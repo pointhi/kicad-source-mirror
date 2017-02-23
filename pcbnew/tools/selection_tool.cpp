@@ -133,11 +133,12 @@ private:
         const auto& selection = getToolManager()->GetTool<SELECTION_TOOL>()->GetSelection();
 
         bool connItem = ( S_C::OnlyType( PCB_VIA_T ) || S_C::OnlyType( PCB_TRACE_T ) )( selection );
+        bool connArea = ( S_C::OnlyType( PCB_ZONE_AREA_T ) )( selection );
         bool sheetSelEnabled = ( S_C::OnlyType( PCB_MODULE_T ) )( selection );
 
-        Enable( getMenuId( PCB_ACTIONS::selectNet ), connItem );
-        Enable( getMenuId( PCB_ACTIONS::selectCopper ), connItem );
         Enable( getMenuId( PCB_ACTIONS::selectConnection ), connItem );
+        Enable( getMenuId( PCB_ACTIONS::selectCopper ), connItem || connArea );
+        Enable( getMenuId( PCB_ACTIONS::selectNet ), connItem || connArea );
         Enable( getMenuId( PCB_ACTIONS::selectSameSheet ), sheetSelEnabled );
     }
 
@@ -724,7 +725,7 @@ void SELECTION_TOOL::selectAllItemsConnectedToItem( BOARD_CONNECTED_ITEM& aSourc
 {
     RN_DATA* ratsnest = getModel<BOARD>()->GetRatsnest();
     std::list<BOARD_CONNECTED_ITEM*> itemsList;
-    ratsnest->GetConnectedItems( &aSourceItem, itemsList, (RN_ITEM_TYPE)( RN_TRACKS | RN_VIAS ) );
+    ratsnest->GetConnectedItems( &aSourceItem, itemsList, (RN_ITEM_TYPE)( RN_TRACKS | RN_VIAS | RN_ZONES) );
 
     for( BOARD_CONNECTED_ITEM* i : itemsList )
         select( i );
@@ -736,7 +737,7 @@ void SELECTION_TOOL::selectAllItemsOnNet( int aNetCode )
     RN_DATA* ratsnest = getModel<BOARD>()->GetRatsnest();
     std::list<BOARD_CONNECTED_ITEM*> itemsList;
 
-    ratsnest->GetNetItems( aNetCode, itemsList, (RN_ITEM_TYPE)( RN_TRACKS | RN_VIAS ) );
+    ratsnest->GetNetItems( aNetCode, itemsList, (RN_ITEM_TYPE)( RN_TRACKS | RN_VIAS | RN_ZONES ) );
 
     for( BOARD_CONNECTED_ITEM* i : itemsList )
         select( i );
