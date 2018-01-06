@@ -408,13 +408,13 @@ bool PGM_BASE::InitPgm()
 
     if( m_pgm_checker->IsAnotherRunning() )
     {
-        wxString quiz = wxString::Format(
+        /*wxString quiz = wxString::Format(
             _( "%s is already running, Continue?" ),
             GetChars( pgm_name.GetName() )
             );
 
         if( !IsOK( NULL, quiz ) )
-            return false;
+            return false;*/
     }
 
     // Init KiCad environment

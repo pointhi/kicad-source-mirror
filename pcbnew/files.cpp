@@ -482,7 +482,7 @@ bool PCB_EDIT_FRAME::OpenProjectFiles( const std::vector<wxString>& aFileSet, in
         Prj().SetProjectFullName( pro.GetFullPath() );
 
         // load project settings before BOARD
-        LoadProjectSettings();
+        //LoadProjectSettings();
     }
 
     if( is_new )
@@ -514,7 +514,8 @@ bool PCB_EDIT_FRAME::OpenProjectFiles( const std::vector<wxString>& aFileSet, in
 #endif
 
             loadedBoard = pi->Load( fullFileName, NULL, &props );
-
+            fprintf(stderr, "board loaded, exit pcbnew!\n");
+            this->Close(true);
 #if USE_INSTRUMENTATION
             unsigned stopTime = GetRunningMicroSecs();
             printf( "PLUGIN::Load(): %u usecs\n", stopTime - startTime );
@@ -522,11 +523,15 @@ bool PCB_EDIT_FRAME::OpenProjectFiles( const std::vector<wxString>& aFileSet, in
         }
         catch( const IO_ERROR& ioe )
         {
-            DisplayErrorMessage( this,
-                                 wxString::Format( _( "Error loading board file:\n%s" ), fullFileName ),
-                                 ioe.What() );
-            return false;
+            fprintf(stderr, "force close!\n");
+            this->Close(true);
+            //DisplayErrorMessage( this,
+            //                     wxString::Format( _( "Error loading board file:\n%s" ), fullFileName ),
+            //                     ioe.What() );
+
+            return true;
         }
+        return true;
 
         SetBoard( loadedBoard );
 
