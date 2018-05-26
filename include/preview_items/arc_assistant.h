@@ -32,7 +32,7 @@ namespace PREVIEW {
 /**
  * Class SELECTION_AREA
  *
- * Represents an assitant draw when interactively drawing an
+ * Represents an assistant draw when interactively drawing an
  * arc on a canvas.
  */
 class ARC_ASSISTANT : public EDA_ITEM

@@ -90,7 +90,7 @@ bool angleIsSpecial( double aRadians )
 }
 
 
-static void drawLineWithHilight( KIGFX::VIEW *aView,
+static void drawLineWithHighlight( KIGFX::VIEW *aView,
         const VECTOR2I& aStart, const VECTOR2I& aEnd, bool aDim )
 {
     auto gal = aView->GetGAL();
@@ -107,7 +107,7 @@ static void drawLineWithHilight( KIGFX::VIEW *aView,
 }
 
 
-static void drawArcWithHilight( KIGFX::VIEW *aView,
+static void drawArcWithHighlight( KIGFX::VIEW *aView,
         const VECTOR2I& aOrigin, double aRad, double aStartAngle,
         double aEndAngle )
 {
@@ -153,7 +153,7 @@ void ARC_ASSISTANT::ViewDraw( int aLayer, KIGFX::VIEW* aView ) const
     // draw first radius line
     bool dimFirstLine = m_constructMan.GetStep() > ARC_GEOM_MANAGER::SET_START;
 
-    drawLineWithHilight( aView, origin, m_constructMan.GetStartRadiusEnd(), dimFirstLine );
+    drawLineWithHighlight( aView, origin, m_constructMan.GetStartRadiusEnd(), dimFirstLine );
 
     std::vector<wxString> cursorStrings;
 
@@ -169,7 +169,7 @@ void ARC_ASSISTANT::ViewDraw( int aLayer, KIGFX::VIEW* aView ) const
         gal.DrawLine( origin, angleRefLineEnd );
 
         // draw the angle reference arc
-        drawArcWithHilight( aView, origin, innerRad, initAngle, 0.0 );
+        drawArcWithHighlight( aView, origin, innerRad, initAngle, 0.0 );
 
         double degs = getNormDeciDegFromRad( initAngle );
 
@@ -178,18 +178,18 @@ void ARC_ASSISTANT::ViewDraw( int aLayer, KIGFX::VIEW* aView ) const
     }
     else
     {
-        drawLineWithHilight( aView, origin, m_constructMan.GetEndRadiusEnd(), false );
+        drawLineWithHighlight( aView, origin, m_constructMan.GetEndRadiusEnd(), false );
 
         auto    start = m_constructMan.GetStartAngle();
         auto    subtended = m_constructMan.GetSubtended();
 
-        drawArcWithHilight( aView, origin, innerRad, start, start + subtended );
+        drawArcWithHighlight( aView, origin, innerRad, start, start + subtended );
 
         double  subtendedDeg    = getNormDeciDegFromRad( subtended );
         double  endAngleDeg     = getNormDeciDegFromRad( start + subtended );
 
         // draw dimmed extender line to cursor
-        drawLineWithHilight( aView, origin, m_constructMan.GetLastPoint(), true );
+        drawLineWithHighlight( aView, origin, m_constructMan.GetLastPoint(), true );
 
         cursorStrings.push_back( DimensionLabel( "Δθ", subtendedDeg, DEGREES ) );
         cursorStrings.push_back( DimensionLabel( "θ", endAngleDeg, DEGREES ) );
