@@ -238,6 +238,8 @@ set( COMMON_PREVIEW_ITEMS_SRCS
     preview_items/polygon_item.cpp
     preview_items/preview_utils.cpp
     preview_items/ruler_item.cpp
+    preview_items/segment_assistant.cpp
+    preview_items/segment_geom_manager.cpp
     preview_items/selection_area.cpp
     preview_items/simple_overlay_item.cpp
     )

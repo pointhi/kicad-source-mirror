@@ -51,6 +51,7 @@
 #include "grid_helper.h"
 #include <dialogs/dialog_text_properties.h>
 #include <preview_items/arc_assistant.h>
+#include <preview_items/segment_assistant.h>
 
 #include <class_board.h>
 #include <class_edge_mod.h>
@@ -979,6 +980,14 @@ bool DRAWING_TOOL::drawSegment( int aShape, DRAWSEGMENT*& aGraphic,
     // Only two shapes are currently supported
     assert( aShape == S_SEGMENT || aShape == S_CIRCLE );
 
+    m_toolMgr->RunAction( PCB_ACTIONS::selectionClear, true );
+
+    // Segment geometric construction manager
+    KIGFX::PREVIEW::SEGMENT_GEOM_MANAGER segmentManager( aShape );
+
+    // Segment drawing assistant overlay
+    KIGFX::PREVIEW::SEGMENT_ASSISTANT segAsst( segmentManager, m_frame->GetUserUnits() );
+
     DRAWSEGMENT line45;
     GRID_HELPER grid( m_frame );
 
@@ -987,8 +996,8 @@ bool DRAWING_TOOL::drawSegment( int aShape, DRAWSEGMENT*& aGraphic,
     // Add a VIEW_GROUP that serves as a preview for the new item
     SELECTION preview;
     m_view->Add( &preview );
+    m_view->Add( &segAsst );
 
-    m_toolMgr->RunAction( PCB_ACTIONS::selectionClear, true );
     m_controls->ShowCursor( true );
 
     Activate();
@@ -1020,6 +1029,10 @@ bool DRAWING_TOOL::drawSegment( int aShape, DRAWSEGMENT*& aGraphic,
             m_frame->GetScreen()->m_O_Curseur = wxPoint( aStartingPoint->x, aStartingPoint->y );
 
         started = true;
+
+        segmentManager.AddPoint( wxPoint( aStartingPoint->x, aStartingPoint->y ), true );
+
+        m_view->Update( &segAsst );
     }
 
     // Main loop: keep receiving events
@@ -1129,6 +1142,8 @@ bool DRAWING_TOOL::drawSegment( int aShape, DRAWSEGMENT*& aGraphic,
                 preview.Clear();
                 break;
             }
+
+            segmentManager.AddPoint( cursorPos, true );
         }
         else if( evt->IsMotion() )
         {
@@ -1144,6 +1159,12 @@ bool DRAWING_TOOL::drawSegment( int aShape, DRAWSEGMENT*& aGraphic,
                 frame()->SetMsgPanel( aGraphic );
             else
                 frame()->SetMsgPanel( board() );
+
+            // set angle snap
+            segmentManager.SetAngleSnap( limit45 );
+
+            // update, but don't step the manager state
+            segmentManager.AddPoint( cursorPos, false );
         }
         else if( evt->IsAction( &PCB_ACTIONS::incWidth ) )
         {
@@ -1165,6 +1186,12 @@ bool DRAWING_TOOL::drawSegment( int aShape, DRAWSEGMENT*& aGraphic,
         {
             IsOCurseurSet = true;
         }
+
+        if( segmentManager.HasGeometryChanged() )
+        {
+            m_view->Update( &segAsst );
+        }
+
     }
 
     if( !IsOCurseurSet ) // reset the relative coordinte if it was not set before
