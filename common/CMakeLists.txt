@@ -241,6 +241,7 @@ set( COMMON_SRCS
     ${COMMON_PAGE_LAYOUT_SRCS}
     ${COMMON_PREVIEW_ITEMS_SRCS}
     ${PLOTTERS_CONTROL_SRCS}
+    app_signal_handler.cpp
     base_struct.cpp
     bezier_curves.cpp
     bin_mod.cpp

@@ -39,6 +39,7 @@
 #include <richio.h>
 #include <wildcards_and_files_ext.h>
 #include <systemdirsappend.h>
+#include <app_signal_handler.h>
 
 #include <stdexcept>
 
@@ -220,6 +221,10 @@ struct APP_KICAD : public wxApp
 #if defined (__LINUX__)
     APP_KICAD(): wxApp()
     {
+        // register for signals
+        APP_SIGNAL_HANDLER::RegisterSignalHandler( SIGSEGV, APP_SIGNAL_HANDLER::BacktraceSignalHandler );
+        APP_SIGNAL_HANDLER::RegisterSignalHandler( SIGABRT, APP_SIGNAL_HANDLER::BacktraceSignalHandler );
+
         // Disable proxy menu in Unity window manager. Only usual menubar works with
         // wxWidgets (at least <= 3.1).  When the proxy menu menubar is enable, some
         // important things for us do not work: menuitems UI events and shortcuts.
