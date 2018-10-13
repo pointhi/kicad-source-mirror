@@ -290,7 +290,6 @@ void POINT_EDITOR::updateEditedPoint( const TOOL_EVENT& aEvent )
         setEditedPoint( point );
 }
 
-
 int POINT_EDITOR::OnSelectionChange( const TOOL_EVENT& aEvent )
 {
     if( !m_selectionTool )
@@ -311,6 +310,9 @@ int POINT_EDITOR::OnSelectionChange( const TOOL_EVENT& aEvent )
 
     GRID_HELPER grid( editFrame );
     BOARD_ITEM* item = static_cast<BOARD_ITEM*>( selection.Front() );
+
+    if( !item )
+        return 0;
 
     m_editPoints = EDIT_POINTS_FACTORY::Make( item, getView()->GetGAL() );
 
