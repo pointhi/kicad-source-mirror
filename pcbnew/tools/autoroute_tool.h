@@ -28,6 +28,7 @@ private:
     int routeTrack( const TOOL_EVENT& aEvent );
 
     PCB_EDIT_FRAME* m_frame;
+    BOARD* m_board;
 };
 
 
