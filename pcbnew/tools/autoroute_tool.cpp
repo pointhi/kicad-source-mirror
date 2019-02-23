@@ -199,8 +199,9 @@ int AUTOROUTE_TOOL::routeAll( const TOOL_EVENT& aEvent ) {
     int x_offset = m_board->GetBoundingBox().GetLeft();
     int y_offset = m_board->GetBoundingBox().GetTop();
 
-    auto current_pcb = pcb(dims, routing_flood_vectorss, routing_path_vectorss, 1, 0, 1, 8);
+    auto current_pcb = pcb(dims, routing_flood_vectorss, routing_path_vectorss, 2, 1, 1, 10);
 
+    // TODO: net= -1 missing?
     for(auto it = m_board->BeginNets(); it != m_board->EndNets(); it++) {
         track track;
         track.m_id = std::to_string(it->GetNet());
@@ -213,10 +214,57 @@ int AUTOROUTE_TOOL::routeAll( const TOOL_EVENT& aEvent ) {
                 if((*it) == dpad->GetNet()) {
                     LSET mask_copper_layers = dpad->GetLayerSet() & LSET::AllCuMask();
 
-                    auto radius = dpad->GetSize().x / IU_PER_MM / 2.; // TODO: improve pad shapes
                     auto gap = it->GetClearance(nullptr) / IU_PER_MM / 2.;
                     auto pos_x = (dpad->GetPosition().x - x_offset) / IU_PER_MM;
                     auto pos_y = (dpad->GetPosition().y - y_offset) / IU_PER_MM;
+                    double radius = 0.1;
+                    points_2d shape;
+
+                    // TODO: improve pad shapes
+                    switch(dpad->GetShape()) {
+                        case PAD_SHAPE_RECT: {
+                            auto size_x = dpad->GetSize().x / IU_PER_MM / 2.;
+                            auto size_y = dpad->GetSize().y / IU_PER_MM / 2.;
+
+                            radius = 0;
+
+                            // TODO: support more rotations than 90degree level
+                            if((int)(module->GetOrientationDegrees() + dpad->GetOrientationDegrees()) % 180 == 0) {
+                                shape.push_back({-size_x, -size_y});
+                                shape.push_back({-size_x, size_y});
+                                shape.push_back({size_x, size_y});
+                                shape.push_back({size_x, -size_y});
+                            } else {
+                                shape.push_back({-size_y, -size_x});
+                                shape.push_back({-size_y, size_x});
+                                shape.push_back({size_y, size_x});
+                                shape.push_back({size_y, -size_x});
+                            }
+                        }
+                            break;
+
+                        case PAD_SHAPE_OVAL: {
+                            radius = std::min(dpad->GetSize().x, dpad->GetSize().y) / IU_PER_MM / 2.;
+                            auto distance = std::max(dpad->GetSize().x, dpad->GetSize().y) / IU_PER_MM / 2. - radius;
+
+                            // TODO: rotation
+                            if(dpad->GetSize().x > dpad->GetSize().y) {
+                                shape.push_back({-distance/2, 0.});
+                                shape.push_back({distance/2, 0.});
+                            } else {
+                                shape.push_back({0., -distance/2});
+                                shape.push_back({0., -distance/2});
+                            }
+
+                        }
+                            break;
+
+                        case PAD_SHAPE_CIRCLE:
+                        default:
+                            radius = std::max(dpad->GetSize().x, dpad->GetSize().y) / IU_PER_MM / 2.;
+                            break;
+                    }
+
 
                     // TODO: howto iterate through layers?
                     if( mask_copper_layers.test( PCB_LAYER_ID::F_Cu ) ) {
@@ -224,6 +272,7 @@ int AUTOROUTE_TOOL::routeAll( const TOOL_EVENT& aEvent ) {
                         p.m_radius = radius;
                         p.m_gap = gap;
                         p.m_pos = {pos_x, pos_y, (double)id_from_layer(PCB_LAYER_ID::F_Cu)};
+                        p.m_shape = shape;
                         track.m_pads.push_back(p);
                     }
                     if( mask_copper_layers.test( PCB_LAYER_ID::B_Cu ) ) {
@@ -231,6 +280,7 @@ int AUTOROUTE_TOOL::routeAll( const TOOL_EVENT& aEvent ) {
                         p.m_radius = radius;
                         p.m_gap = gap;
                         p.m_pos = {pos_x, pos_y, (double)id_from_layer(PCB_LAYER_ID::B_Cu)};
+                        p.m_shape = shape;
                         track.m_pads.push_back(p);
                     }
                 }
@@ -292,8 +342,8 @@ int AUTOROUTE_TOOL::routeAll( const TOOL_EVENT& aEvent ) {
             best_pcb.print_stats();
         }
     }
-    //best_pcb.print_netlist();
-    //best_pcb.print_stats();
+    best_pcb.print_netlist();
+    best_pcb.print_stats();
 
     // Construct commit from current PCB_TOOL
     BOARD_COMMIT commit( this );
