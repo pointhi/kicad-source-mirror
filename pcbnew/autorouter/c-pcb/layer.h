@@ -69,7 +69,7 @@ public:
 			// m_pv_dist1 = dot_2d(m_pv_norm, l.m_p1);
 			// m_pv_dist2 = m_pv_dist1 - len;
 		}
-		auto hit(const line &l, double d)
+		bool hit(const line &l, double d)
 		{
 			auto dp1 = dot_2d(m_lv_norm, l.m_p1) - m_lv_dist;
 			auto dp2 = dot_2d(m_lv_norm, l.m_p2) - m_lv_dist;

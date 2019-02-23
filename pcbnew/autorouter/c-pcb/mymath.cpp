@@ -25,14 +25,14 @@
 //distance metric stuff
 ///////////////////////
 
-auto manhattan_distance_2d(const point_2d &p1, const point_2d &p2)
+double manhattan_distance_2d(const point_2d &p1, const point_2d &p2)
 {
 	auto dx = p1.m_x - p2.m_x;
 	auto dy = p1.m_y - p2.m_y;
 	return double(fabs(dx) + fabs(dy));
 }
 
-auto manhattan_distance_3d(const point_3d &p1, const point_3d &p2)
+double manhattan_distance_3d(const point_3d &p1, const point_3d &p2)
 {
 	auto dx = p1.m_x - p2.m_x;
 	auto dy = p1.m_y - p2.m_y;
@@ -40,14 +40,14 @@ auto manhattan_distance_3d(const point_3d &p1, const point_3d &p2)
 	return double(fabs(dx) + fabs(dy) + fabs(dz));
 }
 
-auto euclidean_distance_2d(const point_2d &p1, const point_2d &p2)
+double euclidean_distance_2d(const point_2d &p1, const point_2d &p2)
 {
 	auto dx = p1.m_x - p2.m_x;
 	auto dy = p1.m_y - p2.m_y;
 	return double(sqrt(dx * dx + dy * dy));
 }
 
-auto euclidean_distance_3d(const point_3d &p1, const point_3d &p2)
+double euclidean_distance_3d(const point_3d &p1, const point_3d &p2)
 {
 	auto dx = p1.m_x - p2.m_x;
 	auto dy = p1.m_y - p2.m_y;
@@ -55,14 +55,14 @@ auto euclidean_distance_3d(const point_3d &p1, const point_3d &p2)
 	return double(sqrt(dx * dx + dy * dy + dz * dz));
 }
 
-auto squared_euclidean_distance_2d(const point_2d &p1, const point_2d &p2)
+double squared_euclidean_distance_2d(const point_2d &p1, const point_2d &p2)
 {
 	auto dx = p1.m_x - p2.m_x;
 	auto dy = p1.m_y - p2.m_y;
 	return double(dx * dx + dy * dy);
 }
 
-auto squared_euclidean_distance_3d(const point_3d &p1, const point_3d &p2)
+double squared_euclidean_distance_3d(const point_3d &p1, const point_3d &p2)
 {
 	auto dx = p1.m_x - p2.m_x;
 	auto dy = p1.m_y - p2.m_y;
@@ -70,14 +70,14 @@ auto squared_euclidean_distance_3d(const point_3d &p1, const point_3d &p2)
 	return double(dx * dx + dy * dy + dz * dz);
 }
 
-auto chebyshev_distance_2d(const point_2d &p1, const point_2d &p2)
+double chebyshev_distance_2d(const point_2d &p1, const point_2d &p2)
 {
 	auto dx = fabs(p1.m_x - p2.m_x);
 	auto dy = fabs(p1.m_y - p2.m_y);
 	return std::max(dx, dy);
 }
 
-auto chebyshev_distance_3d(const point_3d &p1, const point_3d &p2)
+double chebyshev_distance_3d(const point_3d &p1, const point_3d &p2)
 {
 	auto dx = fabs(p1.m_x - p2.m_x);
 	auto dy = fabs(p1.m_y - p2.m_y);
@@ -86,14 +86,14 @@ auto chebyshev_distance_3d(const point_3d &p1, const point_3d &p2)
 	return std::max(d, dz);
 }
 
-auto reciprical_distance_2d(const point_2d &p1, const point_2d &p2)
+double reciprical_distance_2d(const point_2d &p1, const point_2d &p2)
 {
 	auto d = manhattan_distance_2d(p1, p2);
 	if (d == 0.0) return 1.0;
 	return 1.0 / d;
 }
 
-auto reciprical_distance_3d(const point_3d &p1, const point_3d &p2)
+double reciprical_distance_3d(const point_3d &p1, const point_3d &p2)
 {
 	auto d = manhattan_distance_3d(p1, p2);
 	if (d == 0.0) return 1.0;
@@ -104,87 +104,87 @@ auto reciprical_distance_3d(const point_3d &p1, const point_3d &p2)
 //specific vector stuff
 ///////////////////////
 
-auto add_2d(const point_2d &p1, const point_2d &p2)
+point_2d add_2d(const point_2d &p1, const point_2d &p2)
 {
 	return point_2d(p1.m_x + p2.m_x, p1.m_y + p2.m_y);
 }
 
-auto sub_2d(const point_2d &p1, const point_2d &p2)
+point_2d sub_2d(const point_2d &p1, const point_2d &p2)
 {
 	return point_2d(p1.m_x - p2.m_x, p1.m_y - p2.m_y);
 }
 
-auto sub_3d(const point_3d &p1, const point_3d &p2)
+point_3d sub_3d(const point_3d &p1, const point_3d &p2)
 {
 	return point_3d(p1.m_x - p2.m_x, p1.m_y - p2.m_y, p1.m_z - p2.m_z);
 }
 
-auto scale_2d(const point_2d &p, double s)
+point_2d scale_2d(const point_2d &p, double s)
 {
 	return point_2d(p.m_x * s, p.m_y * s);
 }
 
-auto scale_3d(const point_3d &p, double s)
+point_3d scale_3d(const point_3d &p, double s)
 {
 	return point_3d(p.m_x * s, p.m_y * s, p.m_z * s);
 }
 
-auto perp_2d(const point_2d &p)
+point_2d perp_2d(const point_2d &p)
 {
 	return point_2d(-p.m_y, p.m_x);
 }
 
-auto dot_2d(const point_2d &p1, const point_2d &p2)
+double dot_2d(const point_2d &p1, const point_2d &p2)
 {
 	return p1.m_x * p2.m_x + p1.m_y * p2.m_y;
 }
 
-auto det_2d(const point_2d &p1, const point_2d &p2)
+double det_2d(const point_2d &p1, const point_2d &p2)
 {
 	return p1.m_x * p2.m_y - p1.m_y * p2.m_x;
 }
 
-auto dot_3d(const point_3d &p1, const point_3d &p2)
+double dot_3d(const point_3d &p1, const point_3d &p2)
 {
 	return p1.m_x * p2.m_x + p1.m_y * p2.m_y + p1.m_z * p2.m_z;
 }
 
-auto length_2d(const point_2d &p)
+double length_2d(const point_2d &p)
 {
 	return double(sqrt(dot_2d(p, p)));
 }
 
-auto length_3d(const point_3d &p)
+double length_3d(const point_3d &p)
 {
 	return double(sqrt(dot_3d(p, p)));
 }
 
-auto norm_2d(const point_2d &p)
+point_2d norm_2d(const point_2d &p)
 {
 	auto l = length_2d(p);
 	if (l == 0.0) return point_2d(0.0, 0.0);
 	return scale_2d(p, 1.0 / l);
 }
 
-auto norm_3d(const point_3d &p)
+point_3d norm_3d(const point_3d &p)
 {
 	auto l = length_3d(p);
 	if (l == 0.0) return point_3d(0.0, 0.0, 0.0);
 	return scale_3d(p, 1.0 / l);
 }
 
-auto distance_2d(const point_2d &p1, const point_2d &p2)
+double distance_2d(const point_2d &p1, const point_2d &p2)
 {
 	return length_2d(sub_2d(p2, p1));
 }
 
-auto distance_squared_2d(const point_2d &p1, const point_2d &p2)
+double distance_squared_2d(const point_2d &p1, const point_2d &p2)
 {
 	auto p = sub_2d(p2, p1);
 	return dot_2d(p, p);
 }
 
-auto distance_to_line_2d(const point_2d &p, const point_2d &p1, const point_2d &p2)
+double distance_to_line_2d(const point_2d &p, const point_2d &p1, const point_2d &p2)
 {
 	auto lv = sub_2d(p2, p1);
 	auto pv = sub_2d(p, p1);
@@ -195,7 +195,7 @@ auto distance_to_line_2d(const point_2d &p, const point_2d &p1, const point_2d &
 	return distance_2d(p, add_2d(p1, scale_2d(lv, c1/c2)));
 }
 
-auto distance_squared_to_line_2d(const point_2d &p, const point_2d &p1, const point_2d &p2)
+double distance_squared_to_line_2d(const point_2d &p, const point_2d &p1, const point_2d &p2)
 {
 	auto lv = sub_2d(p2, p1);
 	auto pv = sub_2d(p, p1);
@@ -206,7 +206,7 @@ auto distance_squared_to_line_2d(const point_2d &p, const point_2d &p1, const po
 	return distance_squared_2d(p, add_2d(p1, scale_2d(lv, c1/c2)));
 }
 
-auto collide_lines_2d(const point_2d &l1_p1, const point_2d &l1_p2, const point_2d &l2_p1, const point_2d &l2_p2)
+bool collide_lines_2d(const point_2d &l1_p1, const point_2d &l1_p2, const point_2d &l2_p1, const point_2d &l2_p2)
 {
 	auto av = sub_2d(l1_p2, l1_p1);
 	auto bv = sub_2d(l2_p2, l2_p1);
@@ -244,7 +244,7 @@ bool collide_thick_lines_2d(const point_2d &tl1_p1, const point_2d &tl1_p2,
 //generic path stuff
 ////////////////////
 
-auto circle_as_lines(const point_2d &p, double radius, int resolution)
+points_2d circle_as_lines(const point_2d &p, double radius, int resolution)
 {
 	auto out_points = points_2d{}; out_points.reserve(resolution+1);
 	auto rvx = 0.0;
@@ -261,7 +261,7 @@ auto circle_as_lines(const point_2d &p, double radius, int resolution)
 	return out_points;
 }
 
-auto torus_as_tristrip(const point_2d &p, double radius1, double radius2, int resolution)
+points_2d torus_as_tristrip(const point_2d &p, double radius1, double radius2, int resolution)
 {
 	auto out_points = points_2d{}; out_points.reserve(resolution*2+2);
 	auto rvx1 = 0.0;
@@ -283,7 +283,7 @@ auto torus_as_tristrip(const point_2d &p, double radius1, double radius2, int re
 	return out_points;
 }
 
-auto circle_as_trifan(const point_2d &p, double radius, int resolution)
+points_2d circle_as_trifan(const point_2d &p, double radius, int resolution)
 {
 	auto out_points = points_2d{}; out_points.reserve(resolution*2+2);
 	auto rvx1 = 0.0;
@@ -301,7 +301,7 @@ auto circle_as_trifan(const point_2d &p, double radius, int resolution)
 	return out_points;
 }
 
-auto thicken_path_as_lines(const points_2d &path, double radius, int capstyle, int joinstyle, int resolution)
+points_2d thicken_path_as_lines(const points_2d &path, double radius, int capstyle, int joinstyle, int resolution)
 {
 	if (radius == 0.0) radius = 0.00000001;
 	auto index = 0;
@@ -415,7 +415,7 @@ auto thicken_path_as_lines(const points_2d &path, double radius, int capstyle, i
 	return out_points;
 }
 
-auto thicken_path_as_tristrip(const points_2d &path, double radius, int capstyle, int joinstyle, int resolution)
+points_2d thicken_path_as_tristrip(const points_2d &path, double radius, int capstyle, int joinstyle, int resolution)
 {
 	if (radius == 0.0) radius = 0.00000001f;
 	auto index = 0;
@@ -542,7 +542,7 @@ auto thicken_path_as_tristrip(const points_2d &path, double radius, int capstyle
 	return out_points;
 }
 
-auto recursive_bezier(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4,
+void recursive_bezier(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4,
 	 					points_2d &points, double distance_tolerance)
 {
 	//calculate all the mid-points of the line segments
@@ -578,7 +578,7 @@ auto recursive_bezier(double x1, double y1, double x2, double y2, double x3, dou
 }
 
 //create bezier path
-auto bezier_path_as_lines(const point_2d &p1, const point_2d &p2,
+points_2d bezier_path_as_lines(const point_2d &p1, const point_2d &p2,
 	 						const point_2d &p3, const point_2d &p4, double distance_tolerance)
 {
 	auto points = points_2d{};

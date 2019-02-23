@@ -78,7 +78,7 @@ void layer::sub_line(const line &l)
 		for (auto x = bb.m_minx; x <= bb.m_maxx; ++x)
 		{
 			auto &&b = m_buckets[y*m_width + x];
-			auto itr = std::find_if(begin(b), end(b), [&] (auto &e)
+			auto itr = std::find_if(begin(b), end(b), [&] (std::shared_ptr<record> &e)
 			{
 				return e->m_line == l;
 			});

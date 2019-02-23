@@ -78,7 +78,7 @@ bool pcb::route(double timeout)
 	unmark_distances();
 	reset_areas();
 	shuffle_netlist();
-	std::sort(begin(m_netlist), end(m_netlist), [&] (auto &n1, auto &n2)
+	std::sort(begin(m_netlist), end(m_netlist), [&] (net &n1, net &n2)
 	{
 		if (n1.m_area == n2.m_area) return n1.m_radius > n2.m_radius;
 		return n1.m_area < n2.m_area;
@@ -95,7 +95,7 @@ bool pcb::route(double timeout)
 			{
 				reset_areas();
 				shuffle_netlist();
-				std::sort(begin(m_netlist), end(m_netlist), [&] (auto &n1, auto &n2)
+				std::sort(begin(m_netlist), end(m_netlist), [&] (net &n1, net &n2)
 				{
 					if (n1.m_area == n2.m_area) return n1.m_radius > n2.m_radius;
 					return n1.m_area < n2.m_area;
@@ -228,7 +228,7 @@ inline void pcb::set_node(const node &n, unsigned int value)
 }
 
 //get grid node value
-inline auto pcb::get_node(const node &n)
+inline int pcb::get_node(const node &n)
 {
 	return m_nodes[(m_stride*n.m_z)+(n.m_y*m_width)+n.m_x];
 }
@@ -286,14 +286,14 @@ nodes &pcb::all_nearer_sorted(const nodess &vec, const node &n)
 	static auto yield = nodes{}; yield.clear();
 	auto distance = get_node(n);
 	auto &marked_nodes = all_marked(vec, n);
-	auto marked_nodes_end = std::remove_if(begin(marked_nodes), end(marked_nodes), [=] (auto &mn)
+	auto marked_nodes_end = std::remove_if(begin(marked_nodes), end(marked_nodes), [=] (sort_node &mn)
 	{
 		if ((distance - mn.m_mark) <= 0) return true;
 		mn.m_mark = n.manhattan_distance(mn.m_node);
 		return false;
 	});
-	std::sort(begin(marked_nodes), marked_nodes_end, [&] (auto &s1, auto &s2) { return s1.m_mark < s2.m_mark; });
-	std::for_each(begin(marked_nodes), marked_nodes_end, [&] (auto &sn) { yield.emplace_back(sn.m_node); });
+	std::sort(begin(marked_nodes), marked_nodes_end, [&] (sort_node &s1, sort_node &s2) { return s1.m_mark < s2.m_mark; });
+	std::for_each(begin(marked_nodes), marked_nodes_end, [&] (sort_node &sn) { yield.emplace_back(sn.m_node); });
 	return yield;
 }
 
@@ -339,7 +339,7 @@ void pcb::mark_distances(double radius, double via, double gap, const node_set &
 	while (!frontier.empty() || !vias_nodes.empty())
 	{
 		for (auto &node : frontier) set_node(node, distance);
-		if (std::all_of(begin(ends), end(ends), [&] (auto &&n) { return get_node(n); })) break;
+		if (std::all_of(begin(ends), end(ends), [&] (node n) { return get_node(n); })) break;
 		auto new_nodes = node_set{};
 		for (auto &node : frontier)
 		{
@@ -374,7 +374,7 @@ void pcb::unmark_distances()
 }
 
 //aabb of pads
-auto aabb_pads(const pads &terms, int quantization)
+std::pair<int, layer::aabb> aabb_pads(const pads &terms, int quantization)
 {
 	if (terms.empty()) return std::pair<int, layer::aabb>(0, {0, 0, 0, 0});
 	auto minx = (int(terms[0].m_pos.m_x) / quantization) * quantization;
@@ -595,8 +595,8 @@ void net::sub_wire_collision_lines()
 //paths collision lines
 std::vector<layers::line> net::paths_collision_lines() const
 {
-	auto max_lines = std::accumulate(cbegin(m_paths), cend(m_paths), 0u,
-		[&] (auto acc, auto &&p) { return acc + p.size(); });
+	auto max_lines = std::accumulate(begin(m_paths), end(m_paths), 0u,
+		[&] (int acc, const std::vector<node, std::allocator<node>> p) { return acc + p.size(); });
 	auto paths_lines = std::vector<layers::line>{};
 	paths_lines.reserve(max_lines);
 	for (auto const &path : m_paths)
@@ -688,7 +688,7 @@ std::pair<nodes, bool> net::backtrack_path(const node_set &visited, const node &
 			m_pcb->all_nearer_sorted(via_vectors, path_node),
 			path_node, via, gap)) nearer_nodes.emplace_back(node);
 		if (nearer_nodes.empty()) return std::pair<nodes, bool>(nodes{}, false);
-		auto search = std::find_if(cbegin(nearer_nodes), cend(nearer_nodes), [&] (auto &node)
+		auto search = std::find_if(begin(nearer_nodes), end(nearer_nodes), [&] (node &node)
 		{
 			return visited.find(node) != end(visited);
 		});
@@ -715,7 +715,7 @@ bool net::route()
 	{
 		for (auto &&start : m_pad_end_nodes[index - 1]) visited.insert(start);
 		auto &&ends = m_pad_end_nodes[index];
-		if (std::any_of(cbegin(ends), cend(ends), [&] (auto &&node)
+		if (std::any_of(begin(ends), end(ends), [&] (node node)
 		{
 			return visited.find(node) != end(visited);
 		})) continue;
@@ -724,7 +724,7 @@ bool net::route()
 		auto mid = n_s.mid(n_e);
 		auto mid_scale = m_pcb->m_viascost ? n_s.manhattan_distance(n_e) / double(m_pcb->m_viascost * 2) : 0.0;
 		m_pcb->mark_distances(m_radius, m_via, m_gap, visited, ends, mid, mid_scale);
-		std::sort(begin(ends), end(ends), [&] (auto &&n1, auto && n2)
+		std::sort(begin(ends), end(ends), [&] (node n1, node n2)
 		{
 			 return m_pcb->get_node(n1) < m_pcb->get_node(n2);
 		});

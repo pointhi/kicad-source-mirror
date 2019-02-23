@@ -83,7 +83,7 @@ namespace std
 	template <>
 	struct hash<node>
 	{
-		auto operator()(const node& n) const
+		int operator()(const node& n) const
 		{
 			return (std::hash<int>()(n.m_x)
 					^ std::hash<int>()(n.m_y)
@@ -173,7 +173,7 @@ public:
 	pcb(const dims &dims, const nodess &rfvs, const nodess &rpvs,
 		int res, int verb, int quant, int viascost);
 	~pcb();
-	auto get_node(const node &n);
+	int get_node(const node &n);
 	void add_track(track &t);
 	bool route(double timeout);
 	int cost();
