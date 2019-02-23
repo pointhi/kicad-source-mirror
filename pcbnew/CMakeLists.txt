@@ -40,6 +40,7 @@ include_directories(
     ../include/legacy_wx
     ./dialogs
     ./autorouter
+    ./autorouter/c-pcb
     ../3d-viewer
     ../common
     ../common/dialogs
@@ -227,6 +228,10 @@ set( PCBNEW_CLASS_SRCS
     autorouter/ar_autoplacer.cpp
     autorouter/ar_matrix.cpp
     autorouter/autoplacer_tool.cpp
+
+    autorouter/c-pcb/layer.cpp
+    autorouter/c-pcb/mymath.cpp
+    autorouter/c-pcb/router.cpp
 
     action_plugin.cpp
     append_board_to_current.cpp
