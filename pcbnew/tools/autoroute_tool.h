@@ -4,6 +4,8 @@
 
 #include "pcb_tool.h"
 
+struct pcb;
+
 class AUTOROUTE_TOOL : public PCB_TOOL
 {
 public:
@@ -20,6 +22,8 @@ public:
     void setTransitions() override;
 
 private:
+
+    void outputBoard( pcb& aPcb, BOARD_COMMIT& commit, int x_offset, int y_offset );
 
     ///> 'Route All' tool
     int routeAll( const TOOL_EVENT& aEvent );

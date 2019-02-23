@@ -140,6 +140,10 @@ public:
 	node_set m_wire_nodes;
 	layer::aabb m_bbox;
 
+	std::string get_id() {
+		return m_id;
+	}
+
 private:
 	void add_pad_collision_lines();
 	void sub_pad_collision_lines();
@@ -191,6 +195,10 @@ public:
 	void mark_distances(double radius, double via, double gap,
 		const node_set &starts, const nodes &ends, const node &mid, double mid_scale);
 	void unmark_distances();
+
+	nets get_netlist() {
+		return m_netlist;
+	}
 
 	int m_resolution;
 	int m_quantization;

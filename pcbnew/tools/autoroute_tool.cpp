@@ -3,6 +3,8 @@
 #include "selection_tool.h"
 #include "tool/tool_manager.h"
 #include "class_module.h"
+#include "board_commit.h"
+#include "class_drawsegment.h"
 
 #include "autorouter/c-pcb/router.h"
 
@@ -100,6 +102,75 @@ pcb::dims dimensions()
     return t;
 }
 
+int id_from_layer(PCB_LAYER_ID layer) {
+    switch(layer) {
+        case F_Cu:
+            return 0;
+        case B_Cu:
+            return 1;
+        default:
+            return 2; // TODO
+    }
+}
+
+PCB_LAYER_ID layer_from_id(int id) {
+    switch(id) {
+        case 0:
+            return F_Cu;
+        case 1:
+            return B_Cu;
+        default:
+            return In1_Cu; // TODO
+    }
+}
+
+void AUTOROUTE_TOOL::outputBoard( pcb& aPcb, BOARD_COMMIT& commit, int x_offset, int y_offset ) {
+// write back
+    auto scale = 1.0 / aPcb.m_resolution;
+    for(auto net : aPcb.get_netlist()) {
+        auto n = m_board->FindNet(std::stoi(net.get_id()));
+
+        for(auto paths : net.m_paths) {
+            auto path = paths.begin();
+
+            auto last = wxPoint(path->m_x*scale*IU_PER_MM+x_offset, path->m_y*scale*IU_PER_MM+y_offset);
+            auto last_layer = layer_from_id(path->m_z);
+
+            for(path++; path != std::end(paths); path++) {
+                auto cur = wxPoint(path->m_x*scale*IU_PER_MM+x_offset, path->m_y*scale*IU_PER_MM+y_offset);
+                auto cur_layer = layer_from_id(path->m_z);
+
+                if(last != cur) {
+                    TRACK* t = new TRACK(m_board);
+
+                    t->SetTimeStamp(0);
+                    t->SetPosition(last);
+                    t->SetEnd(cur);
+                    t->SetWidth(n->GetTrackWidth());
+                    t->SetLayer(cur_layer);
+                    t->SetNet(n);
+
+                    commit.Add(t);
+                } else if(last_layer != cur_layer) {
+                    VIA* v = new VIA(m_board);
+
+                    v->SetTimeStamp(0);
+                    v->SetPosition(last);
+                    v->SetDrill(n->GetViaDrillSize());
+                    v->SetWidth(n->GetViaSize());
+                    v->SetLayerPair(last_layer, cur_layer);
+                    v->SetNet(n);
+
+                    commit.Add(v);
+                }
+
+                last = cur;
+                last_layer = cur_layer;
+            }
+        }
+    }
+}
+
 int AUTOROUTE_TOOL::routeAll( const TOOL_EVENT& aEvent ) {
     std::cerr << "routeALL" << std::endl;
 
@@ -140,20 +211,64 @@ int AUTOROUTE_TOOL::routeAll( const TOOL_EVENT& aEvent ) {
         for( MODULE* module = m_board->m_Modules; module; module = module->Next() ) {
             for( D_PAD* dpad : module->Pads() ) {
                 if((*it) == dpad->GetNet()) {
-                    // TODO: detect actual CU-Layers used
-                    for (int layer = 0; layer < 2; layer++) {
+                    LSET mask_copper_layers = dpad->GetLayerSet() & LSET::AllCuMask();
+
+                    auto radius = dpad->GetSize().x / IU_PER_MM / 2.; // TODO: improve pad shapes
+                    auto gap = it->GetClearance(nullptr) / IU_PER_MM / 2.;
+                    auto pos_x = (dpad->GetPosition().x - x_offset) / IU_PER_MM;
+                    auto pos_y = (dpad->GetPosition().y - y_offset) / IU_PER_MM;
+
+                    // TODO: howto iterate through layers?
+                    if( mask_copper_layers.test( PCB_LAYER_ID::F_Cu ) ) {
                         pad p;
-                        p.m_radius = dpad->GetSize().x / IU_PER_MM / 2.; // TODO: improve pad shapes
-                        p.m_gap = it->GetClearance(nullptr) / IU_PER_MM / 2.;
-                        p.m_pos = {(dpad->GetPosition().x - x_offset) / IU_PER_MM,
-                                   (dpad->GetPosition().y - y_offset) / IU_PER_MM, (double)layer};
+                        p.m_radius = radius;
+                        p.m_gap = gap;
+                        p.m_pos = {pos_x, pos_y, (double)id_from_layer(PCB_LAYER_ID::F_Cu)};
+                        track.m_pads.push_back(p);
+                    }
+                    if( mask_copper_layers.test( PCB_LAYER_ID::B_Cu ) ) {
+                        pad p;
+                        p.m_radius = radius;
+                        p.m_gap = gap;
+                        p.m_pos = {pos_x, pos_y, (double)id_from_layer(PCB_LAYER_ID::B_Cu)};
                         track.m_pads.push_back(p);
                     }
                 }
             }
         }
 
-        //track.m_paths = read_paths(in);
+        for( auto drawing : m_board->Drawings() )
+        {
+            switch( drawing->Type() )
+            {
+                case PCB_LINE_T:
+                    if( drawing->GetLayer() == Edge_Cuts )
+                    {
+                        DRAWSEGMENT* seg = dynamic_cast<DRAWSEGMENT*>(drawing);
+
+                        path p0, p1;
+                        auto pos_x = (seg->GetStart().x - x_offset) / IU_PER_MM;
+                        auto pos_y = (seg->GetStart().y - y_offset) / IU_PER_MM;
+                        p0.push_back({pos_x, pos_y, (double)id_from_layer(PCB_LAYER_ID::F_Cu)});
+                        p1.push_back({pos_x, pos_y, (double)id_from_layer(PCB_LAYER_ID::B_Cu)});
+
+                        auto end_x = (seg->GetEnd().x - x_offset) / IU_PER_MM;
+                        auto end_y = (seg->GetEnd().y - y_offset) / IU_PER_MM;
+                        p0.push_back({end_x, end_y, (double)id_from_layer(PCB_LAYER_ID::F_Cu)});
+                        p1.push_back({end_x, end_y, (double)id_from_layer(PCB_LAYER_ID::B_Cu)});
+
+                        // TODO: causes crash later, function understood in the wrong way?
+                        //track.m_paths.push_back(p0);
+                        //track.m_paths.push_back(p1);
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        // TODO: existing tracks?
 
         current_pcb.add_track(track);
     }
@@ -177,8 +292,15 @@ int AUTOROUTE_TOOL::routeAll( const TOOL_EVENT& aEvent ) {
             best_pcb.print_stats();
         }
     }
-    best_pcb.print_netlist();
-    best_pcb.print_stats();
+    //best_pcb.print_netlist();
+    //best_pcb.print_stats();
+
+    // Construct commit from current PCB_TOOL
+    BOARD_COMMIT commit( this );
+
+    outputBoard(best_pcb, commit, x_offset, y_offset);
+
+    commit.Push( "Autorouter" );
 
     return 0;
 }
