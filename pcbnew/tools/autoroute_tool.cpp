@@ -66,7 +66,7 @@ bool AUTOROUTE_TOOL::Init()
         // add our own tool's action
         menu.AddItem( PCB_ACTIONS::routeAll, inactiveStateCondition );
         // add the PCB_EDITOR_CONTROL's zone unfill all action
-        menu.AddItem( PCB_ACTIONS::routeTrack, inactiveStateCondition );
+        //menu.AddItem( PCB_ACTIONS::routeTrack, inactiveStateCondition );
     }
 
     return true;
