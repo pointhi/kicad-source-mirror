@@ -363,6 +363,10 @@ public:
     static TOOL_ACTION lock;
     static TOOL_ACTION unlock;
 
+    // Autoroute
+    static TOOL_ACTION routeAll;
+    static TOOL_ACTION routeTrack;
+
     // Miscellaneous
     static TOOL_ACTION selectionTool;
     static TOOL_ACTION pickerTool;

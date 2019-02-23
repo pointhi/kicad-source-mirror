@@ -265,7 +265,6 @@ void PCB_EDITOR_CONTROL::Reset( RESET_REASON aReason )
     }
 }
 
-
 bool PCB_EDITOR_CONTROL::Init()
 {
     auto activeToolCondition = [ this ] ( const SELECTION& aSel ) {
