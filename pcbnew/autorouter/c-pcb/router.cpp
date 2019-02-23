@@ -40,21 +40,22 @@ std::default_random_engine rand_gen(0);
 
 pcb::pcb(const dims &dims, const nodess &rfvs, const nodess &rpvs,
 		int res, int verb, int quant, int viascost)
-	: m_width(std::ceil(dims.m_width))
-	, m_height(std::ceil(dims.m_height))
-	, m_depth(int(dims.m_depth))
-	, m_resolution(res)
-	, m_routing_flood_vectors(rfvs)
-	, m_routing_path_vectors(rpvs)
+	: m_resolution(res)
 	, m_quantization(quant * res)
-	, m_verbosity(verb)
+	, m_depth(int(dims.m_depth))
 	, m_viascost(viascost * res)
-	, m_layers(layers(layers::dims{static_cast<int>(std::ceil(dims.m_width) * spacial_hash_res),
-		 							static_cast<int>(std::ceil(dims.m_height) * spacial_hash_res),
-									int(dims.m_depth)}, spacial_hash_res/res))
-	, m_via_layers(layers(layers::dims{static_cast<int>(std::ceil(dims.m_width) * spacial_hash_res),
-		 							static_cast<int>(std::ceil(dims.m_height) * spacial_hash_res),
-									int(dims.m_depth)}, spacial_hash_res/res))
+    , m_layers(layers(layers::dims{static_cast<int>(std::ceil(dims.m_width) * spacial_hash_res),
+                                   static_cast<int>(std::ceil(dims.m_height) * spacial_hash_res),
+                                   int(dims.m_depth)}, spacial_hash_res/res))
+    , m_via_layers(layers(layers::dims{static_cast<int>(std::ceil(dims.m_width) * spacial_hash_res),
+                                       static_cast<int>(std::ceil(dims.m_height) * spacial_hash_res),
+                                       int(dims.m_depth)}, spacial_hash_res/res))
+    , m_routing_flood_vectors(rfvs)
+    , m_routing_path_vectors(rpvs)
+
+	, m_width(std::ceil(dims.m_width))
+	, m_height(std::ceil(dims.m_height))
+	, m_verbosity(verb)
 {
 	m_width *= res;
 	m_height *= res;
@@ -249,9 +250,9 @@ sort_nodes &pcb::all_marked(const nodess &vec, const node &n)
 		 	&& (0 <= ny) && (ny < m_height)
 			&& (0 <= nz) && (nz < m_depth))
 		{
-			auto n = node{nx, ny, nz};
-			auto mark = get_node(n);
-			if (mark) yield.emplace_back(sort_node{mark, n});
+			auto n2 = node{nx, ny, nz};
+			auto mark = get_node(n2);
+			if (mark) yield.emplace_back(sort_node{mark, n2});
 		}
 	}
 	return yield;
@@ -273,8 +274,8 @@ nodes &pcb::all_not_marked(const nodess &vec, const node &n)
 		 	&& (0 <= ny) && (ny < m_height)
 			&& (0 <= nz) && (nz < m_depth))
 		{
-			auto n = node{nx, ny, nz};
-			if (!get_node(n)) yield.emplace_back(n);
+			auto n2 = node{nx, ny, nz};
+			if (!get_node(n2)) yield.emplace_back(n2);
 		}
 	}
 	return yield;
@@ -440,22 +441,22 @@ void pcb::remove_netlist()
 //net methods
 
 net::net(const track &t, pcb *pcb)
-	: m_pcb(pcb)
+	: m_radius(t.m_track_radius * pcb->m_resolution)
+	, m_wires(t.m_paths)
+	, m_pads(t.m_pads)
+	, m_pcb(pcb)
 	, m_id(t.m_id)
-	, m_radius(t.m_track_radius * pcb->m_resolution)
 	, m_via(t.m_via_radius * pcb->m_resolution)
 	, m_gap(t.m_gap * pcb->m_resolution)
-	, m_pads(t.m_pads)
-	, m_wires(t.m_paths)
 {
 	//scale pads for resolution of grid
-	for (auto &t : m_pads)
+	for (auto &t2 : m_pads)
 	{
-		t.m_radius *= m_pcb->m_resolution;
-		t.m_gap *= m_pcb->m_resolution;
-		t.m_pos.m_x *= m_pcb->m_resolution;
-		t.m_pos.m_y *= m_pcb->m_resolution;
-		for (auto &p : t.m_shape)
+		t2.m_radius *= m_pcb->m_resolution;
+		t2.m_gap *= m_pcb->m_resolution;
+		t2.m_pos.m_x *= m_pcb->m_resolution;
+		t2.m_pos.m_y *= m_pcb->m_resolution;
+		for (auto &p : t2.m_shape)
 		{
 			p.m_x *= m_pcb->m_resolution;
 			p.m_y *= m_pcb->m_resolution;
@@ -465,10 +466,10 @@ net::net(const track &t, pcb *pcb)
 	//scale wires for resolution of grid
 	for (auto &p : m_wires)
 	{
-		for (auto &t : p)
+		for (auto &t2 : p)
 		{
-			t.m_x *= m_pcb->m_resolution;
-			t.m_y *= m_pcb->m_resolution;
+			t2.m_x *= m_pcb->m_resolution;
+			t2.m_y *= m_pcb->m_resolution;
 		}
 	}
 
@@ -496,13 +497,13 @@ net::net(const track &t, pcb *pcb)
 			{
 				auto pc = point_3d{x, y, z};
 				auto p1 = point_3d{x + shape[0].m_x, y + shape[0].m_y, z};
-				for (auto i = 1; i < (int)shape.size(); ++i)
+				for (auto j = 1; j < (int)shape.size(); ++j)
 				{
 					//add pad entries to via only spacial cache
 					m_pcb->m_via_layers.add_line(layers::line{pc, p1, r, g});
 
 					auto p0 = p1;
-					p1 = point_3d{x + shape[i].m_x, y + shape[i].m_y, z};
+					p1 = point_3d{x + shape[j].m_x, y + shape[j].m_y, z};
 					m_pad_collision_lines.emplace_back(layers::line{p0, p1, r, g});
 				}
 			}
@@ -543,9 +544,9 @@ net::net(const track &t, pcb *pcb)
 				auto v = sub_2d(p, point_2d(p1.m_x, p1.m_y));
 				auto l = length_2d(v);
 				auto norm = scale_2d(v, 1.0 / l);
-				for (auto i = 0.0; i < l; i += 0.25)
+				for (auto j = 0.0; j < l; j += 0.25)
 				{
-					auto pn = add_2d(p, scale_2d(norm, i));
+					auto pn = add_2d(p, scale_2d(norm, j));
 					m_wire_nodes.insert(m_pcb->pad_point_to_node(point_3d(pn.m_x, pn.m_y, p0.m_z)));
 				}
 				m_wire_nodes.insert(m_pcb->pad_point_to_node(p1));
