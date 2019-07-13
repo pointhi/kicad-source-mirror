@@ -28,6 +28,9 @@ add_executable( qa_eeschema
     # A single top to load the pcnew kiface
     # ../../common/single_top.cpp
 
+    # stuff from common due to...units? (Python)
+    #../../common/eda_text.cpp
+
     # stuff from common which is needed...why?
     ../../common/colors.cpp
     ../../common/observable.cpp
@@ -62,6 +65,7 @@ target_link_libraries( qa_eeschema
     qa_utils
     unit_test_utils
     ${GDI_PLUS_LIBRARIES}
+    ${PYTHON_LIBRARIES}
     ${Boost_LIBRARIES}
 )
 

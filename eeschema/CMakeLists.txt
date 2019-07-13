@@ -18,6 +18,16 @@ if( KICAD_SPICE )
         )
 endif()
 
+if( KICAD_SCRIPTING OR KICAD_SCRIPTING_MODULES )
+    file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/swig )
+
+    # Infrequently needed headers go at end of search paths, append to INC_AFTER
+    set( INC_AFTER ${INC_AFTER} swig )
+    set( INC_AFTER ${INC_AFTER} ../common/swig )
+
+    #message( STATUS "eeschema INC_AFTER:${INC_AFTER}" )
+endif()
+
 include_directories( BEFORE ${INC_BEFORE} )
 include_directories(
     ./dialogs
@@ -245,6 +255,10 @@ set( EESCHEMA_COMMON_SRCS
     ../common/page_info.cpp
     )
 
+set( EESCHEMA_SCRIPTING_PYTHON_HELPERS
+    ../common/swig/wx_python_helpers.cpp
+    )
+
 
 if( KICAD_SPICE )
     set( EESCHEMA_SRCS
@@ -268,6 +282,96 @@ if( KICAD_SPICE )
     )
 endif()
 
+if( COMPILER_SUPPORTS_WSHADOW )
+    # .cpp files are compiled with extra ${WSHADOW_FLAGS}, but not .cxx files
+    set_source_files_properties(
+        ${EESCHEMA_SRCS} ${EESCHEMA_COMMON_SRCS} ${EESCHEMA_SCRIPTING_PYTHON_HELPERS}
+        PROPERTIES COMPILE_FLAGS ${WSHADOW_FLAGS}
+    )
+
+    # There is a lot of 'local variable shadowed' warnings,
+    # but we have no control over the generated code
+    set_source_files_properties( eeschema_wrap.cxx eeschemaPYTHON_wrap.cxx
+        PROPERTIES COMPILE_FLAGS -Wno-shadow
+    )
+endif()
+
+if( KICAD_SCRIPTING )
+    set( EESCHEMA_SCRIPTING_SRCS
+        eeschema_wrap.cxx
+        ${EESCHEMA_SCRIPTING_PYTHON_HELPERS}
+        )
+
+
+    # Swig generated files do not use the override specifier, therefore
+    # disable suggest-override warnings
+    if( COMPILER_SUPPORTS_WSUGGEST_OVERRIDE )
+        set_source_files_properties( eeschema_wrap.cxx eeschemaPYTHON_wrap.cxx
+            PROPERTIES COMPILE_FLAGS -Wno-suggest-override
+        )
+    endif()
+endif()
+
+if( KICAD_SCRIPTING OR KICAD_SCRIPTING_MODULES )
+
+    set( SWIG_FLAGS
+        -I${CMAKE_CURRENT_SOURCE_DIR}
+        -I${CMAKE_CURRENT_SOURCE_DIR}/../include
+        -I${CMAKE_CURRENT_SOURCE_DIR}/../scripting
+        -I${CMAKE_CURRENT_SOURCE_DIR}/../common/swig
+        -I${WXPYTHON_SWIG_DIR}
+        )
+
+    if( DEBUG )
+        set( SWIG_FLAGS ${SWIG_FLAGS} -DDEBUG )
+    endif()
+
+    # collect CFLAGS , and pass them to swig later
+    get_directory_property( DirDefs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMPILE_DEFINITIONS )
+    foreach( d ${DirDefs} )
+        set( SWIG_FLAGS ${SWIG_FLAGS} -D${d} )
+    endforeach()
+
+endif()
+
+if( KICAD_SCRIPTING )   # Generate eeschema.py and eeschema_wrap.cxx using swig
+
+    # We deliberately do not use the CMake support for swig here,
+    # i.e. swig_add_footprint()) because we want full control.
+
+    set( SWIG_OPTS -python -c++ -outdir ${CMAKE_CURRENT_BINARY_DIR} ${SWIG_FLAGS} )
+
+    if( EXISTS ${CMAKE_CURRENT_BINARY_DIR}/doxygen-xml )
+        set( SWIG_OPTS ${SWIG_OPTS} -DENABLE_DOCSTRINGS_FROM_DOXYGEN )
+        set( SWIG_OPTS ${SWIG_OPTS} -I${CMAKE_CURRENT_BINARY_DIR}/docstrings )
+    endif()
+
+    add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/eeschema_wrap.cxx
+                        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/eeschema.py
+
+        DEPENDS swig/eeschema.i
+        DEPENDS swig/sheet.i
+
+        DEPENDS ../common/swig/kicad.i
+        DEPENDS ../common/swig/wx.i
+        DEPENDS ../common/swig/ki_exception.i
+        DEPENDS ../scripting/kicadplugins.i
+
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/docstrings
+
+        # Make docstrings.i available if it doesn't exist
+        COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/docstrings/docstrings.i
+
+        COMMAND ${SWIG_EXECUTABLE}
+            ${SWIG_OPTS} -o ${CMAKE_CURRENT_BINARY_DIR}/eeschema_wrap.cxx swig/eeschema.i
+
+        COMMAND ${PYTHON_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/scripting/build_tools/fix_swig_imports.py
+            ${CMAKE_CURRENT_BINARY_DIR}/eeschema.py
+
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+endif()
 
 if( MINGW )
     # EESCHEMA_RESOURCES variable is set by the macro.
@@ -328,6 +432,7 @@ target_link_libraries( eeschema
 add_library( eeschema_kiface_objects OBJECT
     ${EESCHEMA_SRCS}
     ${EESCHEMA_COMMON_SRCS}
+    ${EESCHEMA_SCRIPTING_SRCS}
     )
 
 # CMake <3.9 can't link anything to object libraries,
@@ -361,6 +466,12 @@ if( KICAD_SPICE )
         ${NGSPICE_LIBRARY}
         )
 endif()
+
+#if( KICAD_SCRIPTING )
+    target_link_libraries( eeschema_kiface
+        ${PYTHON_LIBRARIES}
+        )
+#endif()
 
 set_target_properties( eeschema_kiface PROPERTIES
     # Decorate OUTPUT_NAME with PREFIX and SUFFIX, creating something like
@@ -443,6 +554,94 @@ else()
         DESTINATION ${KICAD_BIN}
         COMPONENT binary
         )
+endif()
+
+if( KICAD_SCRIPTING )
+    if( NOT APPLE )
+        install( FILES ${CMAKE_BINARY_DIR}/eeschema/eeschema.py DESTINATION ${PYTHON_DEST} )
+    else()
+        # put into bundle at build time, it is relocated at install
+        add_custom_target( ScriptingEeschemaPyCopy ALL
+            COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/eeschema/eeschema.py" "${PYTHON_DEST}/"
+            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/eeschema.py
+            COMMENT "Copying eeschema.py into ${PYTHON_DEST}"
+            )
+        add_dependencies( ScriptingEeschemaPyCopy ScriptingWxpythonCopy )
+    endif()
+
+    # python plugins
+    #install( DIRECTORY ${PROJECT_SOURCE_DIR}/eeschema/python/plugins/
+    #    DESTINATION ${KICAD_DATA}/scripting/plugins
+    #    FILE_PERMISSIONS OWNER_EXECUTE OWNER_READ OWNER_WRITE GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    #)
+
+    # python shell
+    #if ( KICAD_SCRIPTING_WXPYTHON )
+    #    install( DIRECTORY ${PROJECT_SOURCE_DIR}/eeschema/python/kicad_pyshell/
+    #        DESTINATION ${KICAD_DATA}/scripting/kicad_pyshell
+    #        FILE_PERMISSIONS OWNER_EXECUTE OWNER_READ OWNER_WRITE GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    #    )
+    #endif()
+endif()
+
+if( KICAD_SCRIPTING_MODULES )
+
+    # 1) KICAD_SCRIPTING enables python inside _eeschema.kiface.
+    # 2) KICAD_SCRIPTING_MODULES enables python from the OS command line for eeschema.
+    # When python is running within _eeschema.kiface (case 1 above) it uses said
+    # kiface for the native part of the eeschema python module.  This is a kind of
+    # circular dependency that works well.  When running python from
+    # the command line (case 2 above) then python needs a native portion of the eeschema
+    # python module also, and this is _eeschema.{so,pyd}.  It turns out that the
+    # kiface file is built adequately to serve the needs of 2) for now if it is
+    # merely renamed. This is phase 1 of a 2 step plan.
+    # In phase 2 we will use the _eeschema.kiface file without renaming, by doctoring
+    # what the python portion of the eeschema python module wants to load when run
+    # from the command line, case 2 above.
+
+    # Here is built the _eeschema.{so,pyd} which is the native part of the eeschema Python library
+    # when Python is used from the command line.
+
+    if( MINGW )
+        install( FILES ${CMAKE_BINARY_DIR}/eeschema/_eeschema.pyd DESTINATION ${PYTHON_DEST} )
+        set( PYMOD_EXT "pyd" )
+    elseif( APPLE )
+         # put everything into bundle at build time, it is relocated at install
+        add_custom_target( ScriptingModulesEeschemaSoCopy ALL
+            COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/eeschema/_eeschema.so" "${PYTHON_DEST}/"
+            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/_pcbnew.so
+            COMMENT "Copying _eeschema.so into ${PYTHON_DEST}"
+            )
+        add_dependencies( ScriptingModulesEeschemaSoCopy ScriptingWxpythonCopy )
+        set( PYMOD_EXT "so" )
+    else()  # only linux remains among supported platforms
+        install( FILES ${CMAKE_CURRENT_BINARY_DIR}/_eeschema.kiface DESTINATION ${PYTHON_DEST} COMPONENT binary RENAME "_eeschema.so" )
+        set( PYMOD_EXT "so" )
+    endif()
+
+    if( APPLE )
+         add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/_eeschema.${PYMOD_EXT}
+            DEPENDS eeschema_kiface
+            COMMAND ${CMAKE_COMMAND} -E copy  ${OSX_BUNDLE_BUILD_KIFACE_DIR}/_eeschema.kiface _eeschema.${PYMOD_EXT}
+            COMMENT "Creating python's eeschema native module _eeschema.${PYMOD_EXT} for command line use."
+            )
+        add_custom_target(
+            eeschema_python_module ALL
+            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/_eeschema.${PYMOD_EXT}
+            )
+    else()
+        # For phase 1, copy _eeschema.kiface to the python module.
+        add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/_eeschema.${PYMOD_EXT}
+            DEPENDS eeschema_kiface
+            COMMAND ${CMAKE_COMMAND} -E copy _eeschema.kiface _eeschema.${PYMOD_EXT}
+            COMMENT "Creating python's eeschema native module _eeschema.${PYMOD_EXT} for command line use."
+            )
+        add_custom_target(
+            eeschema_python_module ALL
+            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/_eeschema.${PYMOD_EXT}
+            )
+    endif()
+
 endif()
 
 # auto-generate cmp_library_lexer.h and cmp_library_keywords.cpp for the component

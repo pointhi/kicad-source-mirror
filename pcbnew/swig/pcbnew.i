@@ -40,6 +40,15 @@
 
 %include kicad.i
 
+#include <geometry/shape.h>
+%include <geometry/shape.h>
+
+#include <geometry/shape_line_chain.h>
+%include <geometry/shape_line_chain.h>
+
+#include <geometry/shape_poly_set.h>
+%include <geometry/shape_poly_set.h>
+
 // mostly for KICAD_T
 %include typeinfo.i
 

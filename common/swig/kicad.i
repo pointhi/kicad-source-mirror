@@ -132,8 +132,8 @@ typedef long time_t;
 // KiCad plugin handling
 %include "kicadplugins.i"
 
-#include <geometry/shape.h>
-%include <geometry/shape.h>
+//#include <geometry/shape.h>
+//%include <geometry/shape.h>
 
 // Contains VECTOR2I
 %include math.i
@@ -141,11 +141,11 @@ typedef long time_t;
 // ignore warning from nested classes
 #pragma SWIG nowarn=325
 %ignore SHAPE_LINE_CHAIN::convertFromClipper;
-#include <geometry/shape_line_chain.h>
-%include <geometry/shape_line_chain.h>
+//#include <geometry/shape_line_chain.h>
+//%include <geometry/shape_line_chain.h>
 
-#include <geometry/shape_poly_set.h>
-%include <geometry/shape_poly_set.h>
+//#include <geometry/shape_poly_set.h>
+//%include <geometry/shape_poly_set.h>
 
 // ignore warning relative to operator = and operator ++:
 #pragma SWIG nowarn=362,383
