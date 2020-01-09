@@ -188,6 +188,7 @@ extern wxString EaglePcbFileWildcard();
 extern wxString EagleSchematicFileWildcard();
 extern wxString EagleFilesWildcard();
 extern wxString PCadPcbFileWildcard();
+extern wxString AltiumPcbFileWildcard();
 extern wxString PdfFileWildcard();
 extern wxString PSFileWildcard();
 extern wxString MacrosFileWildcard();
