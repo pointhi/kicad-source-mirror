@@ -408,6 +408,7 @@ void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const C
         pad->SetOrientationDegrees( elem.direction );
         pad->SetLocalCoord();
 
+
         pad->SetSize( elem.topsize );
 
         if ( elem.holesize == 0 ) {
@@ -440,16 +441,15 @@ void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const C
         switch ( elem.layer ) {
             case ALTIUM_LAYER::TOP_LAYER:
                 pad->SetLayer( F_Cu );
-                pad->SetLayerSet( LSET( 3, F_Cu, F_Paste, F_Mask ) );
+                pad->SetLayerSet( D_PAD::SMDMask() );
                 break;
             case ALTIUM_LAYER::BOTTOM_LAYER:
                 pad->SetLayer( B_Cu );
-                pad->SetLayerSet( LSET( 3, B_Cu, B_Paste, B_Mask ) );
+                pad->SetLayerSet( LSET( 3, B_Cu, B_Paste, B_Mask ) ); // TODO: flip footprint?
                 break;
             case ALTIUM_LAYER::MULTI_LAYER:
             default:
-                pad->SetLayerSet( LSET::AllCuMask() );
-                pad->SetLayerSet( pad->GetLayerSet().set( B_Mask).set( F_Mask ) ); // Solder Mask
+                pad->SetLayerSet( elem.plated ? D_PAD::StandardMask() : D_PAD::UnplatedHoleMask() );
                 break;
         }
     }
