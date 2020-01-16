@@ -101,6 +101,8 @@ public:
 
     static double property_double( const std::map<std::string, std::string> &properties, const std::string &key, double def);
 
+    static bool property_bool( const std::map<std::string, std::string> &properties, const std::string &key, bool def);
+
     static int32_t property_unit( const std::map<std::string, std::string> &properties, const std::string &key, const std::string &def);
 
     static std::string property_string( const std::map<std::string, std::string> &properties, const std::string &key, std::string def);

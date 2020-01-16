@@ -317,7 +317,15 @@ void ALTIUM_PCB::Parse( const CFB::CompoundFileReader& aReader ) {
     wxASSERT( board != nullptr );
     if (board != nullptr)
     {
-        ParseBoardData(aReader, board);
+        ParseBoard6Data(aReader, board);
+    }
+
+    // Parse component data
+    const CFB::COMPOUND_FILE_ENTRY* components = FindStream(aReader, "Components6\\Data");
+    wxASSERT( components != nullptr );
+    if (components != nullptr)
+    {
+        ParseComponents6Data(aReader, components);
     }
 
     // Parse arcs
@@ -395,7 +403,7 @@ void ALTIUM_PCB::ParseFileHeader( const CFB::CompoundFileReader& aReader, const 
     //wxASSERT(reader.bytes_remaining() == 0);
 }
 
-void ALTIUM_PCB::ParseBoardData( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
+void ALTIUM_PCB::ParseBoard6Data(const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
     ALTIUM_PARSER reader( aReader, aEntry );
 
     std::map<std::string, std::string> properties = reader.read_properties();
@@ -410,6 +418,44 @@ void ALTIUM_PCB::ParseBoardData( const CFB::CompoundFileReader& aReader, const C
     int layercount = ALTIUM_PARSER::property_int( properties, "LAYERSETSCOUNT", 2 );
 
     m_board->SetCopperLayerCount( layercount );
+}
+
+void ALTIUM_PCB::ParseComponents6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
+    ALTIUM_PARSER reader( aReader, aEntry );
+
+    u_int16_t component = 0;
+    while( !reader.parser_error() && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ ) {
+        std::map<std::string, std::string> properties = reader.read_properties();
+
+        std::string layer = ALTIUM_PARSER::property_string( properties, "LAYER", "" );
+
+        std::string sourcedesignator = ALTIUM_PARSER::property_string( properties, "SOURCEDESIGNATOR", "" );
+        std::string sourcelibreference = ALTIUM_PARSER::property_string( properties, "SOURCELIBREFERENCE", "" );
+
+        bool locked = ALTIUM_PARSER::property_bool( properties, "LOCKED", false );
+
+        double rotation = ALTIUM_PARSER::property_double( properties, "ROTATION", 0. );
+
+        int x = ALTIUM_PARSER::property_unit( properties, "X", "0mil" );
+        int y = ALTIUM_PARSER::property_unit( properties, "Y", "0mil" );
+
+        MODULE* module = GetComponent(component);
+
+        module->SetPosition( wxPoint( x, -y ) );
+        module->SetOrientationDegrees( rotation );
+        module->SetReference( sourcedesignator ); // TODO: text duplication
+        module->SetLocked( locked );
+        module->SetLayer( layer == "TOP" ? F_Cu : B_Cu );
+
+        /*for (auto & property : properties) {
+            std::cout << "  * '" << property.first << "' = '" << property.second << "'" << std::endl;
+        }*/
+
+        component++;
+    }
+
+    wxASSERT(!reader.parser_error());
+    wxASSERT(reader.bytes_remaining() == 0);
 }
 
 void ALTIUM_PCB::ParseArcs6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
@@ -539,7 +585,7 @@ void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const C
         pad->SetName( name );
         pad->SetPosition( position );
         pad->SetSize( topsize );
-        pad->SetOrientation( direction * 10. );
+        pad->SetOrientationDegrees( direction );
         if ( holesize == 0 ) {
             wxASSERT( layer != ALTIUM_LAYER::MULTI_LAYER );
             pad->SetAttribute( PAD_ATTR_T::PAD_ATTRIB_SMD );
@@ -642,7 +688,9 @@ void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const
 
         reader.read_subrecord_length();
         u_int8_t layer = reader.read<u_int8_t>();
-        reader.skip( 12 );
+        reader.skip(6);
+        u_int16_t component = reader.read<u_int16_t>();
+        reader.skip( 4 );
         wxPoint start = reader.read_point();
         wxPoint end = reader.read_point();
         u_int32_t width = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
@@ -660,8 +708,16 @@ void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const
         }
         else
         {
-            DRAWSEGMENT* ds = new DRAWSEGMENT( m_board );
-            m_board->Add( ds );
+            DRAWSEGMENT* ds = nullptr;
+
+            if (component == std::numeric_limits<u_int16_t>::max()) {
+                ds = new DRAWSEGMENT( m_board );
+                m_board->Add( ds );
+            } else {
+                MODULE* module = GetComponent( component );
+                ds = new EDGE_MODULE( module );
+                module->Add( ds );
+            }
 
             ds->SetStart( start );
             ds->SetEnd( end );

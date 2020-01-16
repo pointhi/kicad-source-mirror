@@ -239,7 +239,10 @@ types:
       - id: layer
         type: u1
         enum: layer
-      - size: 12
+      - size: 6
+      - id: component
+        type: u2
+      - size: 4
       - id: start  # 13
         type: xy
       - id: end  # 21

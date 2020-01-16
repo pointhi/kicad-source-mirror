@@ -109,6 +109,16 @@ double ALTIUM_PARSER::property_double(const std::map<std::string, std::string> &
     }
 }
 
+bool ALTIUM_PARSER::property_bool( const std::map<std::string, std::string> &properties, const std::string &key, bool def) {
+    try {
+        const std::string &value = properties.at(key);
+
+        return value == "TRUE";
+    } catch (const std::out_of_range& oor) {
+        return def;
+    }
+}
+
 int32_t ALTIUM_PARSER::property_unit(const std::map<std::string, std::string> &properties, const std::string &key, const std::string &def) {
     const std::string &value = property_string(properties, key, def);
 
@@ -129,8 +139,6 @@ int32_t ALTIUM_PARSER::property_unit(const std::map<std::string, std::string> &p
         std::string after_decimal_str = value.substr(decimal_point + 1, after_decimal_digits);
         after_decimal = std::stoi( after_decimal_str ) ;
     }
-
-    std::cout << " parsed: " << before_decimal << "." << after_decimal << std::endl;
 
     if ( value.length() > 3 && value.compare( value.length() - 3, 3, "mil" ) == 0 ) {
         // ensure after_decimal is formatted to base 1000
