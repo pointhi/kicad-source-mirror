@@ -243,6 +243,14 @@ void ALTIUM_PCB::Parse( const CFB::CompoundFileReader& aReader ) {
     {
         ParseTexts6Data(aReader, texts6);
     }
+
+    // Parse fills
+    const CFB::COMPOUND_FILE_ENTRY* fills6 = FindStream(aReader, "Fills6\\Data");
+    wxASSERT( fills6 != nullptr );
+    if (fills6 != nullptr)
+    {
+        ParseFills6Data(aReader, fills6);
+    }
 }
 
 MODULE* ALTIUM_PCB::GetComponent( const u_int16_t id ) {
@@ -546,6 +554,37 @@ void ALTIUM_PCB::ParseTexts6Data( const CFB::CompoundFileReader& aReader, const 
     wxASSERT( reader.bytes_remaining() == 0 );
 }
 
+void ALTIUM_PCB::ParseFills6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
+    ALTIUM_PARSER reader(aReader, aEntry);
+
+    while (!reader.parser_error() && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ ) {
+        AFILL6 elem(reader);
+
+        ZONE_CONTAINER* zone = new ZONE_CONTAINER( m_board );
+        m_board->Add(zone);
+
+        zone->SetNetCode( GetNetCode( elem.net ) );
+        zone->SetLayer( kicad_layer( elem.layer ) );
+        zone->SetPosition( elem.pos1 );
+
+        SHAPE_LINE_CHAIN linechain;
+        linechain.Append(elem.pos1.x, elem.pos1.y);
+        linechain.Append(elem.pos2.x, elem.pos1.y);
+        linechain.Append(elem.pos2.x, elem.pos2.y);
+        linechain.Append(elem.pos1.x, elem.pos2.y);
+        linechain.Append(elem.pos1.x, elem.pos1.y);
+        linechain.SetClosed(true);
+
+        SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
+        outline->AddOutline(linechain);
+        zone->SetOutline(outline);
+    }
+
+    wxASSERT( !reader.parser_error() );
+    wxASSERT( reader.bytes_remaining() == 0 );
+}
+
+
 ABOARD6::ABOARD6( ALTIUM_PARSER &reader ) {
     wxASSERT(reader.bytes_remaining() > 4);
     wxASSERT(!reader.parser_error());
@@ -759,6 +798,29 @@ ATEXT6::ATEXT6( ALTIUM_PARSER &reader ) {
     reader.read_subrecord_length();
 
     text        = reader.read_string(); // TODO: what about strings with length > 255?
+
+    reader.subrecord_skip();
+
+    wxASSERT(!reader.parser_error());
+}
+
+AFILL6::AFILL6( ALTIUM_PARSER &reader ) {
+    wxASSERT(reader.bytes_remaining() > 4);
+    wxASSERT(!reader.parser_error());
+
+    u_int8_t recordtype = reader.read<u_int8_t>();
+    wxASSERT( recordtype == ALTIUM_RECORD::FILL );
+
+    // Subrecord 1
+    reader.read_subrecord_length();
+
+    layer       = reader.read<u_int8_t>();
+    reader.skip( 2 );
+    net         = reader.read<u_int16_t>();
+    reader.skip( 8 );
+    pos1        = reader.read_point();
+    pos2        = reader.read_point();
+    rotation    = reader.read<double>();
 
     reader.subrecord_skip();
 

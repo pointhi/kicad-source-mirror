@@ -274,6 +274,17 @@ struct ATEXT6
     ATEXT6( ALTIUM_PARSER &reader );
 };
 
+struct AFILL6
+{
+    u_int8_t    layer;
+    u_int16_t   net;
+
+    wxPoint     pos1;
+    wxPoint     pos2;
+    double      rotation;
+
+    AFILL6( ALTIUM_PARSER &reader );
+};
 
 class BOARD;
 class MODULE;
@@ -312,6 +323,7 @@ private:
     void ParseVias6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseTracks6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseTexts6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    void ParseFills6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
 
     BOARD*                  m_board;
     std::vector<MODULE*>    m_components;

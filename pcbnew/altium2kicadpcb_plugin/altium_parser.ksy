@@ -32,6 +32,7 @@ types:
             record_id::via6: via
             record_id::track6: track
             record_id::text6: text
+            record_id::fill6: fill
 
   arc:
     seq:
@@ -301,6 +302,29 @@ types:
         type: str
         size: len
 
+  fill:
+    seq:
+    - id: sub1_len
+      type: u4
+    - id: data
+      type: fill_sub1
+      size: sub1_len
+
+  fill_sub1:
+    seq:
+      - id: layer
+        type: u1
+      - size: 2
+      - id: net
+        type: u2
+      - size: 8
+      - id: pos1
+        type: xy
+      - id: pos2
+        type: xy
+      - id: rotation
+        type: f8
+
   xy:
     seq:
       - id: x
@@ -315,6 +339,7 @@ enums:
     0x03: via6
     0x04: track6
     0x05: text6
+    0x06: fill6
 
   boolean:
     0: false
