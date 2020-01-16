@@ -257,7 +257,7 @@ MODULE* ALTIUM_PCB::GetComponent( const u_int16_t id ) {
     // I asume this is a special case where a elements belongs to the board.
     if( id == std::numeric_limits<u_int16_t>::max() ) {
         MODULE* module = new MODULE( m_board );
-        m_board->Add(module);
+        m_board->Add( module, ADD_MODE::APPEND );
         return module;
     }
 
@@ -265,7 +265,7 @@ MODULE* ALTIUM_PCB::GetComponent( const u_int16_t id ) {
     if ( module == nullptr )
     {
         module = new MODULE(m_board );
-        m_board->Add(module);
+        m_board->Add( module, ADD_MODE::APPEND);
         if (id >= m_components.size()) {
             m_components.resize(id + 1, nullptr);
         }
@@ -334,7 +334,7 @@ void ALTIUM_PCB::ParseNets6Data( const CFB::CompoundFileReader& aReader, const C
     while( !reader.parser_error() && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ ) {
         ANET6 elem( reader );
 
-        m_board->Add( new NETINFO_ITEM( m_board, elem.name, netCode ) );
+        m_board->Add( new NETINFO_ITEM( m_board, elem.name, netCode ), ADD_MODE::APPEND );
 
         netCode++;
     }
@@ -353,11 +353,11 @@ void ALTIUM_PCB::ParseArcs6Data( const CFB::CompoundFileReader& aReader, const C
         DRAWSEGMENT* ds = nullptr;
         if (elem.component == std::numeric_limits<u_int16_t>::max()) {
             ds = new DRAWSEGMENT( m_board );
-            m_board->Add( ds );
+            m_board->Add( ds, ADD_MODE::APPEND );
         } else {
             MODULE* module = GetComponent( elem.component );
             ds = new EDGE_MODULE( module );
-            module->Add( ds );
+            module->Add( ds, ADD_MODE::APPEND );
         }
 
         ds->SetCenter( elem.center );
@@ -395,13 +395,17 @@ void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const C
         // Create Pad
         MODULE *module = GetComponent( elem.component );
         D_PAD *pad = new D_PAD( module );
-        module->Add( pad );
+        module->Add( pad, ADD_MODE::APPEND );
 
         pad->SetName( elem.name );
         pad->SetNetCode( GetNetCode( elem.net ) );
-        pad->SetPosition( elem.position );
-        pad->SetSize( elem.topsize );
+
+        pad->SetPosition( elem.position  );
         pad->SetOrientationDegrees( elem.direction );
+        pad->SetLocalCoord();
+
+        pad->SetSize( elem.topsize );
+
         if ( elem.holesize == 0 ) {
             wxASSERT( elem.layer != ALTIUM_LAYER::MULTI_LAYER );
             pad->SetAttribute( PAD_ATTR_T::PAD_ATTRIB_SMD );
@@ -457,7 +461,7 @@ void ALTIUM_PCB::ParseVias6Data( const CFB::CompoundFileReader& aReader, const C
         AVIA6 elem(reader );
 
         VIA *via = new VIA( m_board );
-        m_board->Add( via );
+        m_board->Add( via, ADD_MODE::APPEND );
 
         via->SetPosition( elem.position );
         via->SetWidth( elem.diameter );
@@ -480,7 +484,7 @@ void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const
         if( klayer >= F_Cu && klayer <= B_Cu )
         {
             TRACK* track = new TRACK( m_board );
-            m_board->Add( track );
+            m_board->Add( track, ADD_MODE::APPEND );
 
             track->SetStart( elem.start );
             track->SetEnd( elem.end );
@@ -495,15 +499,16 @@ void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const
             if ( elem.component == std::numeric_limits<u_int16_t>::max() ) {
                 ds = new DRAWSEGMENT( m_board );
                 ds->SetShape( STROKE_T::S_SEGMENT );
-                m_board->Add( ds );
+                m_board->Add( ds, ADD_MODE::APPEND );
             } else {
                 MODULE* module = GetComponent( elem.component );
                 ds = new EDGE_MODULE( module, STROKE_T::S_SEGMENT );
-                module->Add( ds );
+                module->Add( ds, ADD_MODE::APPEND );
             }
 
             ds->SetStart( elem.start );
             ds->SetEnd( elem.end );
+
             ds->SetWidth( elem.width );
 
             ds->SetLayer( klayer != UNDEFINED_LAYER ? klayer : Eco1_User );
@@ -529,7 +534,7 @@ void ALTIUM_PCB::ParseTexts6Data( const CFB::CompoundFileReader& aReader, const 
             TEXTE_PCB *txp = new TEXTE_PCB( m_board );
             tx = txp;
             itm = txp;
-            m_board->Add(txp);
+            m_board->Add( txp, ADD_MODE::APPEND );
         } else {
             MODULE *module = GetComponent( elem.component );
             TEXTE_MODULE *txm = elem.isDesignator ?
@@ -538,7 +543,7 @@ void ALTIUM_PCB::ParseTexts6Data( const CFB::CompoundFileReader& aReader, const 
             tx = txm;
             itm = txm;
             if ( !elem.isDesignator ) {
-                module->Add( txm) ;
+                module->Add( txm, ADD_MODE::APPEND ) ;
             }
         }
 
@@ -572,7 +577,7 @@ void ALTIUM_PCB::ParseFills6Data( const CFB::CompoundFileReader& aReader, const 
         AFILL6 elem(reader);
 
         ZONE_CONTAINER* zone = new ZONE_CONTAINER( m_board );
-        m_board->Add(zone);
+        m_board->Add( zone, ADD_MODE::APPEND );
 
         zone->SetNetCode( GetNetCode( elem.net ) );
         zone->SetLayer( kicad_layer( elem.layer ) );
@@ -607,7 +612,7 @@ ABOARD6::ABOARD6( ALTIUM_PARSER &reader ) {
         std::cout << "  * '" << property.first << "' = '" << property.second << "'" << std::endl;
     }*/
 
-    layercount = ALTIUM_PARSER::property_int( properties, "LAYERSETSCOUNT", 2 );
+    layercount = ALTIUM_PARSER::property_int( properties, "LAYERSETSCOUNT", 1 ) + 1;
 }
 
 ACOMPONENT6::ACOMPONENT6( ALTIUM_PARSER &reader ) {
