@@ -712,10 +712,11 @@ void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const
 
             if (component == std::numeric_limits<u_int16_t>::max()) {
                 ds = new DRAWSEGMENT( m_board );
+                ds->SetShape( STROKE_T::S_SEGMENT );
                 m_board->Add( ds );
             } else {
                 MODULE* module = GetComponent( component );
-                ds = new EDGE_MODULE( module );
+                ds = new EDGE_MODULE( module, STROKE_T::S_SEGMENT );
                 module->Add( ds );
             }
 
