@@ -328,6 +328,14 @@ void ALTIUM_PCB::Parse( const CFB::CompoundFileReader& aReader ) {
         ParseComponents6Data(aReader, components);
     }
 
+    // Parse nets data
+    const CFB::COMPOUND_FILE_ENTRY* nets = FindStream(aReader, "Nets6\\Data");
+    wxASSERT( nets != nullptr );
+    if (nets != nullptr)
+    {
+        ParseNets6Data(aReader, nets);
+    }
+
     // Parse arcs
     const CFB::COMPOUND_FILE_ENTRY* arcs6 = FindStream(aReader, "Arcs6\\Data");
     wxASSERT( arcs6 != nullptr );
@@ -369,7 +377,7 @@ void ALTIUM_PCB::Parse( const CFB::CompoundFileReader& aReader ) {
     }
 }
 
-MODULE* ALTIUM_PCB::GetComponent( const u_int16_t id) {
+MODULE* ALTIUM_PCB::GetComponent( const u_int16_t id ) {
     // I asume this is a special case where a elements belongs to the board.
     if( id == std::numeric_limits<u_int16_t>::max() ) {
         MODULE* module = new MODULE( m_board );
@@ -388,6 +396,17 @@ MODULE* ALTIUM_PCB::GetComponent( const u_int16_t id) {
         m_components.insert(m_components.begin() + id, module );
     }
     return module;
+}
+
+int ALTIUM_PCB::GetNetCode( const u_int16_t id ) {
+    if( id == std::numeric_limits<u_int16_t>::max() ) {
+        return NETINFO_LIST::UNCONNECTED;
+    } else if( id >= 0 ) {
+        return id + 1;
+    } else {
+        wxFAIL_MSG( "unexpected NET id" );
+        return NETINFO_LIST::UNCONNECTED;
+    }
 }
 
 void ALTIUM_PCB::ParseFileHeader( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
@@ -452,6 +471,24 @@ void ALTIUM_PCB::ParseComponents6Data( const CFB::CompoundFileReader& aReader, c
         }*/
 
         component++;
+    }
+
+    wxASSERT(!reader.parser_error());
+    wxASSERT(reader.bytes_remaining() == 0);
+}
+
+void ALTIUM_PCB::ParseNets6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
+    ALTIUM_PARSER reader( aReader, aEntry );
+
+    u_int16_t netCode = 1; // 0 = UNCONNECTED
+    while( !reader.parser_error() && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ ) {
+        std::map<std::string, std::string> properties = reader.read_properties();
+
+        std::string name = ALTIUM_PARSER::property_string( properties, "NAME", "" );
+
+        m_board->Add( new NETINFO_ITEM( m_board, name, netCode ) );
+
+        netCode++;
     }
 
     wxASSERT(!reader.parser_error());
@@ -553,7 +590,9 @@ void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const C
         wxASSERT( subrecord5 >= 120 );  // TODO: exact minimum length we know?
 
         u_int8_t layer = reader.read<u_int8_t>();
-        reader.skip( 6 );
+        reader.skip( 2 );
+        u_int16_t net = reader.read<u_int16_t>();
+        reader.skip( 2 );
         u_int16_t component = reader.read<u_int16_t>();
         reader.skip( 4 );
 
@@ -583,6 +622,7 @@ void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const C
         module->Add( pad );
 
         pad->SetName( name );
+        pad->SetNetCode( GetNetCode( net ) );
         pad->SetPosition( position );
         pad->SetSize( topsize );
         pad->SetOrientationDegrees( direction );
@@ -658,7 +698,10 @@ void ALTIUM_PCB::ParseVias6Data( const CFB::CompoundFileReader& aReader, const C
         wxASSERT( recordtype == ALTIUM_RECORD::VIA );
 
         reader.read_subrecord_length();
-        reader.skip( 13 );
+
+        reader.skip( 3 );
+        u_int16_t net = reader.read<u_int16_t>();
+        reader.skip( 8 );
         wxPoint position = reader.read_point();
         u_int32_t diameter = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
         u_int32_t holesize = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
@@ -670,6 +713,7 @@ void ALTIUM_PCB::ParseVias6Data( const CFB::CompoundFileReader& aReader, const C
         via->SetWidth( diameter );
         via->SetDrill( holesize );
         via->SetViaType( VIATYPE::THROUGH ); // TODO
+        via->SetNetCode( GetNetCode( net ) );
 
         reader.subrecord_skip();
         wxASSERT( !reader.parser_error() );
@@ -688,7 +732,9 @@ void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const
 
         reader.read_subrecord_length();
         u_int8_t layer = reader.read<u_int8_t>();
-        reader.skip(6);
+        reader.skip( 2 );
+        u_int16_t net = reader.read<u_int16_t>();
+        reader.skip( 2 );
         u_int16_t component = reader.read<u_int16_t>();
         reader.skip( 4 );
         wxPoint start = reader.read_point();
@@ -705,6 +751,7 @@ void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const
             track->SetEnd( end );
             track->SetWidth( width );
             track->SetLayer( klayer );
+            track->SetNetCode( GetNetCode( net ) );
         }
         else
         {

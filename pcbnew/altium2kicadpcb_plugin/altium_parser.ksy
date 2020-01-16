@@ -45,7 +45,10 @@ types:
     seq:
       - id: layer
         type: u1
-      - size: 6
+      - size: 2
+      - id: net
+        type: u2
+      - size: 2
       - id: component
         type: u2
       - size: 4
@@ -102,7 +105,7 @@ types:
         type: u1
         enum: layer
       - size: 2
-      - id: onet  # $pos+26
+      - id: net  # $pos+26
         type: u2
       - size: 2
       - id: component  # $pos+30
@@ -218,7 +221,10 @@ types:
 
   via_sub1:
     seq:
-      - size: 13
+      - size: 3
+      - id: net
+        type: u2
+      - size: 8
       - id: pos  # 13
         type: xy
       - id: diameter # 21
@@ -239,7 +245,10 @@ types:
       - id: layer
         type: u1
         enum: layer
-      - size: 6
+      - size: 2
+      - id: net
+        type: u2
+      - size: 2
       - id: component
         type: u2
       - size: 4
@@ -267,7 +276,10 @@ types:
     seq:
       - id: layer
         type: u1
-      - size: 6
+      - size: 2
+      - id: net
+        type: u2
+      - size: 2
       - id: component
         type: u2
       - size: 4

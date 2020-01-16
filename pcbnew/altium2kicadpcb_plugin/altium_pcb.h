@@ -49,12 +49,14 @@ private:
     PCB_LAYER_ID kicad_layer( int aAltiumLayer ) const;
 
     MODULE* GetComponent( const u_int16_t id);
+    int GetNetCode( const u_int16_t id);
 
     void ParseFileHeader( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
 
     // Text Format
     void ParseBoard6Data(const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseComponents6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    void ParseNets6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
 
     // Binary Format
     void ParseArcs6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
