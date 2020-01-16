@@ -269,6 +269,9 @@ struct ATEXT6
     u_int32_t   height;
     double      rotation;
 
+    bool        isComment;
+    bool        isDesignator;
+
     std::string text;
 
     ATEXT6( ALTIUM_PARSER &reader );

@@ -293,6 +293,11 @@ types:
       - size: 1
       - id: rotation
         type: f8
+      - size: 5
+      - id: isComment
+        type: u1
+      - id: isDesignator
+        type: u1
 
   text_sub2:
     seq:

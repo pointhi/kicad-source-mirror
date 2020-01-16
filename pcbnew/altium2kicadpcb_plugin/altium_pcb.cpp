@@ -520,22 +520,34 @@ void ALTIUM_PCB::ParseTexts6Data( const CFB::CompoundFileReader& aReader, const 
     ALTIUM_PARSER reader( aReader, aEntry );
 
     while( !reader.parser_error() && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ ) {
-        ATEXT6 elem(reader );
+        ATEXT6 elem( reader );
 
         // TODO: better approach to select if item belongs to a MODULE
-        EDA_TEXT* tx = nullptr;
-        BOARD_ITEM* itm = nullptr;
-        if (elem.component == std::numeric_limits<u_int16_t>::max()) {
-            TEXTE_PCB* txp = new TEXTE_PCB(m_board );
+        EDA_TEXT *tx = nullptr;
+        BOARD_ITEM *itm = nullptr;
+        if ( elem.component == std::numeric_limits<u_int16_t>::max() ) {
+            TEXTE_PCB *txp = new TEXTE_PCB( m_board );
             tx = txp;
             itm = txp;
-            m_board->Add( txp );
+            m_board->Add(txp);
         } else {
-            MODULE* module = GetComponent( elem.component );
-            TEXTE_MODULE* txm = new TEXTE_MODULE( module );
+            MODULE *module = GetComponent( elem.component );
+            TEXTE_MODULE *txm = elem.isDesignator ?
+                                &module->Reference() :
+                                new TEXTE_MODULE( module );
             tx = txm;
             itm = txm;
-            module->Add( txm );
+            if ( !elem.isDesignator ) {
+                module->Add( txm) ;
+            }
+        }
+
+        if (!elem.isDesignator) {
+            if( elem.text == ".Designator" ) {
+                tx->SetText( "%R" );
+            } else {
+                tx->SetText( elem.text );
+            }
         }
 
         itm->SetPosition( elem.position );
@@ -543,8 +555,7 @@ void ALTIUM_PCB::ParseTexts6Data( const CFB::CompoundFileReader& aReader, const 
         itm->SetLayer( klayer != UNDEFINED_LAYER ? klayer : Eco1_User );
 
         tx->SetTextHeight( elem.height );
-        tx->SetTextAngle ( elem.rotation * 10. );
-        tx->SetText( elem.text );
+        tx->SetTextAngle( elem.rotation * 10.);
         tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_LEFT ); // TODO: what byte
 
         wxASSERT(!reader.parser_error());
@@ -791,6 +802,9 @@ ATEXT6::ATEXT6( ALTIUM_PARSER &reader ) {
     height      = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
     reader.skip(2);
     rotation    = reader.read<double>();
+    reader.skip(5);
+    isComment  = reader.read<u_int8_t>() != 0;
+    isDesignator  = reader.read<u_int8_t>() != 0;
 
     reader.subrecord_skip();
 
