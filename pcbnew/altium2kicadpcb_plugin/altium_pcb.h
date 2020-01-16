@@ -162,9 +162,122 @@ struct ALTIUM_LAYER
     };
 };
 
+class ALTIUM_PARSER;
+
+struct ABOARD6
+{
+    int         layercount;
+
+    ABOARD6( ALTIUM_PARSER &reader );
+};
+
+struct ACOMPONENT6
+{
+    std::string layer;
+    wxPoint     position;
+    double      rotation;
+    bool        locked;
+    std::string sourcedesignator;
+    std::string sourcelibreference;
+
+    ACOMPONENT6( ALTIUM_PARSER &reader );
+};
+
+struct ANET6
+{
+    std::string name;
+
+    ANET6( ALTIUM_PARSER &reader );
+};
+
+struct AARC6
+{
+    u_int8_t    layer;
+    u_int16_t   net;
+    u_int16_t   component;
+
+    wxPoint     center;
+    u_int32_t   radius;
+    double      startangle;
+    double      endangle;
+    u_int32_t   width;
+
+    AARC6( ALTIUM_PARSER &reader );
+};
+
+struct APAD6
+{
+    std::string name;
+
+    u_int8_t    layer;
+    u_int16_t   net;
+    u_int16_t   component;
+
+    wxPoint     position;
+    wxSize      topsize;
+    wxSize      midsize;
+    wxSize      botsize;
+
+    u_int32_t   holesize;
+    u_int8_t    topshape;  // TODO: cast to ALTIUM_PAD_SHAPE
+    u_int8_t    midshape;
+    u_int8_t    botshape;
+
+    double      direction;
+    bool        plated;
+    u_int8_t    padmode;  // TODO: cast to ALTIUM_PAD_MODE
+    u_int8_t    pastemaskexpansionmode;
+    u_int8_t    soldermaskexpansion;
+    double      holerotation;
+
+    u_int8_t    tolayer;
+    u_int8_t    fromlayer;
+
+    APAD6(ALTIUM_PARSER &reader );
+};
+
+struct AVIA6
+{
+    u_int16_t   net;
+
+    wxPoint     position;
+    u_int32_t   diameter;
+    u_int32_t   holesize;
+
+    AVIA6( ALTIUM_PARSER &reader );
+};
+
+struct ATRACK6
+{
+    u_int8_t    layer;
+    u_int16_t   net;
+    u_int16_t   component;
+
+    wxPoint     start;
+    wxPoint     end;
+    u_int32_t   width;
+
+    ATRACK6( ALTIUM_PARSER &reader );
+};
+
+struct ATEXT6
+{
+    u_int8_t    layer;
+    u_int16_t   component;
+
+    wxPoint     position;
+    u_int32_t   height;
+    double      rotation;
+
+    std::string text;
+
+    ATEXT6( ALTIUM_PARSER &reader );
+};
+
 
 class BOARD;
 class MODULE;
+
 
 namespace CFB {
     class CompoundFileReader;
