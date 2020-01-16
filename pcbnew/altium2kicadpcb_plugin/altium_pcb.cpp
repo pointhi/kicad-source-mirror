@@ -22,7 +22,7 @@
  */
 
 #include "altium_pcb.h"
-#include "altium_parser_binary.h"
+#include "altium_parser.h"
 
 #include <class_board.h>
 #include <class_drawsegment.h>
@@ -383,7 +383,7 @@ MODULE* ALTIUM_PCB::GetComponent( const u_int16_t id) {
 }
 
 void ALTIUM_PCB::ParseFileHeader( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
-    ALTIUM_PARSER_BINARY reader(aReader, aEntry);
+    ALTIUM_PARSER reader( aReader, aEntry);
 
     reader.read_subrecord_length();
     std::cout << "HEADER: " << reader.read_string() << std::endl;  // tells me: PCB 5.0 Binary File
@@ -396,7 +396,7 @@ void ALTIUM_PCB::ParseFileHeader( const CFB::CompoundFileReader& aReader, const 
 }
 
 void ALTIUM_PCB::ParseBoardData( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
-    ALTIUM_PARSER_BINARY reader(aReader, aEntry);
+    ALTIUM_PARSER reader( aReader, aEntry );
 
     std::map<std::string, std::string> properties = reader.read_properties();
 
@@ -407,13 +407,13 @@ void ALTIUM_PCB::ParseBoardData( const CFB::CompoundFileReader& aReader, const C
         std::cout << "  * '" << property.first << "' = '" << property.second << "'" << std::endl;
     }*/
 
-    int layercount = std::stoi( properties.at( "LAYERSETSCOUNT" ) );
+    int layercount = ALTIUM_PARSER::property_int( properties, "LAYERSETSCOUNT", 2 );
 
     m_board->SetCopperLayerCount( layercount );
 }
 
 void ALTIUM_PCB::ParseArcs6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
-    ALTIUM_PARSER_BINARY reader( aReader, aEntry );
+    ALTIUM_PARSER reader( aReader, aEntry );
 
     while( !reader.parser_error() && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ ) {
         u_int8_t recordtype = reader.read<u_int8_t>();
@@ -427,10 +427,10 @@ void ALTIUM_PCB::ParseArcs6Data( const CFB::CompoundFileReader& aReader, const C
         u_int16_t component = reader.read<u_int16_t>();
         reader.skip(4);
         wxPoint center = reader.read_point();
-        u_int32_t radius = ALTIUM_PARSER_BINARY::kicad_unit( reader.read<u_int32_t>() );
+        u_int32_t radius = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
         double startangle = reader.read<double>();
         double endangle = reader.read<double>();
-        u_int32_t width = ALTIUM_PARSER_BINARY::kicad_unit( reader.read<u_int32_t>() );
+        u_int32_t width = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
 
         reader.subrecord_skip();
 
@@ -477,7 +477,7 @@ void ALTIUM_PCB::ParseArcs6Data( const CFB::CompoundFileReader& aReader, const C
 }
 
 void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
-    ALTIUM_PARSER_BINARY reader( aReader, aEntry );
+    ALTIUM_PARSER reader( aReader, aEntry );
 
     while( !reader.parser_error() && reader.bytes_remaining() >= 4*6 /* TODO: use Header section of file */ ) {
         u_int8_t recordtype = reader.read<u_int8_t>();
@@ -516,7 +516,7 @@ void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const C
         wxSize midsize = reader.read_size();
         wxSize botsize = reader.read_size();
 
-        u_int32_t holesize = ALTIUM_PARSER_BINARY::kicad_unit( reader.read<u_int32_t>() );
+        u_int32_t holesize = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
         u_int8_t topshape = reader.read<u_int8_t>();
         u_int8_t midshape = reader.read<u_int8_t>();
         u_int8_t botshape = reader.read<u_int8_t>();
@@ -605,7 +605,7 @@ void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const C
 }
 
 void ALTIUM_PCB::ParseVias6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
-    ALTIUM_PARSER_BINARY reader( aReader, aEntry );
+    ALTIUM_PARSER reader( aReader, aEntry );
 
     while( !reader.parser_error() && reader.bytes_remaining() >= 213 /* TODO: use Header section of file */ ) {
         u_int8_t recordtype = reader.read<u_int8_t>();
@@ -614,8 +614,8 @@ void ALTIUM_PCB::ParseVias6Data( const CFB::CompoundFileReader& aReader, const C
         reader.read_subrecord_length();
         reader.skip( 13 );
         wxPoint position = reader.read_point();
-        u_int32_t diameter = ALTIUM_PARSER_BINARY::kicad_unit( reader.read<u_int32_t>() );
-        u_int32_t holesize = ALTIUM_PARSER_BINARY::kicad_unit( reader.read<u_int32_t>() );
+        u_int32_t diameter = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
+        u_int32_t holesize = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
 
         VIA *via = new VIA( m_board );
         m_board->Add( via );
@@ -634,7 +634,7 @@ void ALTIUM_PCB::ParseVias6Data( const CFB::CompoundFileReader& aReader, const C
 }
 
 void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
-    ALTIUM_PARSER_BINARY reader( aReader, aEntry );
+    ALTIUM_PARSER reader( aReader, aEntry );
 
     while( !reader.parser_error() && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ ) {
         u_int8_t recordtype = reader.read<u_int8_t>();
@@ -645,7 +645,7 @@ void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const
         reader.skip( 12 );
         wxPoint start = reader.read_point();
         wxPoint end = reader.read_point();
-        u_int32_t width = ALTIUM_PARSER_BINARY::kicad_unit( reader.read<u_int32_t>() );
+        u_int32_t width = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
 
         PCB_LAYER_ID klayer = kicad_layer( layer );
         if( klayer >= F_Cu && klayer <= B_Cu )
@@ -678,7 +678,7 @@ void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const
 }
 
 void ALTIUM_PCB::ParseTexts6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
-    ALTIUM_PARSER_BINARY reader( aReader, aEntry );
+    ALTIUM_PARSER reader( aReader, aEntry );
 
     while( !reader.parser_error() && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ ) {
         u_int8_t recordtype = reader.read<u_int8_t>();
@@ -692,7 +692,7 @@ void ALTIUM_PCB::ParseTexts6Data( const CFB::CompoundFileReader& aReader, const 
         u_int16_t component = reader.read<u_int16_t>();
         reader.skip(4);
         wxPoint position = reader.read_point();
-        u_int32_t height = ALTIUM_PARSER_BINARY::kicad_unit( reader.read<u_int32_t>() );
+        u_int32_t height = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
         reader.skip(2);
         double rotation = reader.read<double>();
 

@@ -21,8 +21,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
-#ifndef ALTIUM_PARSER_BINARY_H
-#define ALTIUM_PARSER_BINARY_H
+#ifndef ALTIUM_PARSER_H
+#define ALTIUM_PARSER_H
 
 #include <memory>
 #include <map>
@@ -36,10 +36,10 @@ namespace CFB {
 }
 
 
-class ALTIUM_PARSER_BINARY {
+class ALTIUM_PARSER {
 public:
-    ALTIUM_PARSER_BINARY( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
-    ~ALTIUM_PARSER_BINARY();
+    ALTIUM_PARSER(const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    ~ALTIUM_PARSER();
 
     template<typename Type>
     Type read() {
@@ -86,7 +86,7 @@ public:
     std::map<std::string, std::string> read_properties();
 
     static int32_t kicad_unit( const int32_t x ) {
-        return (((int64_t) x) * 256L) / 100;
+        return (((int64_t) x) * 254L) / 100;
     }
 
     static int32_t kicad_x( const int32_t x ) {
@@ -96,6 +96,14 @@ public:
     static int32_t kicad_y( const int32_t y ) {
         return -kicad_unit( y );
     }
+
+    static int property_int( const std::map<std::string, std::string> &properties, const std::string &key, int def);
+
+    static double property_double( const std::map<std::string, std::string> &properties, const std::string &key, double def);
+
+    static int32_t property_unit( const std::map<std::string, std::string> &properties, const std::string &key, const std::string &def);
+
+    static std::string property_string( const std::map<std::string, std::string> &properties, const std::string &key, std::string def);
 
     void skip(size_t len) {
         if( bytes_remaining() >= len )
@@ -139,4 +147,4 @@ private:
 };
 
 
-#endif //ALTIUM_PARSER_BINARY_H
+#endif //ALTIUM_PARSER_H

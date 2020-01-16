@@ -9,7 +9,7 @@ include_directories( . )
 set( ALTIUM2PCBNEW_SRCS
     altium_plugin.cpp
     altium_pcb.cpp
-    altium_parser_binary.cpp
+    altium_parser.cpp
     )
 
 add_library( altium2kicadpcb STATIC ${ALTIUM2PCBNEW_SRCS} )
