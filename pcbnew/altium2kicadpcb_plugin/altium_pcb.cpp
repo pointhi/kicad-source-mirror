@@ -380,6 +380,10 @@ void ALTIUM_PCB::ParseArcs6Data( const CFB::CompoundFileReader& aReader, const C
                     -static_cast<int32_t>(std::sin(startradiant) * elem.radius) );
             ds->SetArcStart( elem.center + arcStartOffset);
         }
+
+        if ( elem.component != std::numeric_limits<u_int16_t>::max() ) {
+            dynamic_cast<EDGE_MODULE *>(ds)->SetLocalCoord();
+        }
     }
 
     wxASSERT( !reader.parser_error() );
@@ -500,14 +504,20 @@ void ALTIUM_PCB::ParseTracks6Data( const CFB::CompoundFileReader& aReader, const
                 ds = new DRAWSEGMENT( m_board );
                 ds->SetShape( STROKE_T::S_SEGMENT );
                 m_board->Add( ds, ADD_MODE::APPEND );
+
+                ds->SetStart( elem.start );
+                ds->SetEnd( elem.end );
             } else {
                 MODULE* module = GetComponent( elem.component );
-                ds = new EDGE_MODULE( module, STROKE_T::S_SEGMENT );
-                module->Add( ds, ADD_MODE::APPEND );
-            }
+                EDGE_MODULE* em = new EDGE_MODULE( module, STROKE_T::S_SEGMENT );
+                module->Add( em, ADD_MODE::APPEND );
 
-            ds->SetStart( elem.start );
-            ds->SetEnd( elem.end );
+                em->SetStart( elem.start );
+                em->SetEnd( elem.end );
+                em->SetLocalCoord();
+
+                ds = em;
+            }
 
             ds->SetWidth( elem.width );
 
@@ -556,11 +566,16 @@ void ALTIUM_PCB::ParseTexts6Data( const CFB::CompoundFileReader& aReader, const 
         }
 
         itm->SetPosition( elem.position );
+        tx->SetTextAngle( elem.rotation * 10.);
+        if ( elem.component != std::numeric_limits<u_int16_t>::max() ) {
+            dynamic_cast<TEXTE_MODULE *>(tx)->SetLocalCoord();
+        }
+
         PCB_LAYER_ID klayer = kicad_layer( elem.layer );
         itm->SetLayer( klayer != UNDEFINED_LAYER ? klayer : Eco1_User );
 
         tx->SetTextHeight( elem.height );
-        tx->SetTextAngle( elem.rotation * 10.);
+
         tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_LEFT ); // TODO: what byte
 
         wxASSERT(!reader.parser_error());
