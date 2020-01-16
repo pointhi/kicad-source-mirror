@@ -312,6 +312,14 @@ void ALTIUM_PCB::Parse( const CFB::CompoundFileReader& aReader ) {
         ParseFileHeader(aReader, fileHeader);
     }
 
+    // Parse board data
+    const CFB::COMPOUND_FILE_ENTRY* board = FindStream(aReader, "Board6\\Data");
+    wxASSERT( board != nullptr );
+    if (board != nullptr)
+    {
+        ParseBoardData(aReader, board);
+    }
+
     // Parse arcs
     const CFB::COMPOUND_FILE_ENTRY* arcs6 = FindStream(aReader, "Arcs6\\Data");
     wxASSERT( arcs6 != nullptr );
@@ -385,6 +393,23 @@ void ALTIUM_PCB::ParseFileHeader( const CFB::CompoundFileReader& aReader, const 
     // TODO: does not seem to work all the time at the moment
     //wxASSERT(!reader.parser_error());
     //wxASSERT(reader.bytes_remaining() == 0);
+}
+
+void ALTIUM_PCB::ParseBoardData( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {
+    ALTIUM_PARSER_BINARY reader(aReader, aEntry);
+
+    std::map<std::string, std::string> properties = reader.read_properties();
+
+    wxASSERT(!reader.parser_error());
+    wxASSERT(reader.bytes_remaining() == 0);
+
+    /*for (auto & property : properties) {
+        std::cout << "  * '" << property.first << "' = '" << property.second << "'" << std::endl;
+    }*/
+
+    int layercount = std::stoi( properties.at( "LAYERSETSCOUNT" ) );
+
+    m_board->SetCopperLayerCount( layercount );
 }
 
 void ALTIUM_PCB::ParseArcs6Data( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry ) {

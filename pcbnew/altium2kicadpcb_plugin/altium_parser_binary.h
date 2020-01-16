@@ -25,6 +25,7 @@
 #define ALTIUM_PARSER_BINARY_H
 
 #include <memory>
+#include <map>
 
 #include <wx/gdicmn.h>
 
@@ -81,6 +82,8 @@ public:
         subrecord_end = pos + length;
         return length;
     }
+
+    std::map<std::string, std::string> read_properties();
 
     static int32_t kicad_unit( const int32_t x ) {
         return (((int64_t) x) * 256L) / 100;

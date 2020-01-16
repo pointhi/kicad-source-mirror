@@ -54,3 +54,29 @@ ALTIUM_PARSER_BINARY::ALTIUM_PARSER_BINARY(const CFB::CompoundFileReader &aReade
 ALTIUM_PARSER_BINARY::~ALTIUM_PARSER_BINARY() {
 
 }
+
+std::map<std::string, std::string> ALTIUM_PARSER_BINARY::read_properties() {
+    std::map<std::string, std::string> kv;
+
+    u_int32_t length = read<u_int32_t>();
+    if ( length > bytes_remaining() || pos[length-1] != '\0' ) {
+        error = true;
+        return kv;
+    }
+
+    std::string str = std::string(pos, length-1);
+    pos += length;
+
+    std::size_t token_end = 0;
+    while(token_end < str.size() && token_end != std::string::npos) {
+        std::size_t token_start = str.find('|', token_end);
+        std::size_t token_equal = str.find('=', token_start);
+        token_end = str.find('|', token_equal);
+
+        std::string key = str.substr(token_start+1, token_equal-token_start-1);
+        std::string value = str.substr(token_equal+1, token_end-token_equal-1);
+        kv.insert({key, value});
+    }
+
+    return kv;
+}
