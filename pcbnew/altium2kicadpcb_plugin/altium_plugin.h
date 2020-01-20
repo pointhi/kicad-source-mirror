@@ -35,16 +35,14 @@
 class ALTIUM_PLUGIN : public PLUGIN
 {
 public:
-
     // -----<PUBLIC PLUGIN API>--------------------------------------------------
 
-    const wxString  PluginName() const override;
+    const wxString PluginName() const override;
 
-    BOARD*          Load( const wxString&   aFileName,
-                          BOARD*            aAppendToMe,
-                          const PROPERTIES* aProperties ) override;
+    BOARD* Load(
+            const wxString& aFileName, BOARD* aAppendToMe, const PROPERTIES* aProperties ) override;
 
-    const wxString  GetFileExtension() const override;
+    const wxString GetFileExtension() const override;
 
     long long GetLibraryTimestamp( const wxString& aLibraryPath ) const override
     {
@@ -58,8 +56,8 @@ public:
     ~ALTIUM_PLUGIN();
 
 private:
-    const PROPERTIES*   m_props;
-    BOARD*              m_board;
+    const PROPERTIES* m_props;
+    BOARD*            m_board;
 };
 
-#endif    // ALTIUM_PLUGIN_H_
+#endif // ALTIUM_PLUGIN_H_

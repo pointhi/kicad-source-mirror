@@ -24,90 +24,112 @@
 #ifndef ALTIUM_PARSER_H
 #define ALTIUM_PARSER_H
 
-#include <memory>
 #include <map>
+#include <memory>
 
 #include <wx/gdicmn.h>
 
 
-namespace CFB {
-    class CompoundFileReader;
-    struct COMPOUND_FILE_ENTRY;
-}
+namespace CFB
+{
+class CompoundFileReader;
+struct COMPOUND_FILE_ENTRY;
+} // namespace CFB
 
 
-class ALTIUM_PARSER {
+class ALTIUM_PARSER
+{
 public:
-    ALTIUM_PARSER(const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    ALTIUM_PARSER( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     ~ALTIUM_PARSER();
 
-    template<typename Type>
-    Type read() {
-        if (bytes_remaining() >= sizeof(Type)) {
-            Type val = *(Type *) (pos);
-            pos += sizeof(Type);
+    template <typename Type>
+    Type read()
+    {
+        if( bytes_remaining() >= sizeof( Type ) )
+        {
+            Type val = *(Type*) ( pos );
+            pos += sizeof( Type );
             return val;
-        } else {
+        }
+        else
+        {
             error = true;
             return 0;
         }
     }
 
-    std::string read_string() {
+    std::string read_string()
+    {
         u_int8_t len = read<u_int8_t>();
-        if(bytes_remaining() >= len) {
-            std::string val = std::string(pos, len);
+        if( bytes_remaining() >= len )
+        {
+            std::string val = std::string( pos, len );
             pos += len;
             return val;
-        } else {
+        }
+        else
+        {
             error = true;
             return "";
         }
     }
 
-    wxPoint read_point() {
+    wxPoint read_point()
+    {
         int32_t x = kicad_x( read<int32_t>() );
-        int32_t y = kicad_y( read<int32_t>()) ;
-        return {x, y};
+        int32_t y = kicad_y( read<int32_t>() );
+        return { x, y };
     }
 
-    wxSize read_size() {
+    wxSize read_size()
+    {
         int32_t x = kicad_unit( read<int32_t>() );
         int32_t y = kicad_unit( read<int32_t>() );
-        return {x, y};
+        return { x, y };
     }
 
-    size_t read_subrecord_length() {
+    size_t read_subrecord_length()
+    {
         u_int32_t length = read<u_int32_t>();
-        subrecord_end = pos + length;
+        subrecord_end    = pos + length;
         return length;
     }
 
     std::map<std::string, std::string> read_properties();
 
-    static int32_t kicad_unit( const int32_t x ) {
-        return (((int64_t) x) * 254L) / 100;
+    static int32_t kicad_unit( const int32_t x )
+    {
+        return ( ( (int64_t) x ) * 254L ) / 100;
     }
 
-    static int32_t kicad_x( const int32_t x ) {
+    static int32_t kicad_x( const int32_t x )
+    {
         return kicad_unit( x );
     }
 
-    static int32_t kicad_y( const int32_t y ) {
+    static int32_t kicad_y( const int32_t y )
+    {
         return -kicad_unit( y );
     }
 
-    static int property_int( const std::map<std::string, std::string> &properties, const std::string &key, int def);
+    static int property_int(
+            const std::map<std::string, std::string>& properties, const std::string& key, int def );
 
-    static double property_double( const std::map<std::string, std::string> &properties, const std::string &key, double def);
+    static double property_double( const std::map<std::string, std::string>& properties,
+            const std::string& key, double def );
 
-    static bool property_bool( const std::map<std::string, std::string> &properties, const std::string &key, bool def);
+    static bool property_bool( const std::map<std::string, std::string>& properties,
+            const std::string& key, bool def );
 
-    static int32_t property_unit( const std::map<std::string, std::string> &properties, const std::string &key, const std::string &def);
+    static int32_t property_unit( const std::map<std::string, std::string>& properties,
+            const std::string& key, const std::string& def );
 
-    static std::string property_string( const std::map<std::string, std::string> &properties, const std::string &key, std::string def);
+    static std::string property_string( const std::map<std::string, std::string>& properties,
+            const std::string& key, std::string def );
 
-    void skip(size_t len) {
+    void skip( size_t len )
+    {
         if( bytes_remaining() >= len )
         {
             pos += len;
@@ -118,34 +140,42 @@ public:
         }
     }
 
-    void subrecord_skip() {
-        if(subrecord_end == nullptr || subrecord_end < pos) {
+    void subrecord_skip()
+    {
+        if( subrecord_end == nullptr || subrecord_end < pos )
+        {
             error = true;
-        } else {
+        }
+        else
+        {
             pos = subrecord_end;
         }
     };
 
-    size_t bytes_remaining() const {
-        return pos == nullptr ? 0 : size - (pos - content.get());
+    size_t bytes_remaining() const
+    {
+        return pos == nullptr ? 0 : size - ( pos - content.get() );
     }
 
-    size_t subrecord_remaining() const {
-        return pos == nullptr || subrecord_end == nullptr || subrecord_end <= pos ? 0 : subrecord_end - pos;
+    size_t subrecord_remaining() const
+    {
+        return pos == nullptr || subrecord_end == nullptr || subrecord_end <= pos ?
+                       0 :
+                       subrecord_end - pos;
     };
 
-    bool parser_error() {
+    bool parser_error()
+    {
         return error;
     }
 
 private:
-
     std::unique_ptr<char[]> content;
-    size_t size;
+    size_t                  size;
 
-    char* pos;  // current read pointer
+    char* pos;           // current read pointer
     char* subrecord_end; // pointer which points to next subrecord start
-    bool error;
+    bool  error;
 };
 
 
