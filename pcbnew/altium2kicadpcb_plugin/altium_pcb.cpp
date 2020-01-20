@@ -408,7 +408,6 @@ void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const C
         pad->SetOrientationDegrees( elem.direction );
         pad->SetLocalCoord();
 
-
         pad->SetSize( elem.topsize );
 
         if ( elem.holesize == 0 ) {
@@ -422,12 +421,19 @@ void ALTIUM_PCB::ParsePads6Data( const CFB::CompoundFileReader& aReader, const C
 
         wxASSERT( elem.padmode == ALTIUM_PAD_MODE::SIMPLE );
         // wxASSERT( topshape == midshape == botshape );
+
         switch ( elem.topshape ) {
             case ALTIUM_PAD_SHAPE::RECT:
                 pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_RECT );
                 break;
             case ALTIUM_PAD_SHAPE::CIRCLE:
-                pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_CIRCLE );
+                if( elem.sizeAndShape && elem.sizeAndShape->cornerradius[0] < 100 ) {
+                    pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_ROUNDRECT ); // 100 = round, 0 = rectangular
+                    double ratio = elem.sizeAndShape->cornerradius[0] / 200.;
+                    pad->SetRoundRectRadiusRatio( ratio );
+                } else {
+                    pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_CIRCLE );
+                }
                 break;
             case ALTIUM_PAD_SHAPE::OVAL:
                 pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_OVAL );
@@ -751,7 +757,37 @@ APAD6::APAD6(ALTIUM_PARSER &reader ) {
     reader.subrecord_skip();
 
     // Subrecord 6
-    reader.read_subrecord_length();
+    size_t subrecord6 = reader.read_subrecord_length();
+    if( subrecord6 == 651 ) {  // TODO: detect type from something else than the size?
+        sizeAndShape = std::make_unique<APAD6_SIZE_AND_SHAPE>();
+
+        for( int i=0; i< 29; i++ ) {
+            sizeAndShape->inner_size[i].x = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
+        }
+        for( int i=0; i< 29; i++ ) {
+            sizeAndShape->inner_size[i].y = -ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
+        }
+
+        for( int i=0; i< 29; i++ ) {
+            sizeAndShape->inner_shape[i] = reader.read<u_int8_t>();
+        }
+
+        reader.skip(14);
+
+        for( int i=0; i< 32; i++ ) {
+            sizeAndShape->holeoffset[i].x = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
+        }
+        for( int i=0; i< 32; i++ ) {
+            sizeAndShape->holeoffset[i].y = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
+        }
+
+        reader.skip(33);
+
+        for( int i=0; i< 32; i++ ) {
+            sizeAndShape->cornerradius[i] = reader.read<u_int8_t>();
+        }
+    }
+
     reader.subrecord_skip();
 
     wxASSERT(!reader.parser_error());

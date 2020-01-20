@@ -205,6 +205,14 @@ struct AARC6
     AARC6( ALTIUM_PARSER &reader );
 };
 
+struct APAD6_SIZE_AND_SHAPE
+{
+    wxSize     inner_size[29];
+    u_int8_t   inner_shape[29];
+    wxPoint    holeoffset[32];
+    u_int8_t   cornerradius[32];
+};
+
 struct APAD6
 {
     std::string name;
@@ -232,6 +240,8 @@ struct APAD6
 
     u_int8_t    tolayer;
     u_int8_t    fromlayer;
+
+    std::unique_ptr<APAD6_SIZE_AND_SHAPE>  sizeAndShape;
 
     APAD6(ALTIUM_PARSER &reader );
 };
