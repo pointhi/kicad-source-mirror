@@ -395,6 +395,9 @@ void ALTIUM_PCB::ParseBoard6Data(
     wxASSERT( !reader.parser_error() );
     wxASSERT( reader.bytes_remaining() == 0 );
 
+    m_board->SetAuxOrigin( elem.sheetpos );
+    m_board->SetGridOrigin( elem.sheetpos );
+
     m_board->SetCopperLayerCount( elem.layercount );
 }
 
@@ -787,6 +790,11 @@ ABOARD6::ABOARD6( ALTIUM_PARSER& reader )
     /*for (auto & property : properties) {
         std::cout << "  * '" << property.first << "' = '" << property.second << "'" << std::endl;
     }*/
+
+    sheetpos  = wxPoint( ALTIUM_PARSER::property_unit( properties, "SHEETX", "0mil" ),
+            -ALTIUM_PARSER::property_unit( properties, "SHEETY", "0mil" ) );
+    sheetsize = wxSize( ALTIUM_PARSER::property_unit( properties, "SHEETWIDTH", "0mil" ),
+            ALTIUM_PARSER::property_unit( properties, "SHEETHEIGHT", "0mil" ) );
 
     layercount = ALTIUM_PARSER::property_int( properties, "LAYERSETSCOUNT", 1 ) + 1;
 }

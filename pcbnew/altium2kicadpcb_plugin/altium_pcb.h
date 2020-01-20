@@ -166,6 +166,9 @@ class ALTIUM_PARSER;
 
 struct ABOARD6
 {
+    wxPoint sheetpos;
+    wxSize  sheetsize;
+
     int layercount;
 
     ABOARD6( ALTIUM_PARSER& reader );
