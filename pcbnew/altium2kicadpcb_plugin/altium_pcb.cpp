@@ -733,7 +733,8 @@ void ALTIUM_PCB::ParseTexts6Data(
         PCB_LAYER_ID klayer = kicad_layer( elem.layer );
         itm->SetLayer( klayer != UNDEFINED_LAYER ? klayer : Eco1_User );
 
-        tx->SetTextHeight( elem.height );
+        tx->SetTextSize( wxSize( elem.height, elem.height ) ); // TODO: parse text width
+        tx->SetThickness( elem.strokewidth );
 
         tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_LEFT ); // TODO: what byte
 
@@ -1036,7 +1037,8 @@ ATEXT6::ATEXT6( ALTIUM_PARSER& reader )
     height   = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
     reader.skip( 2 );
     rotation = reader.read<double>();
-    reader.skip( 5 );
+    reader.skip( 1 );
+    strokewidth  = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
     isComment    = reader.read<u_int8_t>() != 0;
     isDesignator = reader.read<u_int8_t>() != 0;
 

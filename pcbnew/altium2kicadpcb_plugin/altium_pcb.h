@@ -281,6 +281,7 @@ struct ATEXT6
     wxPoint   position;
     u_int32_t height;
     double    rotation;
+    u_int32_t strokewidth;
 
     bool isComment;
     bool isDesignator;

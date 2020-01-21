@@ -293,11 +293,15 @@ types:
       - size: 1
       - id: rotation
         type: f8
-      - size: 5
-      - id: isComment
+      - size: 1
+      - id: strokewidth
+        type: u4
+      - id: is_comment
         type: u1
-      - id: isDesignator
+        enum: boolean
+      - id: is_designator
         type: u1
+        enum: boolean
 
   text_sub2:
     seq:
