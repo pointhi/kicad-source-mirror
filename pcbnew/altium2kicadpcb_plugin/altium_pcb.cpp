@@ -564,9 +564,13 @@ void ALTIUM_PCB::ParsePads6Data(
                 double ratio = elem.sizeAndShape->cornerradius[0] / 200.;
                 pad->SetRoundRectRadiusRatio( ratio );
             }
-            else
+            else if( elem.topsize.x == elem.topsize.y )
             {
                 pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_CIRCLE );
+            }
+            else
+            {
+                pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_OVAL );
             }
             break;
         case ALTIUM_PAD_SHAPE::OCTAGONAL:
