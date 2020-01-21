@@ -712,14 +712,23 @@ void ALTIUM_PCB::ParseTexts6Data(
         else
         {
             MODULE*       module = GetComponent( elem.component );
-            TEXTE_MODULE* txm =
-                    elem.isDesignator ? &module->Reference() : new TEXTE_MODULE( module );
-            tx  = txm;
-            itm = txm;
-            if( !elem.isDesignator )
+            TEXTE_MODULE* txm;
+            if( elem.isDesignator )
             {
+                txm = &module->Reference();
+            }
+            else if( elem.isComment )
+            {
+                txm = &module->Value();
+            }
+            else
+            {
+                txm = new TEXTE_MODULE( module );
                 module->Add( txm, ADD_MODE::APPEND );
             }
+
+            tx  = txm;
+            itm = txm;
         }
 
         if( !elem.isDesignator )
