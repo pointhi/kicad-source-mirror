@@ -194,6 +194,8 @@ struct ACOMPONENT6
     wxPoint     position;
     double      rotation;
     bool        locked;
+    bool        nameon;
+    bool        commenton;
     std::string sourcedesignator;
     std::string sourcelibreference;
 

@@ -418,6 +418,8 @@ void ALTIUM_PCB::ParseComponents6Data(
         module->SetOrientationDegrees( elem.rotation );
         module->SetReference( elem.sourcedesignator ); // TODO: text duplication
         module->SetLocked( elem.locked );
+        module->Reference().SetVisible( elem.nameon );
+        module->Value().SetVisible( elem.commenton );
         module->SetLayer( elem.layer == "TOP" ? F_Cu : B_Cu );
 
         componentId++;
@@ -855,6 +857,8 @@ ACOMPONENT6::ACOMPONENT6( ALTIUM_PARSER& reader )
             -ALTIUM_PARSER::property_unit( properties, "Y", "0mil" ) );
     rotation           = ALTIUM_PARSER::property_double( properties, "ROTATION", 0. );
     locked             = ALTIUM_PARSER::property_bool( properties, "LOCKED", false );
+    nameon             = ALTIUM_PARSER::property_bool( properties, "NAMEON", true );
+    commenton          = ALTIUM_PARSER::property_bool( properties, "COMMENTON", false );
     sourcedesignator   = ALTIUM_PARSER::property_string( properties, "SOURCEDESIGNATOR", "" );
     sourcelibreference = ALTIUM_PARSER::property_string( properties, "SOURCELIBREFERENCE", "" );
 }
