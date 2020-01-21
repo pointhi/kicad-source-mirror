@@ -735,7 +735,7 @@ void ALTIUM_PCB::ParseTexts6Data(
 
         tx->SetTextSize( wxSize( elem.height, elem.height ) ); // TODO: parse text width
         tx->SetThickness( elem.strokewidth );
-
+        tx->SetMirrored( elem.mirrored );
         switch( elem.textposition )
         {
         case ALTIUM_TEXT_POSITION::LEFT_TOP:
@@ -1078,8 +1078,8 @@ ATEXT6::ATEXT6( ALTIUM_PARSER& reader )
     position = reader.read_point();
     height   = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
     reader.skip( 2 );
-    rotation = reader.read<double>();
-    reader.skip( 1 );
+    rotation     = reader.read<double>();
+    mirrored     = reader.read<u_int8_t>() != 0;
     strokewidth  = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
     isComment    = reader.read<u_int8_t>() != 0;
     isDesignator = reader.read<u_int8_t>() != 0;

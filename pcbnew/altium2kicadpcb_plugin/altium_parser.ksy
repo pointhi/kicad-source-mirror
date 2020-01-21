@@ -293,7 +293,9 @@ types:
       - size: 1
       - id: rotation
         type: f8
-      - size: 1
+      - id: mirrored
+        type: u1
+        enum: boolean
       - id: strokewidth
         type: u4
       - id: is_comment

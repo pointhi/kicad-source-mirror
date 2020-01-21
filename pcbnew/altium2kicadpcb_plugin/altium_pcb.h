@@ -297,6 +297,7 @@ struct ATEXT6
     double    rotation;
     u_int32_t strokewidth;
     u_int8_t  textposition;
+    bool      mirrored;
 
     bool isComment;
     bool isDesignator;
