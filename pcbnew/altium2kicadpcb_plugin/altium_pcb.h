@@ -44,7 +44,6 @@ struct ALTIUM_RECORD
     };
 };
 
-
 struct ALTIUM_PAD_SHAPE
 {
     enum
@@ -56,7 +55,6 @@ struct ALTIUM_PAD_SHAPE
     };
 };
 
-
 struct ALTIUM_PAD_MODE
 {
     enum
@@ -64,6 +62,22 @@ struct ALTIUM_PAD_MODE
         SIMPLE            = 0,
         TOP_MIDDLE_BOTTOM = 1,
         FULL_STACK        = 2
+    };
+};
+
+struct ALTIUM_TEXT_POSITION
+{
+    enum
+    {
+        LEFT_TOP      = 1,
+        LEFT_CENTER   = 2,
+        LEFT_BOTTOM   = 3,
+        CENTER_TOP    = 4,
+        CENTER_CENTER = 5,
+        CENTER_BOTTOM = 6,
+        RIGHT_TOP     = 7,
+        RIGHT_CENTER  = 8,
+        RIGHT_BOTTOM  = 9
     };
 };
 
@@ -282,6 +296,7 @@ struct ATEXT6
     u_int32_t height;
     double    rotation;
     u_int32_t strokewidth;
+    u_int8_t  textposition;
 
     bool isComment;
     bool isDesignator;

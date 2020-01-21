@@ -302,6 +302,10 @@ types:
       - id: is_designator
         type: u1
         enum: boolean
+      - size: 90
+      - id: position
+        type: u1
+        enum: text_position
 
   text_sub2:
     seq:
@@ -378,6 +382,17 @@ enums:
   pad_soldermaskexpansion:
     1: rule
     2: manual
+
+  text_position:
+    1: left_top
+    2: left_center
+    3: left_bottom
+    4: center_top
+    5: center_center
+    6: center_bottom
+    7: right_top
+    8: right_center
+    9: right_bottom
 
   layer:
     1: f_cu

@@ -736,7 +736,49 @@ void ALTIUM_PCB::ParseTexts6Data(
         tx->SetTextSize( wxSize( elem.height, elem.height ) ); // TODO: parse text width
         tx->SetThickness( elem.strokewidth );
 
-        tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_LEFT ); // TODO: what byte
+        switch( elem.textposition )
+        {
+        case ALTIUM_TEXT_POSITION::LEFT_TOP:
+        case ALTIUM_TEXT_POSITION::LEFT_CENTER:
+        case ALTIUM_TEXT_POSITION::LEFT_BOTTOM:
+            tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_LEFT );
+            break;
+        case ALTIUM_TEXT_POSITION::CENTER_TOP:
+        case ALTIUM_TEXT_POSITION::CENTER_CENTER:
+        case ALTIUM_TEXT_POSITION::CENTER_BOTTOM:
+            tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_CENTER );
+            break;
+        case ALTIUM_TEXT_POSITION::RIGHT_TOP:
+        case ALTIUM_TEXT_POSITION::RIGHT_CENTER:
+        case ALTIUM_TEXT_POSITION::RIGHT_BOTTOM:
+            tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_RIGHT );
+            break;
+        default:
+            wxFAIL_MSG( "unexpected horizontal text position" );
+            break;
+        }
+
+        switch( elem.textposition )
+        {
+        case ALTIUM_TEXT_POSITION::LEFT_TOP:
+        case ALTIUM_TEXT_POSITION::CENTER_TOP:
+        case ALTIUM_TEXT_POSITION::RIGHT_TOP:
+            tx->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_TOP );
+            break;
+        case ALTIUM_TEXT_POSITION::LEFT_CENTER:
+        case ALTIUM_TEXT_POSITION::CENTER_CENTER:
+        case ALTIUM_TEXT_POSITION::RIGHT_CENTER:
+            tx->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_CENTER );
+            break;
+        case ALTIUM_TEXT_POSITION::LEFT_BOTTOM:
+        case ALTIUM_TEXT_POSITION::CENTER_BOTTOM:
+        case ALTIUM_TEXT_POSITION::RIGHT_BOTTOM:
+            tx->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_BOTTOM );
+            break;
+        default:
+            wxFAIL_MSG( "unexpected vertical text position" );
+            break;
+        }
 
         wxASSERT( !reader.parser_error() );
     }
@@ -1041,6 +1083,8 @@ ATEXT6::ATEXT6( ALTIUM_PARSER& reader )
     strokewidth  = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
     isComment    = reader.read<u_int8_t>() != 0;
     isDesignator = reader.read<u_int8_t>() != 0;
+    reader.skip( 90 );
+    textposition = reader.read<u_int8_t>();
 
     reader.subrecord_skip();
 
