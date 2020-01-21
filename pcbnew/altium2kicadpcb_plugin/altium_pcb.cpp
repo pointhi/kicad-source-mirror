@@ -32,6 +32,7 @@
 #include <class_text_mod.h>
 
 #include <compoundfilereader.h>
+#include <convert_basic_shapes_to_polygon.h>
 #include <utf.h>
 
 
@@ -555,7 +556,9 @@ void ALTIUM_PCB::ParsePads6Data(
             pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_RECT );
             break;
         case ALTIUM_PAD_SHAPE::CIRCLE:
-            if( elem.sizeAndShape && elem.sizeAndShape->cornerradius[0] < 100 )
+            if( elem.sizeAndShape
+                    && ( elem.sizeAndShape->cornerradius[0] < 100
+                            || elem.topsize.x != elem.topsize.y ) )
             {
                 pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_ROUNDRECT ); // 100 = round, 0 = rectangular
                 double ratio = elem.sizeAndShape->cornerradius[0] / 200.;
@@ -566,8 +569,10 @@ void ALTIUM_PCB::ParsePads6Data(
                 pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_CIRCLE );
             }
             break;
-        case ALTIUM_PAD_SHAPE::OVAL:
-            pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_OVAL );
+        case ALTIUM_PAD_SHAPE::OCTAGONAL:
+            pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_CHAMFERED_RECT );
+            pad->SetChamferPositions( RECT_CHAMFER_ALL );
+            pad->SetChamferRectRatio( 0.25 );
             break;
         case ALTIUM_PAD_SHAPE::UNKNOWN:
         default:
@@ -973,7 +978,8 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
 
     // Subrecord 6
     size_t subrecord6 = reader.read_subrecord_length();
-    if( subrecord6 == 651 )
+    if( subrecord6 == 651
+            || subrecord6 == 628 ) // TODO: better detection mechanism (Altium 14 = 628)
     { // TODO: detect type from something else than the size?
         sizeAndShape = std::make_unique<APAD6_SIZE_AND_SHAPE>();
 

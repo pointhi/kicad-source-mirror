@@ -48,10 +48,10 @@ struct ALTIUM_PAD_SHAPE
 {
     enum
     {
-        UNKNOWN = 0,
-        CIRCLE  = 1,
-        RECT    = 2,
-        OVAL    = 3
+        UNKNOWN   = 0,
+        CIRCLE    = 1,
+        RECT      = 2,
+        OCTAGONAL = 3
     };
 };
 

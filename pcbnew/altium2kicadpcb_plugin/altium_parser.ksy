@@ -364,7 +364,7 @@ enums:
     0: unknown
     1: circle
     2: rect
-    3: oval
+    3: octagonal
 
   pad_shape_alt:  # TODO: for what?
     0: round2
