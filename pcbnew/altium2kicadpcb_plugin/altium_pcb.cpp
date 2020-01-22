@@ -1098,7 +1098,7 @@ ATEXT6::ATEXT6( ALTIUM_PARSER& reader )
     wxASSERT( recordtype == ALTIUM_RECORD::TEXT );
 
     // Subrecord 1 - Properties
-    reader.read_subrecord_length();
+    size_t subrecord1 = reader.read_subrecord_length();
 
     layer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
     reader.skip( 6 );
@@ -1112,8 +1112,20 @@ ATEXT6::ATEXT6( ALTIUM_PARSER& reader )
     strokewidth  = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
     isComment    = reader.read<u_int8_t>() != 0;
     isDesignator = reader.read<u_int8_t>() != 0;
-    reader.skip( 90 );
-    textposition = static_cast<ALTIUM_TEXT_POSITION>( reader.read<u_int8_t>() );
+    if( subrecord1 > 230 )
+    {
+        reader.skip( 90 );
+        textposition = static_cast<ALTIUM_TEXT_POSITION>( reader.read<u_int8_t>() );
+    }
+    else
+    {
+        /**
+         * In Altium 14 (subrecord1 == 230) only left bottom is valid?
+         * https://gitlab.com/kicad/code/kicad/merge_requests/60#note_274913397
+         */
+        textposition = ALTIUM_TEXT_POSITION::LEFT_BOTTOM;
+    }
+
 
     reader.subrecord_skip();
 
