@@ -339,6 +339,12 @@ void ALTIUM_PCB::Parse( const CFB::CompoundFileReader& aReader )
     {
         ParseFills6Data( aReader, fills6 );
     }
+
+    // Finish Board by recalculating module boundingboxes
+    for( auto& module : m_board->Modules() )
+    {
+        module->CalculateBoundingBox();
+    }
 }
 
 MODULE* ALTIUM_PCB::GetComponent( const u_int16_t id )
