@@ -68,11 +68,79 @@ const CFB::COMPOUND_FILE_ENTRY* FindStream(
     return ret;
 }
 
+ALTIUM_LAYER ALTIUM_PCB::altium_layer_from_name( const std::string& aName ) const
+{
+    // TODO: only initialize table once
+    std::unordered_map<std::string, ALTIUM_LAYER> hash_map;
+    hash_map["TOP"]    = ALTIUM_LAYER::TOP_LAYER;
+    hash_map["MID1"]   = ALTIUM_LAYER::MID_LAYER_1;
+    hash_map["MID2"]   = ALTIUM_LAYER::MID_LAYER_2;
+    hash_map["MID3"]   = ALTIUM_LAYER::MID_LAYER_3;
+    hash_map["MID4"]   = ALTIUM_LAYER::MID_LAYER_4;
+    hash_map["MID5"]   = ALTIUM_LAYER::MID_LAYER_5;
+    hash_map["MID6"]   = ALTIUM_LAYER::MID_LAYER_6;
+    hash_map["MID7"]   = ALTIUM_LAYER::MID_LAYER_7;
+    hash_map["MID8"]   = ALTIUM_LAYER::MID_LAYER_8;
+    hash_map["MID9"]   = ALTIUM_LAYER::MID_LAYER_9;
+    hash_map["MID10"]  = ALTIUM_LAYER::MID_LAYER_10;
+    hash_map["MID11"]  = ALTIUM_LAYER::MID_LAYER_11;
+    hash_map["MID12"]  = ALTIUM_LAYER::MID_LAYER_12;
+    hash_map["MID13"]  = ALTIUM_LAYER::MID_LAYER_13;
+    hash_map["MID14"]  = ALTIUM_LAYER::MID_LAYER_14;
+    hash_map["MID15"]  = ALTIUM_LAYER::MID_LAYER_15;
+    hash_map["MID16"]  = ALTIUM_LAYER::MID_LAYER_16;
+    hash_map["MID17"]  = ALTIUM_LAYER::MID_LAYER_17;
+    hash_map["MID18"]  = ALTIUM_LAYER::MID_LAYER_18;
+    hash_map["MID19"]  = ALTIUM_LAYER::MID_LAYER_19;
+    hash_map["MID20"]  = ALTIUM_LAYER::MID_LAYER_20;
+    hash_map["MID21"]  = ALTIUM_LAYER::MID_LAYER_21;
+    hash_map["MID22"]  = ALTIUM_LAYER::MID_LAYER_22;
+    hash_map["MID23"]  = ALTIUM_LAYER::MID_LAYER_23;
+    hash_map["MID24"]  = ALTIUM_LAYER::MID_LAYER_24;
+    hash_map["MID25"]  = ALTIUM_LAYER::MID_LAYER_25;
+    hash_map["MID26"]  = ALTIUM_LAYER::MID_LAYER_26;
+    hash_map["MID27"]  = ALTIUM_LAYER::MID_LAYER_27;
+    hash_map["MID28"]  = ALTIUM_LAYER::MID_LAYER_28;
+    hash_map["MID29"]  = ALTIUM_LAYER::MID_LAYER_29;
+    hash_map["MID30"]  = ALTIUM_LAYER::MID_LAYER_30;
+    hash_map["BOTTOM"] = ALTIUM_LAYER::BOTTOM_LAYER;
+
+    hash_map["PLANE1"]  = ALTIUM_LAYER::INTERNAL_PLANE_1;
+    hash_map["PLANE2"]  = ALTIUM_LAYER::INTERNAL_PLANE_2;
+    hash_map["PLANE3"]  = ALTIUM_LAYER::INTERNAL_PLANE_3;
+    hash_map["PLANE4"]  = ALTIUM_LAYER::INTERNAL_PLANE_4;
+    hash_map["PLANE5"]  = ALTIUM_LAYER::INTERNAL_PLANE_5;
+    hash_map["PLANE6"]  = ALTIUM_LAYER::INTERNAL_PLANE_6;
+    hash_map["PLANE7"]  = ALTIUM_LAYER::INTERNAL_PLANE_7;
+    hash_map["PLANE8"]  = ALTIUM_LAYER::INTERNAL_PLANE_8;
+    hash_map["PLANE9"]  = ALTIUM_LAYER::INTERNAL_PLANE_9;
+    hash_map["PLANE10"] = ALTIUM_LAYER::INTERNAL_PLANE_10;
+    hash_map["PLANE11"] = ALTIUM_LAYER::INTERNAL_PLANE_11;
+    hash_map["PLANE12"] = ALTIUM_LAYER::INTERNAL_PLANE_12;
+    hash_map["PLANE13"] = ALTIUM_LAYER::INTERNAL_PLANE_13;
+    hash_map["PLANE14"] = ALTIUM_LAYER::INTERNAL_PLANE_14;
+    hash_map["PLANE15"] = ALTIUM_LAYER::INTERNAL_PLANE_15;
+    hash_map["PLANE16"] = ALTIUM_LAYER::INTERNAL_PLANE_16;
+
+    auto it = hash_map.find( aName );
+    if( it == hash_map.end() )
+    {
+        return ALTIUM_LAYER::UNKNOWN;
+    }
+    else
+    {
+        return it->second;
+    }
+}
+
 
 PCB_LAYER_ID ALTIUM_PCB::kicad_layer( ALTIUM_LAYER aAltiumLayer ) const
 {
     switch( aAltiumLayer )
     {
+    case ALTIUM_LAYER::UNKNOWN:
+        return UNDEFINED_LAYER;
+
     case ALTIUM_LAYER::TOP_LAYER:
         return F_Cu;
     case ALTIUM_LAYER::MID_LAYER_1:
@@ -292,6 +360,14 @@ void ALTIUM_PCB::Parse( const CFB::CompoundFileReader& aReader )
         ParseNets6Data( aReader, nets );
     }
 
+    // Parse polygons data
+    const CFB::COMPOUND_FILE_ENTRY* polygons6 = FindStream( aReader, "Polygons6\\Data" );
+    wxASSERT( polygons6 != nullptr );
+    if( polygons6 != nullptr )
+    {
+        ParsePolygons6Data( aReader, polygons6 );
+    }
+
     // Parse arcs
     const CFB::COMPOUND_FILE_ENTRY* arcs6 = FindStream( aReader, "Arcs6\\Data" );
     wxASSERT( arcs6 != nullptr );
@@ -450,6 +526,49 @@ void ALTIUM_PCB::ParseNets6Data(
         m_board->Add( new NETINFO_ITEM( m_board, elem.name, netCode ), ADD_MODE::APPEND );
 
         netCode++;
+    }
+
+    wxASSERT( !reader.parser_error() );
+    wxASSERT( reader.bytes_remaining() == 0 );
+}
+
+void ALTIUM_PCB::ParsePolygons6Data(
+        const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
+{
+    ALTIUM_PARSER reader( aReader, aEntry );
+
+    while( !reader.parser_error()
+            && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
+    {
+        APOLYGON6 elem( reader );
+
+        PCB_LAYER_ID layer = kicad_layer( altium_layer_from_name( elem.layer ) );
+        if( layer == UNDEFINED_LAYER )
+        {
+            wxFAIL_MSG( "Ignore polygon on layer " + elem.layer
+                        + " because we do not know where to place " );
+            continue;
+        }
+
+        ZONE_CONTAINER* zone = new ZONE_CONTAINER( m_board );
+        m_board->Add( zone, ADD_MODE::APPEND );
+
+        zone->SetNetCode( GetNetCode( elem.net ) );
+        zone->SetLayer( layer );
+        zone->SetPosition( elem.vertices.at( 0 ).position );
+        zone->SetLocked( elem.locked );
+
+        SHAPE_LINE_CHAIN linechain;
+        for( auto& vertice : elem.vertices )
+        {
+            linechain.Append( vertice.position );
+        }
+        linechain.Append( elem.vertices.at( 0 ).position );
+        linechain.SetClosed( true );
+
+        SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
+        outline->AddOutline( linechain );
+        zone->SetOutline( outline );
     }
 
     wxASSERT( !reader.parser_error() );
@@ -896,6 +1015,38 @@ ANET6::ANET6( ALTIUM_PARSER& reader )
     wxASSERT( !properties.empty() );
 
     name = ALTIUM_PARSER::property_string( properties, "NAME", "" );
+}
+
+APOLYGON6::APOLYGON6( ALTIUM_PARSER& reader )
+{
+    wxASSERT( reader.bytes_remaining() > 4 );
+    wxASSERT( !reader.parser_error() );
+
+    std::map<std::string, std::string> properties = reader.read_properties();
+    wxASSERT( !properties.empty() );
+
+    layer = ALTIUM_PARSER::property_string( properties, "LAYER", "" );
+    net   = ALTIUM_PARSER::property_int( properties, "NET", std::numeric_limits<u_int16_t>::max() );
+    locked = ALTIUM_PARSER::property_bool( properties, "LOCKED", false );
+
+    for( size_t i = 0; i < std::numeric_limits<size_t>::max(); i++ )
+    {
+        const std::string vxi = "VX" + std::to_string( i );
+        const std::string vyi = "VY" + std::to_string( i );
+
+        auto vxit = properties.find( vxi );
+        auto vyit = properties.find( vyi );
+        if( vxit == properties.end() || vyit == properties.end() )
+        {
+            break; // it doesn't seem like we know beforehand how many vertices are inside a polygon
+        }
+
+        const wxPoint vertice_position =
+                wxPoint( ALTIUM_PARSER::property_unit( properties, vxi, "0mil" ),
+                        -ALTIUM_PARSER::property_unit( properties, vyi, "0mil" ) );
+
+        vertices.emplace_back( vertice_position );
+    }
 }
 
 AARC6::AARC6( ALTIUM_PARSER& reader )

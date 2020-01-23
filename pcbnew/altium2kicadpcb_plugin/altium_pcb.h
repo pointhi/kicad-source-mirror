@@ -72,6 +72,8 @@ enum class ALTIUM_TEXT_POSITION
 
 enum class ALTIUM_LAYER
 {
+    UNKNOWN = 0,
+
     TOP_LAYER    = 1,
     MID_LAYER_1  = 2,
     MID_LAYER_2  = 3,
@@ -192,6 +194,26 @@ struct ANET6
     std::string name;
 
     explicit ANET6( ALTIUM_PARSER& reader );
+};
+
+struct APOLYGON6_VERTICE
+{
+    const wxPoint position;
+
+    explicit APOLYGON6_VERTICE( const wxPoint position ) : position( position )
+    {
+    }
+};
+
+struct APOLYGON6
+{
+    std::string layer;
+    u_int16_t   net;
+    bool        locked;
+
+    std::vector<APOLYGON6_VERTICE> vertices;
+
+    explicit APOLYGON6( ALTIUM_PARSER& reader );
 };
 
 struct AARC6
@@ -327,6 +349,7 @@ public:
     void Parse( const CFB::CompoundFileReader& aReader );
 
 private:
+    ALTIUM_LAYER altium_layer_from_name( const std::string& aName ) const;
     PCB_LAYER_ID kicad_layer( ALTIUM_LAYER aAltiumLayer ) const;
 
     MODULE* GetComponent( const u_int16_t id );
@@ -342,6 +365,8 @@ private:
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseNets6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    void ParsePolygons6Data(
+            const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
 
     // Binary Format
     void ParseArcs6Data(
@@ -356,6 +381,7 @@ private:
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseFills6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+
 
     BOARD*               m_board;
     std::vector<MODULE*> m_components;
