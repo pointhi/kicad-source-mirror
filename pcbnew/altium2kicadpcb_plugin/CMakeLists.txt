@@ -1,5 +1,5 @@
 
-# Sources for the pcbnew PLUGIN called ALTIUM_PLUGIN
+# Sources for the pcbnew PLUGIN called ALTIUM_DESIGNER_PLUGIN
 
 # This CMakeLists.txt is included from pcbnew, so we are inheriting its include_directories(),
 # simply add the current source dir to inherited include_directories() for sources in here only.
@@ -7,7 +7,8 @@ include_directories( . )
 
 
 set( ALTIUM2PCBNEW_SRCS
-    altium_plugin.cpp
+    altium_circuit_studio_plugin.cpp
+    altium_designer_plugin.cpp
     altium_pcb.cpp
     altium_parser.cpp
     )

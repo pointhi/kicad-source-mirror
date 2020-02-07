@@ -30,39 +30,39 @@
 
 #include <wx/string.h>
 
+#include <altium_circuit_studio_plugin.h>
 #include <altium_pcb.h>
-#include <altium_plugin.h>
 
 #include <class_board.h>
 
 #include <compoundfilereader.h>
 #include <utf.h>
 
-ALTIUM_PLUGIN::ALTIUM_PLUGIN()
+ALTIUM_CIRCUIT_STUDIO_PLUGIN::ALTIUM_CIRCUIT_STUDIO_PLUGIN()
 {
     m_board = nullptr;
     m_props = nullptr;
 }
 
 
-ALTIUM_PLUGIN::~ALTIUM_PLUGIN()
+ALTIUM_CIRCUIT_STUDIO_PLUGIN::~ALTIUM_CIRCUIT_STUDIO_PLUGIN()
 {
 }
 
 
-const wxString ALTIUM_PLUGIN::PluginName() const
+const wxString ALTIUM_CIRCUIT_STUDIO_PLUGIN::PluginName() const
 {
-    return wxT( "Altium" );
+    return wxT( "Altium Circuit Studio" );
 }
 
 
-const wxString ALTIUM_PLUGIN::GetFileExtension() const
+const wxString ALTIUM_CIRCUIT_STUDIO_PLUGIN::GetFileExtension() const
 {
-    return wxT( "PcbDoc" );
+    return wxT( "CsPcbDoc" );
 }
 
 
-BOARD* ALTIUM_PLUGIN::Load(
+BOARD* ALTIUM_CIRCUIT_STUDIO_PLUGIN::Load(
         const wxString& aFileName, BOARD* aAppendToMe, const PROPERTIES* aProperties )
 {
     m_props = aProperties;
@@ -91,7 +91,7 @@ BOARD* ALTIUM_PLUGIN::Load(
 
     // Parse File
     ALTIUM_PCB pcb( m_board );
-    pcb.Parse( reader );
+    pcb.ParseCircuitStudio( reader );
 
     // Close File
     fclose( fp );

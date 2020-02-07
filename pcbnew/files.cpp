@@ -82,11 +82,12 @@ bool AskLoadBoardFileName( wxWindow* aParent, int* aCtl, wxString* aFileName, bo
         IO_MGR::PCB_FILE_T  pluginType;
     } loaders[] =
     {
-        { PcbFileWildcard(),          IO_MGR::KICAD_SEXP },   // Current Kicad board files
-        { LegacyPcbFileWildcard(),    IO_MGR::LEGACY },       // Old Kicad board files
-        { EaglePcbFileWildcard(),     IO_MGR::EAGLE },        // Import board files
-        { PCadPcbFileWildcard(),      IO_MGR::PCAD },         // Import board files
-        { AltiumPcbFileWildcard(),    IO_MGR::ALTIUM },       // Import board files
+        {PcbFileWildcard(),                    IO_MGR::KICAD_SEXP },            // Current Kicad board files
+        {LegacyPcbFileWildcard(),              IO_MGR::LEGACY },                // Old Kicad board files
+        {EaglePcbFileWildcard(),               IO_MGR::EAGLE },                 // Import board files
+        {PCadPcbFileWildcard(),                IO_MGR::PCAD },                  // Import board files
+        {AltiumDesignerPcbFileWildcard(),      IO_MGR::ALTIUM_DESIGNER },       // Import board files
+        {AltiumCircuitStudioPcbFileWildcard(), IO_MGR::ALTIUM_CIRCUIT_STUDIO }, // Import board files
     };
 
     wxFileName  fileName( *aFileName );
@@ -371,9 +372,13 @@ IO_MGR::PCB_FILE_T plugin_type( const wxString& aFileName, int aCtl )
     {
         pluginType = IO_MGR::PCAD;
     }
-    else if( fn.GetExt().CmpNoCase(  IO_MGR::GetFileExtension( IO_MGR::ALTIUM ) ) == 0 )
+    else if( fn.GetExt().CmpNoCase(  IO_MGR::GetFileExtension( IO_MGR::ALTIUM_DESIGNER ) ) == 0 )
     {
-        pluginType = IO_MGR::ALTIUM;
+        pluginType = IO_MGR::ALTIUM_DESIGNER;
+    }
+    else if( fn.GetExt().CmpNoCase(  IO_MGR::GetFileExtension( IO_MGR::ALTIUM_CIRCUIT_STUDIO ) ) == 0 )
+    {
+        pluginType = IO_MGR::ALTIUM_CIRCUIT_STUDIO;
     }
     else
     {

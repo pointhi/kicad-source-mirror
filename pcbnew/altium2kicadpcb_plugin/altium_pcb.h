@@ -24,6 +24,7 @@
 #ifndef ALTIUM_PCB_H
 #define ALTIUM_PCB_H
 
+#include <functional>
 #include <layers_id_colors_and_visibility.h>
 #include <vector>
 #include <zconf.h>
@@ -340,13 +341,21 @@ struct COMPOUND_FILE_ENTRY;
 } // namespace CFB
 
 
+// type declaration required for a helper method
+class ALTIUM_PCB;
+typedef std::function<void(
+        const ALTIUM_PCB&, const CFB::CompoundFileReader&, const CFB::COMPOUND_FILE_ENTRY* )>
+        parse_function_pointer_t;
+
+
 class ALTIUM_PCB
 {
 public:
     explicit ALTIUM_PCB( BOARD* aBoard );
     ~ALTIUM_PCB();
 
-    void Parse( const CFB::CompoundFileReader& aReader );
+    void ParseDesigner( const CFB::CompoundFileReader& aReader );
+    void ParseCircuitStudio( const CFB::CompoundFileReader& aReader );
 
 private:
     ALTIUM_LAYER altium_layer_from_name( const std::string& aName ) const;
@@ -354,6 +363,10 @@ private:
 
     MODULE* GetComponent( const u_int16_t id );
     int     GetNetCode( const u_int16_t id );
+
+    void ParseHelper( const CFB::CompoundFileReader& aReader, const std::string& streamName,
+            parse_function_pointer_t fp );
+    void FinishParsingHelper();
 
     void ParseFileHeader(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );

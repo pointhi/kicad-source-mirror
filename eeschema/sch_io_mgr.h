@@ -57,7 +57,7 @@ public:
         SCH_EAGLE,       ///< Autodesk Eagle file format
         // Add your schematic type here.
 
-        // ALTIUM,
+        // ALTIUM_DESIGNER,
         // etc.
     } )
 

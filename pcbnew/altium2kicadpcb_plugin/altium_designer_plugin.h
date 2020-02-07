@@ -26,13 +26,13 @@
  * @brief Pcbnew PLUGIN for Altium *.PcbDoc format.
  */
 
-#ifndef ALTIUM_PLUGIN_H_
-#define ALTIUM_PLUGIN_H_
+#ifndef ALTIUM_DESIGNER_PLUGIN_H_
+#define ALTIUM_DESIGNER_PLUGIN_H_
 
 
 #include <io_mgr.h>
 
-class ALTIUM_PLUGIN : public PLUGIN
+class ALTIUM_DESIGNER_PLUGIN : public PLUGIN
 {
 public:
     // -----<PUBLIC PLUGIN API>--------------------------------------------------
@@ -52,12 +52,12 @@ public:
 
     // -----</PUBLIC PLUGIN API>-------------------------------------------------
 
-    ALTIUM_PLUGIN();
-    ~ALTIUM_PLUGIN();
+    ALTIUM_DESIGNER_PLUGIN();
+    ~ALTIUM_DESIGNER_PLUGIN();
 
 private:
     const PROPERTIES* m_props;
     BOARD*            m_board;
 };
 
-#endif // ALTIUM_PLUGIN_H_
+#endif // ALTIUM_DESIGNER_PLUGIN_H_

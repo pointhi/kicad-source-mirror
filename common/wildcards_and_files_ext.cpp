@@ -245,9 +245,14 @@ wxString PCadPcbFileWildcard()
     return _( "P-Cad 200x ASCII PCB files" ) + AddFileExtListToFilter( { "pcb" } );
 }
 
-wxString AltiumPcbFileWildcard()
+wxString AltiumDesignerPcbFileWildcard()
 {
-    return _( "Altium PCB files" ) + AddFileExtListToFilter( { "PcbDoc" } );
+    return _( "Altium Designer PCB files" ) + AddFileExtListToFilter( { "PcbDoc" } );
+}
+
+wxString AltiumCircuitStudioPcbFileWildcard()
+{
+    return _( "Altium Circuit Studio PCB files" ) + AddFileExtListToFilter( { "CsPcbDoc" } );
 }
 
 wxString PcbFileWildcard()

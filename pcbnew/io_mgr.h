@@ -53,20 +53,20 @@ public:
      */
     enum PCB_FILE_T
     {
-        LEGACY,         ///< Legacy Pcbnew file formats prior to s-expression.
-        KICAD_SEXP,          ///< S-expression Pcbnew file format.
+        LEGACY,     ///< Legacy Pcbnew file formats prior to s-expression.
+        KICAD_SEXP, ///< S-expression Pcbnew file format.
         EAGLE,
         PCAD,
-        ALTIUM,
-        GEDA_PCB,       ///< Geda PCB file formats.
+        ALTIUM_DESIGNER,
+        ALTIUM_CIRCUIT_STUDIO,
+        GEDA_PCB, ///< Geda PCB file formats.
 
-        //N.B. This needs to be commented out to ensure compile-type errors
+    //N.B. This needs to be commented out to ensure compile-type errors
 #if defined(BUILD_GITHUB_PLUGIN)
-        GITHUB,         ///< Read only http://github.com repo holding pretty footprints
+        GITHUB, ///< Read only http://github.com repo holding pretty footprints
 #endif
         // add your type here.
 
-        // ALTIUM,
         // etc.
 
         FILE_TYPE_NONE
