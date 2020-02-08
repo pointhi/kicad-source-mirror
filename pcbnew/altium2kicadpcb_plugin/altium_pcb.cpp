@@ -330,16 +330,18 @@ namespace ALTIUM_DESIGNER
 {
 const std::string FILE_HEADER = "FileHeader";
 
-const std::string ARCS6_DATA       = "Arcs6\\Data";
-const std::string BOARD6_DATA      = "Board6\\Data";
-const std::string COMPONENTS6_DATA = "Components6\\Data";
-const std::string FILLS6_DATA      = "Fills6\\Data";
-const std::string NETS6_DATA       = "Nets6\\Data";
-const std::string PADS6_DATA       = "Pads6\\Data";
-const std::string POLYGONS6_DATA   = "Polygons6\\Data";
-const std::string TEXTS6_DATA      = "Texts6\\Data";
-const std::string TRACKS6_DATA     = "Tracks6\\Data";
-const std::string VIAS6_DATA       = "Vias6\\Data";
+const std::string ARCS6_DATA        = "Arcs6\\Data";
+const std::string BOARD6_DATA       = "Board6\\Data";
+const std::string BOARDREGIONS_DATA = "BoardRegions\\Data";
+const std::string COMPONENTS6_DATA  = "Components6\\Data";
+const std::string FILLS6_DATA       = "Fills6\\Data";
+const std::string NETS6_DATA        = "Nets6\\Data";
+const std::string PADS6_DATA        = "Pads6\\Data";
+const std::string POLYGONS6_DATA    = "Polygons6\\Data";
+const std::string REGIONS6_DATA     = "Regions6\\Data";
+const std::string TEXTS6_DATA       = "Texts6\\Data";
+const std::string TRACKS6_DATA      = "Tracks6\\Data";
+const std::string VIAS6_DATA        = "Vias6\\Data";
 }; // namespace ALTIUM_DESIGNER
 
 // those directories were found by searching for equivalent files in both formats
@@ -349,11 +351,13 @@ const std::string FILE_HEADER = "FileHeader";
 
 const std::string ARCS6_DATA       = "00C595EB90524FFC8C3BD9670020A2\\Data";
 const std::string BOARD6_DATA      = "88857D7F1DF64F7BBB61848C965636\\Data";
+// const std::string BOARDREGIONS_DATA = "TODO\\Data";
 const std::string COMPONENTS6_DATA = "465416896A15486999A39C643935D2\\Data";
 const std::string FILLS6_DATA      = "4E83BDC3253747F08E9006D7F57020\\Data";
 const std::string NETS6_DATA       = "D95A0DA2FE9047779A5194C127F30B\\Data";
 const std::string PADS6_DATA       = "47D69BC5107A4B8DB8DAA23E39C238\\Data";
 const std::string POLYGONS6_DATA   = "D7038392280E4E229B9D9B5426B295\\Data";
+// const std::string REGIONS6_DATA = "TODO\\Data";
 const std::string TEXTS6_DATA      = "349ABBB211DB4F5B8AE41B1B49555A\\Data";
 const std::string TRACKS6_DATA     = "530C20C225354B858B2578CAB8C08D\\Data";
 const std::string VIAS6_DATA       = "CA5F5989BCDB404DA70A9D1D3D5758\\Data";
@@ -364,16 +368,18 @@ namespace ALTIUM_CIRCUIT_MAKER
 {
 const std::string FILE_HEADER = "FileHeader";
 
-const std::string ARCS6_DATA       = "1CEEB63FB33847F8AFC4485F64735E\\Data";
-const std::string BOARD6_DATA      = "96B09F5C6CEE434FBCE0DEB3E88E70\\Data";
-const std::string COMPONENTS6_DATA = "F9D060ACC7DD4A85BC73CB785BAC81\\Data";
-const std::string FILLS6_DATA      = "6FFE038462A940E9B422EFC8F5D85E\\Data";
-const std::string NETS6_DATA       = "35D7CF51BB9B4875B3A138B32D80DC\\Data";
-const std::string PADS6_DATA       = "4F501041A9BC4A06BDBDAB67D3820E\\Data";
-const std::string POLYGONS6_DATA   = "A1931C8B0B084A61AA45146575FDD3\\Data";
-const std::string TEXTS6_DATA      = "A34BC67C2A5F408D8F377378C5C5E2\\Data";
-const std::string TRACKS6_DATA     = "412A754DBB864645BF01CD6A80C358\\Data";
-const std::string VIAS6_DATA       = "C87A685A0EFA4A90BEEFD666198B56\\Data";
+const std::string ARCS6_DATA        = "1CEEB63FB33847F8AFC4485F64735E\\Data";
+const std::string BOARD6_DATA       = "96B09F5C6CEE434FBCE0DEB3E88E70\\Data";
+const std::string BOARDREGIONS_DATA = "E3A544335C30403A991912052C936F\\Data";
+const std::string COMPONENTS6_DATA  = "F9D060ACC7DD4A85BC73CB785BAC81\\Data";
+const std::string FILLS6_DATA       = "6FFE038462A940E9B422EFC8F5D85E\\Data";
+const std::string NETS6_DATA        = "35D7CF51BB9B4875B3A138B32D80DC\\Data";
+const std::string PADS6_DATA        = "4F501041A9BC4A06BDBDAB67D3820E\\Data";
+const std::string POLYGONS6_DATA    = "A1931C8B0B084A61AA45146575FDD3\\Data";
+const std::string REGIONS6_DATA     = "F513A5885418472886D3EF18A09E46\\Data";
+const std::string TEXTS6_DATA       = "A34BC67C2A5F408D8F377378C5C5E2\\Data";
+const std::string TRACKS6_DATA      = "412A754DBB864645BF01CD6A80C358\\Data";
+const std::string VIAS6_DATA        = "C87A685A0EFA4A90BEEFD666198B56\\Data";
 }; // namespace ALTIUM_CIRCUIT_MAKER
 
 void ALTIUM_PCB::ParseDesigner( const CFB::CompoundFileReader& aReader )
@@ -427,6 +433,16 @@ void ALTIUM_PCB::ParseDesigner( const CFB::CompoundFileReader& aReader )
     ParseHelper(
             aReader, ALTIUM_DESIGNER::FILLS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
                 c.ParseFills6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper( aReader, ALTIUM_DESIGNER::BOARDREGIONS_DATA,
+            []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseBoardRegionsData( aReader, fileHeader );
+            } );
+
+    ParseHelper(
+            aReader, ALTIUM_DESIGNER::REGIONS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseRegions6Data( aReader, fileHeader );
             } );
 
     FinishParsingHelper();
@@ -490,6 +506,17 @@ void ALTIUM_PCB::ParseCircuitStudio( const CFB::CompoundFileReader& aReader )
                 c.ParseFills6Data( aReader, fileHeader );
             } );
 
+    // TODO: enable
+    //    ParseHelper(
+    //            aReader, ALTIUM_CIRCUIT_STUDIO::BOARDREGIONS_DATA, []( auto c, auto aReader, auto fileHeader ) {
+    //                c.ParseBoardRegionsData( aReader, fileHeader );
+    //            } );
+    //
+    //    ParseHelper(
+    //            aReader, ALTIUM_CIRCUIT_STUDIO::REGIONS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
+    //                c.ParseRegions6Data( aReader, fileHeader );
+    //            } );
+
     FinishParsingHelper();
 }
 
@@ -549,6 +576,16 @@ void ALTIUM_PCB::ParseCircuitMaker( const CFB::CompoundFileReader& aReader )
     ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::FILLS6_DATA,
             []( auto c, auto aReader, auto fileHeader ) {
                 c.ParseFills6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::BOARDREGIONS_DATA,
+            []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseBoardRegionsData( aReader, fileHeader );
+            } );
+
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::REGIONS6_DATA,
+            []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseRegions6Data( aReader, fileHeader );
             } );
 
     FinishParsingHelper();
@@ -720,6 +757,77 @@ void ALTIUM_PCB::ParsePolygons6Data(
         SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
         outline->AddOutline( linechain );
         zone->SetOutline( outline );
+    }
+
+    wxASSERT( !reader.parser_error() );
+    wxASSERT( reader.bytes_remaining() == 0 );
+}
+
+void ALTIUM_PCB::ParseBoardRegionsData(
+        const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
+{
+    ALTIUM_PARSER reader( aReader, aEntry );
+
+    while( !reader.parser_error()
+            && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
+    {
+        AREGION6 elem( reader );
+
+        // TODO: implement?
+    }
+
+    wxASSERT( !reader.parser_error() );
+    wxASSERT( reader.bytes_remaining() == 0 );
+}
+
+void ALTIUM_PCB::ParseRegions6Data(
+        const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
+{
+    ALTIUM_PARSER reader( aReader, aEntry );
+
+    while( !reader.parser_error()
+            && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
+    {
+        AREGION6 elem( reader );
+
+        if( elem.kind == 1 ) // TODO: is kind==1 always keepout?
+        {
+            ZONE_CONTAINER* zone = new ZONE_CONTAINER( m_board );
+            zone->SetIsKeepout( true );
+            zone->SetDoNotAllowTracks( false );
+            zone->SetDoNotAllowVias( false );
+            zone->SetDoNotAllowCopperPour( true );
+            // TODO: contours are not visible in editor?
+
+            m_board->Add( zone, ADD_MODE::APPEND );
+            // TODO: part of component
+
+            //zone->SetNetCode( GetNetCode( elem.net ) );
+            if( elem.layer == ALTIUM_LAYER::MULTI_LAYER )
+            {
+                zone->SetLayer( F_Cu );
+                zone->SetLayerSet( LSET::AllCuMask() );
+            }
+            else
+            {
+                PCB_LAYER_ID klayer = kicad_layer( elem.layer );
+                zone->SetLayer( klayer != UNDEFINED_LAYER ? klayer : Eco1_User );
+            }
+
+            zone->SetPosition( elem.vertices.at( 0 ) );
+            SHAPE_LINE_CHAIN linechain;
+            for( auto& vertice : elem.vertices )
+            {
+                linechain.Append( vertice );
+            }
+            linechain.Append( elem.vertices.at( 0 ) );
+            linechain.SetClosed( true );
+
+            SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
+            outline->AddOutline( linechain );
+            zone->SetOutline( outline );
+        }
+        // TODO: handle other regions
     }
 
     wxASSERT( !reader.parser_error() );
@@ -1515,6 +1623,47 @@ AFILL6::AFILL6( ALTIUM_PARSER& reader )
     pos1     = reader.read_point();
     pos2     = reader.read_point();
     rotation = reader.read<double>();
+
+    reader.subrecord_skip();
+
+    wxASSERT( !reader.parser_error() );
+}
+
+AREGION6::AREGION6( ALTIUM_PARSER& reader )
+{
+    wxASSERT( reader.bytes_remaining() > 4 );
+    wxASSERT( !reader.parser_error() );
+
+    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<u_int8_t>() );
+    wxASSERT( recordtype == ALTIUM_RECORD::REGION );
+
+    // Subrecord 1
+    reader.read_subrecord_length();
+
+    layer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
+    reader.skip( 2 );
+    net = reader.read<u_int16_t>();
+    reader.skip( 2 );
+    component = reader.read<u_int16_t>();
+    reader.skip( 9 );
+
+    std::map<std::string, std::string> properties = reader.read_properties();
+    wxASSERT( !properties.empty() );
+
+    kind          = ALTIUM_PARSER::property_int( properties, "KIND", 0 );
+    iskeepout     = ALTIUM_PARSER::property_bool( properties, "KEEPOUT", false );
+    isboardcutout = ALTIUM_PARSER::property_bool( properties, "ISBOARDCUTOUT", false );
+
+    uint32_t num_vertices = reader.read<uint32_t>();
+
+    for( int i = 0; i < num_vertices; i++ )
+    {
+        // no idea why, but for regions the coordinates are stored as double and not as int32_t
+        double x = reader.read<double>();
+        double y = -reader.read<double>();
+
+        vertices.emplace_back( x * 2.54, y * 2.54 );
+    }
 
     reader.subrecord_skip();
 

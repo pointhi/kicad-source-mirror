@@ -33,6 +33,7 @@ types:
             record_id::track6: track
             record_id::text6: text
             record_id::fill6: fill
+            record_id::boardregion6: boardregion
 
   arc:
     seq:
@@ -353,12 +354,53 @@ types:
       - id: rotation
         type: f8
 
+  boardregion:
+    seq:
+    - id: sub1_len
+      type: u4
+    - id: data
+      type: boardregion_sub1
+      size: sub1_len
+
+  boardregion_sub1:
+    seq:
+    - id: layer
+      type: u1
+    - size: 2
+    - id: net
+      type: u2
+    - size: 2
+    - id: component
+      type: u2
+    - size: 5
+    - id: holecount  # TODO: check
+      type: u2
+    - size: 2
+    - id: propterties_len
+      type: u4
+    - id: properties
+      size: propterties_len
+      type: str
+    - id: vertices_num
+      type: u4
+    - id: vertices
+      repeat: expr
+      repeat-expr: vertices_num
+      type: xyf
+
   xy:
     seq:
       - id: x
         type: s4
       - id: y
         type: s4
+
+  xyf:  # no idea why a different format?
+    seq:
+      - id: x
+        type: f8
+      - id: y
+        type: f8
 
 enums:
   record_id:
@@ -368,6 +410,7 @@ enums:
     0x04: track6
     0x05: text6
     0x06: fill6
+    0x0b: boardregion6
 
   boolean:
     0: false

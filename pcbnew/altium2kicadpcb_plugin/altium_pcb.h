@@ -233,6 +233,20 @@ struct APOLYGON6
     explicit APOLYGON6( ALTIUM_PARSER& reader );
 };
 
+struct AREGION6
+{
+    ALTIUM_LAYER layer;
+    u_int16_t    net;
+    u_int16_t    component;
+
+    int                  kind;      // I asume this means if normal or keepout?
+    bool                 iskeepout; // does not necessary tell us if this is a keepout
+    bool                 isboardcutout;
+    std::vector<wxPoint> vertices;
+
+    explicit AREGION6( ALTIUM_PARSER& reader );
+};
+
 struct AARC6
 {
     ALTIUM_LAYER layer;
@@ -419,6 +433,10 @@ private:
     void ParseTexts6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseFills6Data(
+            const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    void ParseBoardRegionsData(
+            const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    void ParseRegions6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
 
 
