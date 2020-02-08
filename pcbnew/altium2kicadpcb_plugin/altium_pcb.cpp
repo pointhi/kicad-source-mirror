@@ -895,6 +895,11 @@ void ALTIUM_PCB::ParsePads6Data(
             break;
         }
 
+        if( elem.pastemaskexpansionmode == ALTIUM_PAD_RULE::MANUAL )
+        {
+            pad->SetLocalSolderPasteMargin( elem.pastemaskexpansionmanual );
+        }
+
         if( elem.tenttop )
         {
             pad->SetLayerSet( pad->GetLayerSet().reset( F_Mask ) );
@@ -1313,9 +1318,11 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
     plated    = reader.read<u_int8_t>() != 0;
     reader.skip( 1 );
     padmode = static_cast<ALTIUM_PAD_MODE>( reader.read<u_int8_t>() );
-    reader.skip( 38 );
-    pastemaskexpansionmode = reader.read<u_int8_t>();
-    soldermaskexpansion    = reader.read<u_int8_t>();
+    reader.skip( 23 );
+    pastemaskexpansionmanual = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
+    reader.skip( 11 );
+    pastemaskexpansionmode  = static_cast<ALTIUM_PAD_RULE>( reader.read<u_int8_t>() );
+    soldermaskexpansionmode = static_cast<ALTIUM_PAD_RULE>( reader.read<u_int8_t>() =;
     reader.skip( 3 );
     holerotation = reader.read<double>();
     if( subrecord5 == 120 )

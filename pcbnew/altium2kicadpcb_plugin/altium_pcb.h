@@ -66,6 +66,13 @@ enum class ALTIUM_PAD_MODE
     FULL_STACK        = 2
 };
 
+enum class ALTIUM_PAD_RULE
+{
+    UNKNOWN = 0,
+    RULE    = 1,
+    MANUAL  = 2
+};
+
 enum class ALTIUM_TEXT_POSITION
 {
     LEFT_TOP      = 1,
@@ -278,8 +285,9 @@ struct APAD6
     bool     plated;
     bool     tenttop;
     bool     tentbootom;
-    u_int8_t pastemaskexpansionmode;
-    u_int8_t soldermaskexpansion;
+    ALTIUM_PAD_RULE pastemaskexpansionmode;
+    int32_t         pastemaskexpansionmanual;
+    ALTIUM_PAD_RULE soldermaskexpansionmode;
     double   holerotation;
 
     ALTIUM_LAYER tolayer;

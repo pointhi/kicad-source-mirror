@@ -158,18 +158,19 @@ types:
         type: u4
       - id: cpc  # $pos+105
         type: u4
-      - id: cpe  # $pos+109  - pastemaskexpanionmanual?
-        type: u4
+      - id: pastemaskexpanionmanual
+        type: s4
       - id: cse  # $pos+113
         type: u4
       - id: cpl  # $pos+117
         type: u1
       - size: 6
-      - id: pastemaskexpansionmode  # $pos+124 - cpev?
+      - id: pastemaskexpansionmode  # $pos+124
         type: u1
-      - id: soldermaskexpansion  # $pos+125 - csev?
+        enum: pad_mode
+      - id: soldermaskexpansionmode  # $pos+125
         type: u1
-        enum: pad_soldermaskexpansion
+        enum: pad_mode
       - size: 3
       - id: holerotation  # $pos+129
         type: f8
@@ -394,7 +395,8 @@ enums:
     1: top_middle_bottom
     2: full_stack
 
-  pad_soldermaskexpansion:
+  enum: pad_mode:
+    0: unknown
     1: rule
     2: manual
 
