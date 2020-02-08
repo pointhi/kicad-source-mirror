@@ -288,6 +288,7 @@ struct APAD6
     ALTIUM_PAD_RULE pastemaskexpansionmode;
     int32_t         pastemaskexpansionmanual;
     ALTIUM_PAD_RULE soldermaskexpansionmode;
+    int32_t         soldermaskexpansionmanual;
     double   holerotation;
 
     ALTIUM_LAYER tolayer;

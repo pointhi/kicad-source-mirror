@@ -160,17 +160,17 @@ types:
         type: u4
       - id: pastemaskexpanionmanual
         type: s4
-      - id: cse  # $pos+113
-        type: u4
+      - id: soldermaskexpansionmanual  # $pos+113
+        type: s4
       - id: cpl  # $pos+117
         type: u1
       - size: 6
       - id: pastemaskexpansionmode  # $pos+124
         type: u1
-        enum: pad_mode
+        enum: pad_mode_rule
       - id: soldermaskexpansionmode  # $pos+125
         type: u1
-        enum: pad_mode
+        enum: pad_mode_rule
       - size: 3
       - id: holerotation  # $pos+129
         type: f8
@@ -395,7 +395,7 @@ enums:
     1: top_middle_bottom
     2: full_stack
 
-  enum: pad_mode:
+  pad_mode_rule:
     0: unknown
     1: rule
     2: manual
