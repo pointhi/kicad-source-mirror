@@ -218,7 +218,11 @@ types:
       repeat: expr
       repeat-expr: 32
     - size: 1
-    - size: 32
+    - id: shape_alt
+      type: u1
+      enum: pad_shape_alt
+      repeat: expr
+      repeat-expr: 32
     - id: corner_radius
       type: u1
       repeat: expr
@@ -379,19 +383,16 @@ enums:
     2: rect
     3: octagonal
 
+  pad_shape_alt:
+    0: unknown
+    1: round
+    2: rect
+    3: octagonal
+    9: roundrectangle
+
   pad_hole_type:
     0: normal
     2: slot
-
-  pad_shape_alt:  # TODO: for what?
-    0: round2
-    1: round1
-    2: rectangle
-    3: octagonal
-    4: thermalrelief
-    6: point0
-    7: point1
-    9: roundrectangle
 
   pad_mode:
     0: simple

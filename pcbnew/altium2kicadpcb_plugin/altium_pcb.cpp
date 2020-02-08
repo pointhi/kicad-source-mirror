@@ -853,8 +853,7 @@ void ALTIUM_PCB::ParsePads6Data(
             break;
         case ALTIUM_PAD_SHAPE::CIRCLE:
             if( elem.sizeAndShape
-                    && ( elem.sizeAndShape->cornerradius[0] < 100
-                            || elem.topsize.x != elem.topsize.y ) )
+                    && elem.sizeAndShape->alt_shape[0] == ALTIUM_PAD_SHAPE_ALT::ROUNDRECT )
             {
                 pad->SetShape( PAD_SHAPE_T::PAD_SHAPE_ROUNDRECT ); // 100 = round, 0 = rectangular
                 double ratio = elem.sizeAndShape->cornerradius[0] / 200.;
@@ -1367,7 +1366,13 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
             sizeAndShape->holeoffset[i].y = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
         }
 
-        reader.skip( 33 );
+        reader.skip( 1 );
+
+        for( int i = 0; i < 32; i++ )
+        {
+            sizeAndShape->alt_shape[i] =
+                    static_cast<ALTIUM_PAD_SHAPE_ALT>( reader.read<u_int8_t>() );
+        }
 
         for( int i = 0; i < 32; i++ )
         {

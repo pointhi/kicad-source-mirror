@@ -50,6 +50,15 @@ enum class ALTIUM_PAD_SHAPE
     OCTAGONAL = 3
 };
 
+enum class ALTIUM_PAD_SHAPE_ALT
+{
+    UNKNOWN   = 0,
+    CIRCLE    = 1,
+    RECT      = 2, // TODO: valid?
+    OCTAGONAL = 3, // TODO: valid?
+    ROUNDRECT = 9
+};
+
 enum class ALTIUM_PAD_MODE
 {
     SIMPLE            = 0,
@@ -241,6 +250,7 @@ struct APAD6_SIZE_AND_SHAPE
     wxSize   inner_size[29];
     ALTIUM_PAD_SHAPE inner_shape[29];
     wxPoint  holeoffset[32];
+    ALTIUM_PAD_SHAPE_ALT alt_shape[32];
     u_int8_t cornerradius[32];
 };
 
