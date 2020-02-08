@@ -201,7 +201,14 @@ types:
       enum: pad_shape
       repeat: expr
       repeat-expr: 29
-    - size: 14
+    - size: 1
+    - id: hole_type
+      type: u1
+      enum: pad_hole_type
+    - id: slot_length
+      type: s4
+    - id: slot_rotation
+      type: f8
     - id: holeoffset_x
       type: s4
       repeat: expr
@@ -371,6 +378,10 @@ enums:
     1: circle
     2: rect
     3: octagonal
+
+  pad_hole_type:
+    0: normal
+    2: slot
 
   pad_shape_alt:  # TODO: for what?
     0: round2

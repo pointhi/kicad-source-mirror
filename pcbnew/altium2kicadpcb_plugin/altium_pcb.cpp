@@ -820,7 +820,27 @@ void ALTIUM_PCB::ParsePads6Data(
                               MULTI_LAYER ); // TODO: I assume other values are possible as well?
             pad->SetAttribute( elem.plated ? PAD_ATTR_T::PAD_ATTRIB_STANDARD :
                                              PAD_ATTR_T::PAD_ATTRIB_HOLE_NOT_PLATED );
-            pad->SetDrillSize( wxSize( elem.holesize, elem.holesize ) );
+            if( elem.sizeAndShape && elem.sizeAndShape->isslot )
+            {
+                pad->SetDrillShape( PAD_DRILL_SHAPE_T::PAD_DRILL_SHAPE_OBLONG );
+                // ensure 90 degree angles TODO: better solution
+                int angle90 = ( (int) ( elem.sizeAndShape->slotrotation / 90. ) + 4 ) % 4;
+                wxASSERT( ( (double) angle90 * 90. ) == elem.sizeAndShape->slotrotation );
+
+                if( angle90 == 0 || angle90 == 2 )
+                {
+                    pad->SetDrillSize( wxSize( elem.sizeAndShape->slotsize, elem.holesize ) );
+                }
+                else
+                {
+                    pad->SetDrillSize( wxSize( elem.holesize, elem.sizeAndShape->slotsize ) );
+                }
+            }
+            else
+            {
+                pad->SetDrillShape( PAD_DRILL_SHAPE_T::PAD_DRILL_SHAPE_CIRCLE );
+                pad->SetDrillSize( wxSize( elem.holesize, elem.holesize ) );
+            }
         }
 
         wxASSERT( elem.padmode == ALTIUM_PAD_MODE::SIMPLE );
@@ -1332,7 +1352,11 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
             sizeAndShape->inner_shape[i] = static_cast<ALTIUM_PAD_SHAPE>( reader.read<u_int8_t>() );
         }
 
-        reader.skip( 14 );
+        reader.skip( 1 );
+
+        sizeAndShape->isslot       = reader.read<u_int8_t>() == 0x02;
+        sizeAndShape->slotsize     = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
+        sizeAndShape->slotrotation = reader.read<double>();
 
         for( int i = 0; i < 32; i++ )
         {

@@ -234,6 +234,10 @@ struct AARC6
 
 struct APAD6_SIZE_AND_SHAPE
 {
+    bool      isslot;
+    u_int32_t slotsize;
+    double    slotrotation;
+
     wxSize   inner_size[29];
     ALTIUM_PAD_SHAPE inner_shape[29];
     wxPoint  holeoffset[32];
