@@ -868,12 +868,21 @@ void ALTIUM_PCB::ParsePads6Data(
             break;
         case ALTIUM_LAYER::BOTTOM_LAYER:
             pad->SetLayer( B_Cu );
-            pad->SetLayerSet( LSET( 3, B_Cu, B_Paste, B_Mask ) ); // TODO: flip footprint?
+            pad->SetLayerSet( FlipLayerMask( D_PAD::SMDMask() ) );
             break;
         case ALTIUM_LAYER::MULTI_LAYER:
         default:
             pad->SetLayerSet( elem.plated ? D_PAD::StandardMask() : D_PAD::UnplatedHoleMask() );
             break;
+        }
+
+        if( elem.tenttop )
+        {
+            pad->SetLayerSet( pad->GetLayerSet().reset( F_Mask ) );
+        }
+        if( elem.tentbootom )
+        {
+            pad->SetLayerSet( pad->GetLayerSet().reset( B_Mask ) );
         }
     }
 
@@ -1260,7 +1269,12 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
     wxASSERT( subrecord5 >= 120 ); // TODO: exact minimum length we know?
 
     layer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
-    reader.skip( 2 );
+
+    u_int8_t flags1 = reader.read<u_int8_t>();
+    tentbootom      = ( flags1 & 0x40 ) != 0;
+    tenttop         = ( flags1 & 0x20 ) != 0;
+
+    reader.skip( 1 );
     net = reader.read<u_int16_t>();
     reader.skip( 2 );
     component = reader.read<u_int16_t>();

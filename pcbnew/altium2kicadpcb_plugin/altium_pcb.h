@@ -262,6 +262,8 @@ struct APAD6
 
     double   direction;
     bool     plated;
+    bool     tenttop;
+    bool     tentbootom;
     u_int8_t pastemaskexpansionmode;
     u_int8_t soldermaskexpansion;
     double   holerotation;

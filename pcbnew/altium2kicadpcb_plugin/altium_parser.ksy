@@ -102,10 +102,16 @@ types:
 
   pad_sub5:
     seq:
-      - id: altlayer  # $pos+23
+      - id: layer  # $pos+23
         type: u1
         enum: layer
-      - size: 2
+      - type: b1
+      - id: tent_bottom
+        type: b1
+      - id: tent_top
+        type: b1
+      - type: b5
+      - size: 1
       - id: net  # $pos+26
         type: u2
       - size: 2
