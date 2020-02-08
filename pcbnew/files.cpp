@@ -88,6 +88,7 @@ bool AskLoadBoardFileName( wxWindow* aParent, int* aCtl, wxString* aFileName, bo
         {PCadPcbFileWildcard(),                IO_MGR::PCAD },                  // Import board files
         {AltiumDesignerPcbFileWildcard(),      IO_MGR::ALTIUM_DESIGNER },       // Import board files
         {AltiumCircuitStudioPcbFileWildcard(), IO_MGR::ALTIUM_CIRCUIT_STUDIO }, // Import board files
+        {AltiumCircuitMakerPcbFileWildcard(),  IO_MGR::ALTIUM_CIRCUIT_MAKER }, // Import board files
     };
 
     wxFileName  fileName( *aFileName );
@@ -379,6 +380,10 @@ IO_MGR::PCB_FILE_T plugin_type( const wxString& aFileName, int aCtl )
     else if( fn.GetExt().CmpNoCase(  IO_MGR::GetFileExtension( IO_MGR::ALTIUM_CIRCUIT_STUDIO ) ) == 0 )
     {
         pluginType = IO_MGR::ALTIUM_CIRCUIT_STUDIO;
+    }
+    else if( fn.GetExt().CmpNoCase(  IO_MGR::GetFileExtension( IO_MGR::ALTIUM_CIRCUIT_MAKER ) ) == 0 )
+    {
+        pluginType = IO_MGR::ALTIUM_CIRCUIT_MAKER;
     }
     else
     {

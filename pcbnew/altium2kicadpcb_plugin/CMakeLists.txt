@@ -7,6 +7,7 @@ include_directories( . )
 
 
 set( ALTIUM2PCBNEW_SRCS
+    altium_circuit_maker_plugin.cpp
     altium_circuit_studio_plugin.cpp
     altium_designer_plugin.cpp
     altium_pcb.cpp

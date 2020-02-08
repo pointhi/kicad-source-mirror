@@ -359,6 +359,22 @@ const std::string TRACKS6_DATA     = "530C20C225354B858B2578CAB8C08D\\Data";
 const std::string VIAS6_DATA       = "CA5F5989BCDB404DA70A9D1D3D5758\\Data";
 }; // namespace ALTIUM_CIRCUIT_STUDIO
 
+// those directories were found by searching for equivalent files in both formats
+namespace ALTIUM_CIRCUIT_MAKER
+{
+const std::string FILE_HEADER = "FileHeader";
+
+const std::string ARCS6_DATA       = "1CEEB63FB33847F8AFC4485F64735E\\Data";
+const std::string BOARD6_DATA      = "96B09F5C6CEE434FBCE0DEB3E88E70\\Data";
+const std::string COMPONENTS6_DATA = "F9D060ACC7DD4A85BC73CB785BAC81\\Data";
+const std::string FILLS6_DATA      = "6FFE038462A940E9B422EFC8F5D85E\\Data";
+const std::string NETS6_DATA       = "35D7CF51BB9B4875B3A138B32D80DC\\Data";
+const std::string PADS6_DATA       = "4F501041A9BC4A06BDBDAB67D3820E\\Data";
+const std::string POLYGONS6_DATA   = "A1931C8B0B084A61AA45146575FDD3\\Data";
+const std::string TEXTS6_DATA      = "A34BC67C2A5F408D8F377378C5C5E2\\Data";
+const std::string TRACKS6_DATA     = "412A754DBB864645BF01CD6A80C358\\Data";
+const std::string VIAS6_DATA       = "C87A685A0EFA4A90BEEFD666198B56\\Data";
+}; // namespace ALTIUM_CIRCUIT_MAKER
 
 void ALTIUM_PCB::ParseDesigner( const CFB::CompoundFileReader& aReader )
 {
@@ -470,6 +486,67 @@ void ALTIUM_PCB::ParseCircuitStudio( const CFB::CompoundFileReader& aReader )
             } );
 
     ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::FILLS6_DATA,
+            []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseFills6Data( aReader, fileHeader );
+            } );
+
+    FinishParsingHelper();
+}
+
+void ALTIUM_PCB::ParseCircuitMaker( const CFB::CompoundFileReader& aReader )
+{
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::FILE_HEADER,
+            []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseFileHeader( aReader, fileHeader );
+            } );
+
+    // TODO: Board Stackup seems to differ from Altium Designer
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::BOARD6_DATA,
+            []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseBoard6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::COMPONENTS6_DATA,
+            []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseComponents6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::NETS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseNets6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::POLYGONS6_DATA,
+            []( auto c, auto aReader, auto fileHeader ) {
+                c.ParsePolygons6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::ARCS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseArcs6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::PADS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
+                c.ParsePads6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::VIAS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseVias6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::TRACKS6_DATA,
+            []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseTracks6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::TEXTS6_DATA,
+            []( auto c, auto aReader, auto fileHeader ) {
+                c.ParseTexts6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::FILLS6_DATA,
             []( auto c, auto aReader, auto fileHeader ) {
                 c.ParseFills6Data( aReader, fileHeader );
             } );

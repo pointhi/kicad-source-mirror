@@ -30,7 +30,7 @@
 
 #include <wx/string.h>
 
-#include <altium_circuit_studio_plugin.h>
+#include <altium_circuit_maker_plugin.h>
 #include <altium_pcb.h>
 
 #include <class_board.h>
@@ -38,31 +38,31 @@
 #include <compoundfilereader.h>
 #include <utf.h>
 
-ALTIUM_CIRCUIT_STUDIO_PLUGIN::ALTIUM_CIRCUIT_STUDIO_PLUGIN()
+ALTIUM_CIRCUIT_MAKER_PLUGIN::ALTIUM_CIRCUIT_MAKER_PLUGIN()
 {
     m_board = nullptr;
     m_props = nullptr;
 }
 
 
-ALTIUM_CIRCUIT_STUDIO_PLUGIN::~ALTIUM_CIRCUIT_STUDIO_PLUGIN()
+ALTIUM_CIRCUIT_MAKER_PLUGIN::~ALTIUM_CIRCUIT_MAKER_PLUGIN()
 {
 }
 
 
-const wxString ALTIUM_CIRCUIT_STUDIO_PLUGIN::PluginName() const
+const wxString ALTIUM_CIRCUIT_MAKER_PLUGIN::PluginName() const
 {
-    return wxT( "Altium Circuit Studio" );
+    return wxT( "Altium Circuit Maker" );
 }
 
 
-const wxString ALTIUM_CIRCUIT_STUDIO_PLUGIN::GetFileExtension() const
+const wxString ALTIUM_CIRCUIT_MAKER_PLUGIN::GetFileExtension() const
 {
-    return wxT( "CSPcbDoc" );
+    return wxT( "CMPcbDoc" );
 }
 
 
-BOARD* ALTIUM_CIRCUIT_STUDIO_PLUGIN::Load(
+BOARD* ALTIUM_CIRCUIT_MAKER_PLUGIN::Load(
         const wxString& aFileName, BOARD* aAppendToMe, const PROPERTIES* aProperties )
 {
     m_props = aProperties;
@@ -91,7 +91,7 @@ BOARD* ALTIUM_CIRCUIT_STUDIO_PLUGIN::Load(
 
     // Parse File
     ALTIUM_PCB pcb( m_board );
-    pcb.ParseCircuitStudio( reader );
+    pcb.ParseCircuitMaker( reader );
 
     // Close File
     fclose( fp );

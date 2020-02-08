@@ -25,6 +25,7 @@
 #include <wx/filename.h>
 #include <wx/uri.h>
 
+#include <altium2kicadpcb_plugin/altium_circuit_maker_plugin.h>
 #include <altium2kicadpcb_plugin/altium_circuit_studio_plugin.h>
 #include <altium2kicadpcb_plugin/altium_designer_plugin.h>
 #include <config.h>
@@ -211,6 +212,9 @@ static IO_MGR::REGISTER_PLUGIN registerAltiumDesignerPlugin( IO_MGR::ALTIUM_DESI
 static IO_MGR::REGISTER_PLUGIN registerAltiumCircuitStudioPlugin( IO_MGR::ALTIUM_CIRCUIT_STUDIO,
         wxT( "Altium Circuit Studio" ),
         []() -> PLUGIN* { return new ALTIUM_CIRCUIT_STUDIO_PLUGIN; } );
+static IO_MGR::REGISTER_PLUGIN registerAltiumCircuitMakerPlugin( IO_MGR::ALTIUM_CIRCUIT_MAKER,
+        wxT( "Altium Circuit Maker" ),
+        []() -> PLUGIN* { return new ALTIUM_CIRCUIT_MAKER_PLUGIN; } );
 #ifdef BUILD_GITHUB_PLUGIN
 static IO_MGR::REGISTER_PLUGIN registerGithubPlugin( IO_MGR::GITHUB, wxT("Github"), []() -> PLUGIN* { return new GITHUB_PLUGIN; } );
 #endif /* BUILD_GITHUB_PLUGIN */

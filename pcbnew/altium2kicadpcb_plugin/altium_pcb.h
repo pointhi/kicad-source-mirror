@@ -356,6 +356,7 @@ public:
 
     void ParseDesigner( const CFB::CompoundFileReader& aReader );
     void ParseCircuitStudio( const CFB::CompoundFileReader& aReader );
+    void ParseCircuitMaker( const CFB::CompoundFileReader& aReader );
 
 private:
     ALTIUM_LAYER altium_layer_from_name( const std::string& aName ) const;

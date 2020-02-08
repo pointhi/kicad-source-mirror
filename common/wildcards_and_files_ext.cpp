@@ -252,7 +252,12 @@ wxString AltiumDesignerPcbFileWildcard()
 
 wxString AltiumCircuitStudioPcbFileWildcard()
 {
-    return _( "Altium Circuit Studio PCB files" ) + AddFileExtListToFilter( { "CsPcbDoc" } );
+    return _( "Altium Circuit Studio PCB files" ) + AddFileExtListToFilter( { "CSPcbDoc" } );
+}
+
+wxString AltiumCircuitMakerPcbFileWildcard()
+{
+    return _( "Altium Circuit Maker PCB files" ) + AddFileExtListToFilter( { "CMPcbDoc" } );
 }
 
 wxString PcbFileWildcard()
