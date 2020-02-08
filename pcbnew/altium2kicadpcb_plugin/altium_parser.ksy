@@ -173,18 +173,13 @@ types:
       - size: 3
       - id: holerotation  # $pos+129
         type: f8
-      #- id: tolayer
-      #  type: u1
-      #  enum: layer
-      #  if: some_len == 120
-      #- size: 2
-      #  if: some_len == 120
-      #- id: fromlayer
-      #  type: u1
-      #  enum: layer
-      #  if: some_len == 120
-      #- size: 2
-      #  if: some_len == 120
+      - size: 4
+      - id: testpoint_assembly_top
+        type: u1
+        enum: boolean
+      - id: testpoint_assembly_bottom
+        type: u1
+        enum: boolean
 
   pad_sub6:
     seq:
