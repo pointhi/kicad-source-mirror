@@ -138,6 +138,12 @@ ALTIUM_LAYER ALTIUM_PCB::altium_layer_from_name( const std::string& aName ) cons
 
 PCB_LAYER_ID ALTIUM_PCB::kicad_layer( ALTIUM_LAYER aAltiumLayer ) const
 {
+    auto override = m_layermap.find( aAltiumLayer );
+    if( override != m_layermap.end() )
+    {
+        return override->second;
+    }
+
     switch( aAltiumLayer )
     {
     case ALTIUM_LAYER::UNKNOWN:
@@ -386,137 +392,130 @@ const std::string VIAS6_DATA        = "C87A685A0EFA4A90BEEFD666198B56\\Data";
 
 void ALTIUM_PCB::ParseDesigner( const CFB::CompoundFileReader& aReader )
 {
-    ParseHelper(
-            aReader, ALTIUM_DESIGNER::FILE_HEADER, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseFileHeader( aReader, fileHeader );
-            } );
+    ParseHelper( aReader, ALTIUM_DESIGNER::FILE_HEADER, [this]( auto aReader, auto fileHeader ) {
+        this->ParseFileHeader( aReader, fileHeader );
+    } );
 
-    ParseHelper(
-            aReader, ALTIUM_DESIGNER::BOARD6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseBoard6Data( aReader, fileHeader );
-            } );
-
-    ParseHelper( aReader, ALTIUM_DESIGNER::COMPONENTS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseComponents6Data( aReader, fileHeader );
-            } );
-
-    ParseHelper( aReader, ALTIUM_DESIGNER::NETS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-        c.ParseNets6Data( aReader, fileHeader );
+    ParseHelper( aReader, ALTIUM_DESIGNER::BOARD6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParseBoard6Data( aReader, fileHeader );
     } );
 
     ParseHelper(
-            aReader, ALTIUM_DESIGNER::POLYGONS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParsePolygons6Data( aReader, fileHeader );
+            aReader, ALTIUM_DESIGNER::COMPONENTS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseComponents6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_DESIGNER::ARCS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-        c.ParseArcs6Data( aReader, fileHeader );
+    ParseHelper( aReader, ALTIUM_DESIGNER::NETS6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParseNets6Data( aReader, fileHeader );
     } );
 
-    ParseHelper( aReader, ALTIUM_DESIGNER::PADS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-        c.ParsePads6Data( aReader, fileHeader );
+    ParseHelper( aReader, ALTIUM_DESIGNER::POLYGONS6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParsePolygons6Data( aReader, fileHeader );
     } );
 
-    ParseHelper( aReader, ALTIUM_DESIGNER::VIAS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-        c.ParseVias6Data( aReader, fileHeader );
+    ParseHelper( aReader, ALTIUM_DESIGNER::ARCS6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParseArcs6Data( aReader, fileHeader );
+    } );
+
+    ParseHelper( aReader, ALTIUM_DESIGNER::PADS6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParsePads6Data( aReader, fileHeader );
+    } );
+
+    ParseHelper( aReader, ALTIUM_DESIGNER::VIAS6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParseVias6Data( aReader, fileHeader );
+    } );
+
+    ParseHelper( aReader, ALTIUM_DESIGNER::TRACKS6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParseTracks6Data( aReader, fileHeader );
+    } );
+
+    ParseHelper( aReader, ALTIUM_DESIGNER::TEXTS6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParseTexts6Data( aReader, fileHeader );
+    } );
+
+    ParseHelper( aReader, ALTIUM_DESIGNER::FILLS6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParseFills6Data( aReader, fileHeader );
     } );
 
     ParseHelper(
-            aReader, ALTIUM_DESIGNER::TRACKS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseTracks6Data( aReader, fileHeader );
+            aReader, ALTIUM_DESIGNER::BOARDREGIONS_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseBoardRegionsData( aReader, fileHeader );
             } );
 
-    ParseHelper(
-            aReader, ALTIUM_DESIGNER::TEXTS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseTexts6Data( aReader, fileHeader );
-            } );
-
-    ParseHelper(
-            aReader, ALTIUM_DESIGNER::FILLS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseFills6Data( aReader, fileHeader );
-            } );
-
-    ParseHelper( aReader, ALTIUM_DESIGNER::BOARDREGIONS_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseBoardRegionsData( aReader, fileHeader );
-            } );
-
-    ParseHelper(
-            aReader, ALTIUM_DESIGNER::REGIONS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseRegions6Data( aReader, fileHeader );
-            } );
+    ParseHelper( aReader, ALTIUM_DESIGNER::REGIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParseRegions6Data( aReader, fileHeader );
+    } );
 
     FinishParsingHelper();
 }
 
 void ALTIUM_PCB::ParseCircuitStudio( const CFB::CompoundFileReader& aReader )
 {
-    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::FILE_HEADER,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseFileHeader( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::FILE_HEADER, [this]( auto aReader, auto fileHeader ) {
+                this->ParseFileHeader( aReader, fileHeader );
             } );
 
     // TODO: Board Stackup seems to differ from Altium Designer
-    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::BOARD6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseBoard6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::BOARD6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseBoard6Data( aReader, fileHeader );
             } );
 
     ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::COMPONENTS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseComponents6Data( aReader, fileHeader );
+            [this]( auto aReader, auto fileHeader ) {
+                this->ParseComponents6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::NETS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseNets6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::NETS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseNets6Data( aReader, fileHeader );
             } );
 
     ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::POLYGONS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParsePolygons6Data( aReader, fileHeader );
+            [this]( auto aReader, auto fileHeader ) {
+                this->ParsePolygons6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::ARCS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseArcs6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::ARCS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseArcs6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::PADS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParsePads6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::PADS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParsePads6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::VIAS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseVias6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::VIAS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseVias6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::TRACKS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseTracks6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::TRACKS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseTracks6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::TEXTS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseTexts6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::TEXTS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseTexts6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::FILLS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseFills6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::FILLS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseFills6Data( aReader, fileHeader );
             } );
 
     // TODO: enable
     //    ParseHelper(
-    //            aReader, ALTIUM_CIRCUIT_STUDIO::BOARDREGIONS_DATA, []( auto c, auto aReader, auto fileHeader ) {
-    //                c.ParseBoardRegionsData( aReader, fileHeader );
+    //            aReader, ALTIUM_CIRCUIT_STUDIO::BOARDREGIONS_DATA, [this]( auto aReader, auto fileHeader ) {
+    //                this->ParseBoardRegionsData( aReader, fileHeader );
     //            } );
     //
     //    ParseHelper(
-    //            aReader, ALTIUM_CIRCUIT_STUDIO::REGIONS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-    //                c.ParseRegions6Data( aReader, fileHeader );
+    //            aReader, ALTIUM_CIRCUIT_STUDIO::REGIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
+    //                this->ParseRegions6Data( aReader, fileHeader );
     //            } );
 
     FinishParsingHelper();
@@ -524,70 +523,70 @@ void ALTIUM_PCB::ParseCircuitStudio( const CFB::CompoundFileReader& aReader )
 
 void ALTIUM_PCB::ParseCircuitMaker( const CFB::CompoundFileReader& aReader )
 {
-    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::FILE_HEADER,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseFileHeader( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::FILE_HEADER, [this]( auto aReader, auto fileHeader ) {
+                this->ParseFileHeader( aReader, fileHeader );
             } );
 
     // TODO: Board Stackup seems to differ from Altium Designer
-    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::BOARD6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseBoard6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::BOARD6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseBoard6Data( aReader, fileHeader );
             } );
 
     ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::COMPONENTS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseComponents6Data( aReader, fileHeader );
+            [this]( auto aReader, auto fileHeader ) {
+                this->ParseComponents6Data( aReader, fileHeader );
             } );
 
     ParseHelper(
-            aReader, ALTIUM_CIRCUIT_MAKER::NETS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseNets6Data( aReader, fileHeader );
-            } );
-
-    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::POLYGONS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParsePolygons6Data( aReader, fileHeader );
+            aReader, ALTIUM_CIRCUIT_MAKER::NETS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseNets6Data( aReader, fileHeader );
             } );
 
     ParseHelper(
-            aReader, ALTIUM_CIRCUIT_MAKER::ARCS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseArcs6Data( aReader, fileHeader );
+            aReader, ALTIUM_CIRCUIT_MAKER::POLYGONS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParsePolygons6Data( aReader, fileHeader );
             } );
 
     ParseHelper(
-            aReader, ALTIUM_CIRCUIT_MAKER::PADS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParsePads6Data( aReader, fileHeader );
+            aReader, ALTIUM_CIRCUIT_MAKER::ARCS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseArcs6Data( aReader, fileHeader );
             } );
 
     ParseHelper(
-            aReader, ALTIUM_CIRCUIT_MAKER::VIAS6_DATA, []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseVias6Data( aReader, fileHeader );
+            aReader, ALTIUM_CIRCUIT_MAKER::PADS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParsePads6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::TRACKS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseTracks6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::VIAS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseVias6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::TEXTS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseTexts6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::TRACKS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseTracks6Data( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::FILLS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseFills6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::TEXTS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseTexts6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::FILLS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseFills6Data( aReader, fileHeader );
             } );
 
     ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::BOARDREGIONS_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseBoardRegionsData( aReader, fileHeader );
+            [this]( auto aReader, auto fileHeader ) {
+                this->ParseBoardRegionsData( aReader, fileHeader );
             } );
 
-    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::REGIONS6_DATA,
-            []( auto c, auto aReader, auto fileHeader ) {
-                c.ParseRegions6Data( aReader, fileHeader );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::REGIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseRegions6Data( aReader, fileHeader );
             } );
 
     FinishParsingHelper();
@@ -597,10 +596,10 @@ void ALTIUM_PCB::ParseHelper( const CFB::CompoundFileReader& aReader, const std:
         parse_function_pointer_t fp )
 {
     const CFB::COMPOUND_FILE_ENTRY* file = FindStream( aReader, streamName.c_str() );
-    wxASSERT( file != nullptr );
+    wxASSERT_MSG( file != nullptr, "File not found: " + streamName );
     if( file != nullptr )
     {
-        fp( *this, aReader, file );
+        fp( aReader, file );
     }
 }
 
@@ -690,16 +689,21 @@ void ALTIUM_PCB::ParseBoard6Data(
     for( ; it != stackup.GetList().end() && ( *it )->GetType() != BS_ITEM_TYPE_COPPER; ++it )
         ;
 
+    auto curLayer = static_cast<int>( F_Cu );
     for( size_t i                                = static_cast<size_t>( ALTIUM_LAYER::TOP_LAYER );
             i < elem.stackup.size() && i != 0; i = elem.stackup[i - 1].nextId, layercount++ )
     {
         auto layer = elem.stackup.at( i - 1 ); // array starts with 0, but stackup with 1
+        m_layermap.insert(
+                { static_cast<ALTIUM_LAYER>( i ), static_cast<PCB_LAYER_ID>( curLayer++ ) } );
 
         wxASSERT( ( *it )->GetType() == BS_ITEM_TYPE_COPPER );
         ( *it )->SetThickness( layer.copperthick );
 
         if( ( *it )->GetBrdLayerId() == B_Cu )
         {
+            // overwrite entry from internal -> bottom
+            m_layermap.insert( { static_cast<ALTIUM_LAYER>( i ), B_Cu } );
             break;
         }
 

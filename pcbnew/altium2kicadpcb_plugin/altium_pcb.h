@@ -398,8 +398,7 @@ struct COMPOUND_FILE_ENTRY;
 
 // type declaration required for a helper method
 class ALTIUM_PCB;
-typedef std::function<void(
-        const ALTIUM_PCB&, const CFB::CompoundFileReader&, const CFB::COMPOUND_FILE_ENTRY* )>
+typedef std::function<void( const CFB::CompoundFileReader&, const CFB::COMPOUND_FILE_ENTRY* )>
         parse_function_pointer_t;
 
 
@@ -456,8 +455,9 @@ private:
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
 
 
-    BOARD*               m_board;
-    std::vector<MODULE*> m_components;
+    BOARD*                               m_board;
+    std::vector<MODULE*>                 m_components;
+    std::map<ALTIUM_LAYER, PCB_LAYER_ID> m_layermap; // used to correctly map copper layers
 };
 
 
