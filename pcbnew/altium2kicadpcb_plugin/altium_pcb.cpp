@@ -31,6 +31,8 @@
 #include <class_edge_mod.h>
 #include <class_text_mod.h>
 
+#include <board_stackup_manager/stackup_predefined_prms.h>
+
 #include <compoundfilereader.h>
 #include <convert_basic_shapes_to_polygon.h>
 #include <utf.h>
@@ -669,7 +671,47 @@ void ALTIUM_PCB::ParseBoard6Data(
     m_board->SetAuxOrigin( elem.sheetpos );
     m_board->SetGridOrigin( elem.sheetpos );
 
-    m_board->SetCopperLayerCount( elem.layercount );
+    // read layercount from stackup, because LAYERSETSCOUNT is not always correct?!
+    size_t layercount = 0;
+    for( size_t i                                = static_cast<size_t>( ALTIUM_LAYER::TOP_LAYER );
+            i < elem.stackup.size() && i != 0; i = elem.stackup[i - 1].nextId, layercount++ )
+        ;
+    m_board->SetCopperLayerCount( layercount );
+
+    BOARD_DESIGN_SETTINGS& designSettings = m_board->GetDesignSettings();
+    BOARD_STACKUP&         stackup        = designSettings.GetStackupDescriptor();
+
+    // create board stackup
+    stackup.RemoveAll(); // Just to be sure
+    stackup.BuildDefaultStackupList( &designSettings, layercount );
+
+    auto it = stackup.GetList().begin();
+    // find first copper layer
+    for( ; it != stackup.GetList().end() && ( *it )->GetType() != BS_ITEM_TYPE_COPPER; ++it )
+        ;
+
+    for( size_t i                                = static_cast<size_t>( ALTIUM_LAYER::TOP_LAYER );
+            i < elem.stackup.size() && i != 0; i = elem.stackup[i - 1].nextId, layercount++ )
+    {
+        auto layer = elem.stackup.at( i - 1 ); // array starts with 0, but stackup with 1
+
+        wxASSERT( ( *it )->GetType() == BS_ITEM_TYPE_COPPER );
+        ( *it )->SetThickness( layer.copperthick );
+
+        if( ( *it )->GetBrdLayerId() == B_Cu )
+        {
+            break;
+        }
+
+        ++it;
+        wxASSERT( ( *it )->GetType() == BS_ITEM_TYPE_DIELECTRIC );
+        ( *it )->SetThickness( layer.dielectricthick, 0 );
+        ( *it )->SetMaterial(
+                layer.dielectricmaterial.empty() ? NotSpecifiedPrm() : layer.dielectricmaterial );
+        ( *it )->SetEpsilonR( layer.dielectricconst, 0 );
+
+        ++it;
+    }
 }
 
 void ALTIUM_PCB::ParseComponents6Data(
@@ -1282,6 +1324,36 @@ ABOARD6::ABOARD6( ALTIUM_PARSER& reader )
             ALTIUM_PARSER::property_unit( properties, "SHEETHEIGHT", "0mil" ) );
 
     layercount = ALTIUM_PARSER::property_int( properties, "LAYERSETSCOUNT", 1 ) + 1;
+
+    for( size_t i = 1; i < std::numeric_limits<size_t>::max(); i++ )
+    {
+        const std::string layeri    = "LAYER" + std::to_string( i );
+        const std::string layername = layeri + "NAME";
+
+        auto layernameit = properties.find( layername );
+        if( layernameit == properties.end() )
+        {
+            break; // it doesn't seem like we know beforehand how many vertices are inside a polygon
+        }
+
+        ABOARD6_LAYER_STACKUP curlayer;
+
+        curlayer.name =
+                ALTIUM_PARSER::property_string( properties, layername, "" ); // TODO: trim string
+        curlayer.nextId = ALTIUM_PARSER::property_int( properties, layeri + "NEXT", 0 );
+        curlayer.prevId = ALTIUM_PARSER::property_int( properties, layeri + "PREV", 0 );
+        curlayer.copperthick =
+                ALTIUM_PARSER::property_unit( properties, layeri + "COPTHICK", "1.4mil" );
+
+        curlayer.dielectricconst =
+                ALTIUM_PARSER::property_double( properties, layeri + "DIELCONST", 0. );
+        curlayer.dielectricthick =
+                ALTIUM_PARSER::property_unit( properties, layeri + "DIELHEIGHT", "60mil" );
+        curlayer.dielectricmaterial =
+                ALTIUM_PARSER::property_string( properties, layeri + "DIELMATERIAL", "FR-4" );
+
+        stackup.push_back( curlayer );
+    }
 }
 
 ACOMPONENT6::ACOMPONENT6( ALTIUM_PARSER& reader )

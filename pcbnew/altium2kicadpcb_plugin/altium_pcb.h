@@ -182,12 +182,27 @@ enum class ALTIUM_LAYER
 
 class ALTIUM_PARSER;
 
+struct ABOARD6_LAYER_STACKUP
+{
+    std::string name;
+
+    size_t nextId;
+    size_t prevId;
+
+    int32_t copperthick;
+
+    double      dielectricconst;
+    int32_t     dielectricthick;
+    std::string dielectricmaterial;
+};
+
 struct ABOARD6
 {
     wxPoint sheetpos;
     wxSize  sheetsize;
 
     int layercount;
+    std::vector<ABOARD6_LAYER_STACKUP> stackup;
 
     explicit ABOARD6( ALTIUM_PARSER& reader );
 };
@@ -239,9 +254,10 @@ struct AREGION6
     u_int16_t    net;
     u_int16_t    component;
 
-    int                  kind;      // I asume this means if normal or keepout?
-    bool                 iskeepout; // does not necessary tell us if this is a keepout
-    bool                 isboardcutout;
+    int  kind;      // I asume this means if normal or keepout?
+    bool iskeepout; // does not necessary tell us if this is a keepout
+    bool isboardcutout;
+
     std::vector<wxPoint> vertices;
 
     explicit AREGION6( ALTIUM_PARSER& reader );
