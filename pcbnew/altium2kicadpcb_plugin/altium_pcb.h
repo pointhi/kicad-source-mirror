@@ -44,6 +44,19 @@ enum class ALTIUM_CLASS_KIND
     POLYGON_CLASS          = 7
 };
 
+enum class ALTIUM_RULE_KIND
+{
+    UNKNOWN = 0,
+
+    CLEARANCE              = 1,
+    DIFF_PAIR_ROUTINGS     = 2,
+    HEIGHT                 = 3,
+    HOLE_SIZE              = 4,
+    HOLE_TO_HOLE_CLEARANCE = 5,
+    WIDTH                  = 6,
+    PASTE_MASK_EXPANSION   = 7,
+};
+
 enum class ALTIUM_RECORD
 {
     ARC    = 1,
@@ -274,6 +287,19 @@ struct APOLYGON6
     explicit APOLYGON6( ALTIUM_PARSER& reader );
 };
 
+
+struct ARULE6
+{
+    std::string name;
+    int         priority;
+
+    ALTIUM_RULE_KIND kind;
+
+    // TODO: implement different types of rules we need to parse
+
+    explicit ARULE6( ALTIUM_PARSER& reader );
+};
+
 struct AREGION6
 {
     ALTIUM_LAYER layer;
@@ -462,6 +488,8 @@ private:
     void ParseNets6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParsePolygons6Data(
+            const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    void ParseRules6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
 
     // Binary Format

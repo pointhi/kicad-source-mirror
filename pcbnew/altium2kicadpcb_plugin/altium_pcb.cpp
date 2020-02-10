@@ -348,6 +348,7 @@ const std::string NETS6_DATA        = "Nets6\\Data";
 const std::string PADS6_DATA        = "Pads6\\Data";
 const std::string POLYGONS6_DATA    = "Polygons6\\Data";
 const std::string REGIONS6_DATA     = "Regions6\\Data";
+const std::string RULES6_DATA       = "Rules6\\Data";
 const std::string TEXTS6_DATA       = "Texts6\\Data";
 const std::string TRACKS6_DATA      = "Tracks6\\Data";
 const std::string VIAS6_DATA        = "Vias6\\Data";
@@ -368,6 +369,7 @@ const std::string NETS6_DATA       = "D95A0DA2FE9047779A5194C127F30B\\Data";
 const std::string PADS6_DATA       = "47D69BC5107A4B8DB8DAA23E39C238\\Data";
 const std::string POLYGONS6_DATA   = "D7038392280E4E229B9D9B5426B295\\Data";
 // const std::string REGIONS6_DATA = "TODO\\Data";
+// const std::string RULES6_DATA   = "TODO\\Data";
 const std::string TEXTS6_DATA      = "349ABBB211DB4F5B8AE41B1B49555A\\Data";
 const std::string TRACKS6_DATA     = "530C20C225354B858B2578CAB8C08D\\Data";
 const std::string VIAS6_DATA       = "CA5F5989BCDB404DA70A9D1D3D5758\\Data";
@@ -388,6 +390,7 @@ const std::string NETS6_DATA        = "35D7CF51BB9B4875B3A138B32D80DC\\Data";
 const std::string PADS6_DATA        = "4F501041A9BC4A06BDBDAB67D3820E\\Data";
 const std::string POLYGONS6_DATA    = "A1931C8B0B084A61AA45146575FDD3\\Data";
 const std::string REGIONS6_DATA     = "F513A5885418472886D3EF18A09E46\\Data";
+const std::string RULES6_DATA       = "C27718A40C94421388FAE5BD7785D7\\Data";
 const std::string TEXTS6_DATA       = "A34BC67C2A5F408D8F377378C5C5E2\\Data";
 const std::string TRACKS6_DATA      = "412A754DBB864645BF01CD6A80C358\\Data";
 const std::string VIAS6_DATA        = "C87A685A0EFA4A90BEEFD666198B56\\Data";
@@ -415,6 +418,10 @@ void ALTIUM_PCB::ParseDesigner( const CFB::CompoundFileReader& aReader )
     // we need the nets assigned beforehand? Or use the UUID?
     ParseHelper( aReader, ALTIUM_DESIGNER::CLASSES6_DATA, [this]( auto aReader, auto fileHeader ) {
         this->ParseClasses6Data( aReader, fileHeader );
+    } );
+
+    ParseHelper( aReader, ALTIUM_DESIGNER::RULES6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParseRules6Data( aReader, fileHeader );
     } );
 
     ParseHelper( aReader, ALTIUM_DESIGNER::POLYGONS6_DATA, [this]( auto aReader, auto fileHeader ) {
@@ -485,6 +492,10 @@ void ALTIUM_PCB::ParseCircuitStudio( const CFB::CompoundFileReader& aReader )
     //            aReader, ALTIUM_CIRCUIT_MAKER::CLASSES6_DATA, [this]( auto aReader, auto fileHeader ) {
     //                this->ParseClasses6Data( aReader, fileHeader );
     //            } );
+
+    //    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::RULES6_DATA, [this]( auto aReader, auto fileHeader ) {
+    //        this->ParseRules6Data( aReader, fileHeader );
+    //    } );
 
     ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::POLYGONS6_DATA,
             [this]( auto aReader, auto fileHeader ) {
@@ -562,6 +573,11 @@ void ALTIUM_PCB::ParseCircuitMaker( const CFB::CompoundFileReader& aReader )
     ParseHelper(
             aReader, ALTIUM_CIRCUIT_MAKER::CLASSES6_DATA, [this]( auto aReader, auto fileHeader ) {
                 this->ParseClasses6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::RULES6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseRules6Data( aReader, fileHeader );
             } );
 
     ParseHelper(
@@ -852,6 +868,21 @@ void ALTIUM_PCB::ParsePolygons6Data(
         SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
         outline->AddOutline( linechain );
         zone->SetOutline( outline );
+    }
+
+    wxASSERT( !reader.parser_error() );
+    wxASSERT( reader.bytes_remaining() == 0 );
+}
+
+void ALTIUM_PCB::ParseRules6Data(
+        const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
+{
+    ALTIUM_PARSER reader( aReader, aEntry );
+
+    while( !reader.parser_error()
+            && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
+    {
+        ARULE6 elem( reader );
     }
 
     wxASSERT( !reader.parser_error() );
@@ -1491,6 +1522,54 @@ APOLYGON6::APOLYGON6( ALTIUM_PARSER& reader )
                         -ALTIUM_PARSER::property_unit( properties, vyi, "0mil" ) );
 
         vertices.emplace_back( vertice_position );
+    }
+}
+
+ARULE6::ARULE6( ALTIUM_PARSER& reader )
+{
+    wxASSERT( reader.bytes_remaining() > 4 );
+    wxASSERT( !reader.parser_error() );
+
+    reader.skip( 2 );
+
+    std::map<std::string, std::string> properties = reader.read_properties();
+    wxASSERT( !properties.empty() );
+
+    name     = ALTIUM_PARSER::property_string( properties, "NAME", "" );
+    priority = ALTIUM_PARSER::property_int( properties, "PRIORITY", 1 );
+
+    std::string rulekind = ALTIUM_PARSER::property_string( properties, "RULEKIND", "" );
+    if( rulekind == "Clearance" )
+    {
+        kind = ALTIUM_RULE_KIND::CLEARANCE;
+    }
+    else if( rulekind == "DiffPairsRouting" )
+    {
+        kind = ALTIUM_RULE_KIND::DIFF_PAIR_ROUTINGS;
+    }
+    else if( rulekind == "Height" )
+    {
+        kind = ALTIUM_RULE_KIND::HEIGHT;
+    }
+    else if( rulekind == "HoleSize" )
+    {
+        kind = ALTIUM_RULE_KIND::HOLE_SIZE;
+    }
+    else if( rulekind == "HoleToHoleClearance" )
+    {
+        kind = ALTIUM_RULE_KIND::HOLE_TO_HOLE_CLEARANCE;
+    }
+    else if( rulekind == "Width" )
+    {
+        kind = ALTIUM_RULE_KIND::WIDTH;
+    }
+    else if( rulekind == "PasteMaskExpansion" )
+    {
+        kind = ALTIUM_RULE_KIND::PASTE_MASK_EXPANSION;
+    }
+    else
+    {
+        kind = ALTIUM_RULE_KIND::UNKNOWN;
     }
 }
 
