@@ -341,6 +341,7 @@ const std::string FILE_HEADER = "FileHeader";
 const std::string ARCS6_DATA        = "Arcs6\\Data";
 const std::string BOARD6_DATA       = "Board6\\Data";
 const std::string BOARDREGIONS_DATA = "BoardRegions\\Data";
+const std::string CLASSES6_DATA     = "Classes6\\Data";
 const std::string COMPONENTS6_DATA  = "Components6\\Data";
 const std::string FILLS6_DATA       = "Fills6\\Data";
 const std::string NETS6_DATA        = "Nets6\\Data";
@@ -360,6 +361,7 @@ const std::string FILE_HEADER = "FileHeader";
 const std::string ARCS6_DATA       = "00C595EB90524FFC8C3BD9670020A2\\Data";
 const std::string BOARD6_DATA      = "88857D7F1DF64F7BBB61848C965636\\Data";
 // const std::string BOARDREGIONS_DATA = "TODO\\Data";
+// const std::string CLASSES6_DATA     = "TODO\\Data";
 const std::string COMPONENTS6_DATA = "465416896A15486999A39C643935D2\\Data";
 const std::string FILLS6_DATA      = "4E83BDC3253747F08E9006D7F57020\\Data";
 const std::string NETS6_DATA       = "D95A0DA2FE9047779A5194C127F30B\\Data";
@@ -379,6 +381,7 @@ const std::string FILE_HEADER = "FileHeader";
 const std::string ARCS6_DATA        = "1CEEB63FB33847F8AFC4485F64735E\\Data";
 const std::string BOARD6_DATA       = "96B09F5C6CEE434FBCE0DEB3E88E70\\Data";
 const std::string BOARDREGIONS_DATA = "E3A544335C30403A991912052C936F\\Data";
+const std::string CLASSES6_DATA     = "4F71DD45B09143988210841EA1C28D\\Data";
 const std::string COMPONENTS6_DATA  = "F9D060ACC7DD4A85BC73CB785BAC81\\Data";
 const std::string FILLS6_DATA       = "6FFE038462A940E9B422EFC8F5D85E\\Data";
 const std::string NETS6_DATA        = "35D7CF51BB9B4875B3A138B32D80DC\\Data";
@@ -407,6 +410,11 @@ void ALTIUM_PCB::ParseDesigner( const CFB::CompoundFileReader& aReader )
 
     ParseHelper( aReader, ALTIUM_DESIGNER::NETS6_DATA, [this]( auto aReader, auto fileHeader ) {
         this->ParseNets6Data( aReader, fileHeader );
+    } );
+
+    // we need the nets assigned beforehand? Or use the UUID?
+    ParseHelper( aReader, ALTIUM_DESIGNER::CLASSES6_DATA, [this]( auto aReader, auto fileHeader ) {
+        this->ParseClasses6Data( aReader, fileHeader );
     } );
 
     ParseHelper( aReader, ALTIUM_DESIGNER::POLYGONS6_DATA, [this]( auto aReader, auto fileHeader ) {
@@ -471,6 +479,12 @@ void ALTIUM_PCB::ParseCircuitStudio( const CFB::CompoundFileReader& aReader )
             aReader, ALTIUM_CIRCUIT_STUDIO::NETS6_DATA, [this]( auto aReader, auto fileHeader ) {
                 this->ParseNets6Data( aReader, fileHeader );
             } );
+
+    // we need the nets assigned beforehand? Or use the UUID?
+    //    ParseHelper(
+    //            aReader, ALTIUM_CIRCUIT_MAKER::CLASSES6_DATA, [this]( auto aReader, auto fileHeader ) {
+    //                this->ParseClasses6Data( aReader, fileHeader );
+    //            } );
 
     ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::POLYGONS6_DATA,
             [this]( auto aReader, auto fileHeader ) {
@@ -542,6 +556,12 @@ void ALTIUM_PCB::ParseCircuitMaker( const CFB::CompoundFileReader& aReader )
     ParseHelper(
             aReader, ALTIUM_CIRCUIT_MAKER::NETS6_DATA, [this]( auto aReader, auto fileHeader ) {
                 this->ParseNets6Data( aReader, fileHeader );
+            } );
+
+    // we need the nets assigned beforehand? Or use the UUID?
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_MAKER::CLASSES6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseClasses6Data( aReader, fileHeader );
             } );
 
     ParseHelper(
@@ -716,6 +736,35 @@ void ALTIUM_PCB::ParseBoard6Data(
 
         ++it;
     }
+}
+
+void ALTIUM_PCB::ParseClasses6Data(
+        const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
+{
+    ALTIUM_PARSER reader( aReader, aEntry );
+
+    BOARD_DESIGN_SETTINGS& designSettings = m_board->GetDesignSettings();
+
+    while( !reader.parser_error()
+            && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
+    {
+        ACLASS6 elem( reader );
+
+        if( elem.kind == ALTIUM_CLASS_KIND::NET_CLASS )
+        {
+            const NETCLASSPTR& netclass = std::make_shared<NETCLASS>( elem.name );
+            designSettings.m_NetClasses.Add( netclass );
+
+            for( const auto& name : elem.names )
+            {
+                netclass->Add(
+                        name ); // TODO: it seems it can happen that we have names not attached to any net.
+            }
+        }
+    }
+
+    wxASSERT( !reader.parser_error() );
+    wxASSERT( reader.bytes_remaining() == 0 );
 }
 
 void ALTIUM_PCB::ParseComponents6Data(
@@ -1357,6 +1406,29 @@ ABOARD6::ABOARD6( ALTIUM_PARSER& reader )
                 ALTIUM_PARSER::property_string( properties, layeri + "DIELMATERIAL", "FR-4" );
 
         stackup.push_back( curlayer );
+    }
+}
+
+ACLASS6::ACLASS6( ALTIUM_PARSER& reader )
+{
+    wxASSERT( reader.bytes_remaining() > 4 );
+    wxASSERT( !reader.parser_error() );
+
+    std::map<std::string, std::string> properties = reader.read_properties();
+    wxASSERT( !properties.empty() );
+
+    name     = ALTIUM_PARSER::property_string( properties, "NAME", "" );
+    uniqueid = ALTIUM_PARSER::property_string( properties, "UNIQUEID", "" );
+    kind = static_cast<ALTIUM_CLASS_KIND>( ALTIUM_PARSER::property_int( properties, "KIND", -1 ) );
+
+    for( size_t i = 0; i < std::numeric_limits<size_t>::max(); i++ )
+    {
+        auto mit = properties.find( "M" + std::to_string( i ) );
+        if( mit == properties.end() )
+        {
+            break; // it doesn't seem like we know beforehand how many components are in the netclass
+        }
+        names.push_back( mit->second );
     }
 }
 

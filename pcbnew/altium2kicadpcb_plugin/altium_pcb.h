@@ -30,6 +30,20 @@
 #include <zconf.h>
 
 
+enum class ALTIUM_CLASS_KIND
+{
+    UNKNOWN = -1,
+
+    NET_CLASS              = 0,
+    SOURCE_SCHEMATIC_CLASS = 1,
+    FROM_TO                = 2,
+    PAD_CLASS              = 3,
+    LAYER_CLASS            = 4,
+    UNKNOWN_CLASS          = 5,
+    DIFF_PAIR_CLASS        = 6,
+    POLYGON_CLASS          = 7
+};
+
 enum class ALTIUM_RECORD
 {
     ARC    = 1,
@@ -205,6 +219,18 @@ struct ABOARD6
     std::vector<ABOARD6_LAYER_STACKUP> stackup;
 
     explicit ABOARD6( ALTIUM_PARSER& reader );
+};
+
+struct ACLASS6
+{
+    std::string name;
+    std::string uniqueid;
+
+    ALTIUM_CLASS_KIND kind;
+
+    std::vector<std::string> names;
+
+    explicit ACLASS6( ALTIUM_PARSER& reader );
 };
 
 struct ACOMPONENT6
@@ -428,6 +454,8 @@ private:
 
     // Text Format
     void ParseBoard6Data(
+            const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    void ParseClasses6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseComponents6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
