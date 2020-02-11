@@ -283,6 +283,7 @@ struct ADIMENSION6
 
     wxPoint referencePoint0;
     wxPoint referencePoint1;
+    wxPoint textPos;
 
     explicit ADIMENSION6( ALTIUM_PARSER& reader );
 };

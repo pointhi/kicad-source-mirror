@@ -36,6 +36,7 @@
 
 #include <compoundfilereader.h>
 #include <convert_basic_shapes_to_polygon.h>
+#include <trigo.h>
 #include <utf.h>
 
 
@@ -846,6 +847,7 @@ void ALTIUM_PCB::ParseComponents6Data(
     wxASSERT( reader.bytes_remaining() == 0 );
 }
 
+
 void ALTIUM_PCB::ParseDimensions6Data(
         const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
 {
@@ -872,6 +874,9 @@ void ALTIUM_PCB::ParseDimensions6Data(
         dimension->SetEnd( elem.referencePoint1, elem.textprecission );
         dimension->SetWidth( elem.linewidth );
         // TODO: place measurement
+
+        int hight = DistanceLinePoint( elem.referencePoint0, elem.referencePoint1, elem.textPos );
+        dimension->SetHeight( hight, elem.textprecission );
 
         dimension->Text().SetThickness( elem.textlinewidth );
         dimension->Text().SetTextSize( wxSize( elem.textheight, elem.textheight ) );
@@ -1591,6 +1596,8 @@ ADIMENSION6::ADIMENSION6( ALTIUM_PARSER& reader )
     referencePoint1 =
             wxPoint( ALTIUM_PARSER::property_unit( properties, "REFERENCE1POINTX", "0mil" ),
                     -ALTIUM_PARSER::property_unit( properties, "REFERENCE1POINTY", "0mil" ) );
+    textPos = wxPoint( ALTIUM_PARSER::property_unit( properties, "X1", "0mil" ),
+                      -ALTIUM_PARSER::property_unit( properties, "Y1", "0mil" ) );
 
     std::string dimensionunit =
             ALTIUM_PARSER::property_string( properties, "TEXTDIMENSIONUNIT", "Millimeters" );
