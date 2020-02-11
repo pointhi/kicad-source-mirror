@@ -738,8 +738,9 @@ void ALTIUM_PCB::ParseBoard6Data(
 
         if( ( *it )->GetBrdLayerId() == B_Cu )
         {
+            wxASSERT( layer.nextId == 0 );
             // overwrite entry from internal -> bottom
-            m_layermap.insert( { static_cast<ALTIUM_LAYER>( i ), B_Cu } );
+            m_layermap[static_cast<ALTIUM_LAYER>( i )] = B_Cu;
             break;
         }
 
