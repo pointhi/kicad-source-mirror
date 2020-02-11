@@ -44,6 +44,14 @@ enum class ALTIUM_CLASS_KIND
     POLYGON_CLASS          = 7
 };
 
+enum class ALTIUM_UNIT
+{
+    UNKNOWN = 0,
+
+    INCHES      = 1,
+    MILLIMETERS = 2
+};
+
 enum class ALTIUM_RULE_KIND
 {
     UNKNOWN = 0,
@@ -258,6 +266,25 @@ struct ACOMPONENT6
     std::string sourcelibreference;
 
     explicit ACOMPONENT6( ALTIUM_PARSER& reader );
+};
+
+struct ADIMENSION6
+{
+    std::string layer;
+
+    u_int32_t linewidth;
+    u_int32_t textheight;
+    u_int32_t textlinewidth;
+    int32_t   textprecission;
+    bool      textbold;
+    bool      textitalic;
+
+    ALTIUM_UNIT textunit;
+
+    wxPoint referencePoint0;
+    wxPoint referencePoint1;
+
+    explicit ADIMENSION6( ALTIUM_PARSER& reader );
 };
 
 struct ANET6
@@ -484,6 +511,8 @@ private:
     void ParseClasses6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseComponents6Data(
+            const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    void ParseDimensions6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseNets6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );

@@ -25,6 +25,7 @@
 #include "altium_parser.h"
 
 #include <class_board.h>
+#include <class_dimension.h>
 #include <class_drawsegment.h>
 #include <class_pcb_text.h>
 
@@ -123,6 +124,23 @@ ALTIUM_LAYER ALTIUM_PCB::altium_layer_from_name( const std::string& aName ) cons
     hash_map["PLANE14"] = ALTIUM_LAYER::INTERNAL_PLANE_14;
     hash_map["PLANE15"] = ALTIUM_LAYER::INTERNAL_PLANE_15;
     hash_map["PLANE16"] = ALTIUM_LAYER::INTERNAL_PLANE_16;
+
+    hash_map["MECHANICAL1"]  = ALTIUM_LAYER::MECHANICAL_1;
+    hash_map["MECHANICAL2"]  = ALTIUM_LAYER::MECHANICAL_2;
+    hash_map["MECHANICAL3"]  = ALTIUM_LAYER::MECHANICAL_3;
+    hash_map["MECHANICAL4"]  = ALTIUM_LAYER::MECHANICAL_4;
+    hash_map["MECHANICAL5"]  = ALTIUM_LAYER::MECHANICAL_5;
+    hash_map["MECHANICAL6"]  = ALTIUM_LAYER::MECHANICAL_6;
+    hash_map["MECHANICAL7"]  = ALTIUM_LAYER::MECHANICAL_7;
+    hash_map["MECHANICAL8"]  = ALTIUM_LAYER::MECHANICAL_8;
+    hash_map["MECHANICAL9"]  = ALTIUM_LAYER::MECHANICAL_9;
+    hash_map["MECHANICAL10"] = ALTIUM_LAYER::MECHANICAL_10;
+    hash_map["MECHANICAL11"] = ALTIUM_LAYER::MECHANICAL_11;
+    hash_map["MECHANICAL12"] = ALTIUM_LAYER::MECHANICAL_12;
+    hash_map["MECHANICAL13"] = ALTIUM_LAYER::MECHANICAL_13;
+    hash_map["MECHANICAL14"] = ALTIUM_LAYER::MECHANICAL_14;
+    hash_map["MECHANICAL15"] = ALTIUM_LAYER::MECHANICAL_15;
+    hash_map["MECHANICAL16"] = ALTIUM_LAYER::MECHANICAL_16;
 
     auto it = hash_map.find( aName );
     if( it == hash_map.end() )
@@ -343,6 +361,7 @@ const std::string BOARD6_DATA       = "Board6\\Data";
 const std::string BOARDREGIONS_DATA = "BoardRegions\\Data";
 const std::string CLASSES6_DATA     = "Classes6\\Data";
 const std::string COMPONENTS6_DATA  = "Components6\\Data";
+const std::string DIMENSIONS6_DATA  = "Dimensions6\\Data";
 const std::string FILLS6_DATA       = "Fills6\\Data";
 const std::string NETS6_DATA        = "Nets6\\Data";
 const std::string PADS6_DATA        = "Pads6\\Data";
@@ -364,6 +383,7 @@ const std::string BOARD6_DATA      = "88857D7F1DF64F7BBB61848C965636\\Data";
 // const std::string BOARDREGIONS_DATA = "TODO\\Data";
 // const std::string CLASSES6_DATA     = "TODO\\Data";
 const std::string COMPONENTS6_DATA = "465416896A15486999A39C643935D2\\Data";
+// const std::string DIMENSIONS6_DATA  = "TODO\\Data";
 const std::string FILLS6_DATA      = "4E83BDC3253747F08E9006D7F57020\\Data";
 const std::string NETS6_DATA       = "D95A0DA2FE9047779A5194C127F30B\\Data";
 const std::string PADS6_DATA       = "47D69BC5107A4B8DB8DAA23E39C238\\Data";
@@ -385,6 +405,7 @@ const std::string BOARD6_DATA       = "96B09F5C6CEE434FBCE0DEB3E88E70\\Data";
 const std::string BOARDREGIONS_DATA = "E3A544335C30403A991912052C936F\\Data";
 const std::string CLASSES6_DATA     = "4F71DD45B09143988210841EA1C28D\\Data";
 const std::string COMPONENTS6_DATA  = "F9D060ACC7DD4A85BC73CB785BAC81\\Data";
+// const std::string DIMENSIONS6_DATA  = "TODO\\Data";
 const std::string FILLS6_DATA       = "6FFE038462A940E9B422EFC8F5D85E\\Data";
 const std::string NETS6_DATA        = "35D7CF51BB9B4875B3A138B32D80DC\\Data";
 const std::string PADS6_DATA        = "4F501041A9BC4A06BDBDAB67D3820E\\Data";
@@ -423,6 +444,11 @@ void ALTIUM_PCB::ParseDesigner( const CFB::CompoundFileReader& aReader )
     ParseHelper( aReader, ALTIUM_DESIGNER::RULES6_DATA, [this]( auto aReader, auto fileHeader ) {
         this->ParseRules6Data( aReader, fileHeader );
     } );
+
+    ParseHelper(
+            aReader, ALTIUM_DESIGNER::DIMENSIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseDimensions6Data( aReader, fileHeader );
+            } );
 
     ParseHelper( aReader, ALTIUM_DESIGNER::POLYGONS6_DATA, [this]( auto aReader, auto fileHeader ) {
         this->ParsePolygons6Data( aReader, fileHeader );
@@ -495,6 +521,10 @@ void ALTIUM_PCB::ParseCircuitStudio( const CFB::CompoundFileReader& aReader )
 
     //    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::RULES6_DATA, [this]( auto aReader, auto fileHeader ) {
     //        this->ParseRules6Data( aReader, fileHeader );
+    //    } );
+
+    //    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::DIMENSIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
+    //        this->ParseDimensions6Data( aReader, fileHeader );
     //    } );
 
     ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::POLYGONS6_DATA,
@@ -579,6 +609,10 @@ void ALTIUM_PCB::ParseCircuitMaker( const CFB::CompoundFileReader& aReader )
             aReader, ALTIUM_CIRCUIT_MAKER::RULES6_DATA, [this]( auto aReader, auto fileHeader ) {
                 this->ParseRules6Data( aReader, fileHeader );
             } );
+
+    //    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::DIMENSIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
+    //        this->ParseDimensions6Data( aReader, fileHeader );
+    //    } );
 
     ParseHelper(
             aReader, ALTIUM_CIRCUIT_MAKER::POLYGONS6_DATA, [this]( auto aReader, auto fileHeader ) {
@@ -806,6 +840,57 @@ void ALTIUM_PCB::ParseComponents6Data(
         module->SetLayer( elem.layer == "TOP" ? F_Cu : B_Cu );
 
         componentId++;
+    }
+
+    wxASSERT( !reader.parser_error() );
+    wxASSERT( reader.bytes_remaining() == 0 );
+}
+
+void ALTIUM_PCB::ParseDimensions6Data(
+        const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
+{
+    ALTIUM_PARSER reader( aReader, aEntry );
+
+    while( !reader.parser_error()
+            && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
+    {
+        ADIMENSION6 elem( reader );
+
+        PCB_LAYER_ID layer = kicad_layer( altium_layer_from_name( elem.layer ) );
+        if( layer == UNDEFINED_LAYER )
+        {
+            wxFAIL_MSG( "Ignore Dimension on layer " + elem.layer
+                        + " because we do not know where to place " );
+            continue;
+        }
+
+        DIMENSION* dimension = new DIMENSION( m_board );
+        m_board->Add( dimension, ADD_MODE::APPEND );
+
+        dimension->SetLayer( layer );
+        dimension->SetOrigin( elem.referencePoint0, elem.textprecission );
+        dimension->SetEnd( elem.referencePoint1, elem.textprecission );
+        dimension->SetWidth( elem.linewidth );
+        // TODO: place measurement
+
+        dimension->Text().SetThickness( elem.textlinewidth );
+        dimension->Text().SetTextSize( wxSize( elem.textheight, elem.textheight ) );
+        dimension->Text().SetBold( elem.textbold );
+        dimension->Text().SetItalic( elem.textitalic );
+
+        switch( elem.textunit )
+        {
+        case ALTIUM_UNIT::INCHES:
+            dimension->SetUnits( EDA_UNITS::INCHES, true );
+            break;
+        case ALTIUM_UNIT::MILLIMETERS:
+            dimension->SetUnits( EDA_UNITS::MILLIMETRES, false );
+            break;
+        default:
+            break;
+        }
+
+        dimension->AdjustDimensionDetails( elem.textprecission );
     }
 
     wxASSERT( !reader.parser_error() );
@@ -1481,6 +1566,46 @@ ACOMPONENT6::ACOMPONENT6( ALTIUM_PARSER& reader )
     commenton          = ALTIUM_PARSER::property_bool( properties, "COMMENTON", false );
     sourcedesignator   = ALTIUM_PARSER::property_string( properties, "SOURCEDESIGNATOR", "" );
     sourcelibreference = ALTIUM_PARSER::property_string( properties, "SOURCELIBREFERENCE", "" );
+}
+
+ADIMENSION6::ADIMENSION6( ALTIUM_PARSER& reader )
+{
+    wxASSERT( reader.bytes_remaining() > 6 );
+    wxASSERT( !reader.parser_error() );
+
+    reader.skip( 2 );
+
+    std::map<std::string, std::string> properties = reader.read_properties();
+    wxASSERT( !properties.empty() );
+
+    layer          = ALTIUM_PARSER::property_string( properties, "LAYER", "" );
+    linewidth      = ALTIUM_PARSER::property_unit( properties, "LINEWIDTH", "10mil" );
+    textheight     = ALTIUM_PARSER::property_unit( properties, "TEXTHEIGHT", "10mil" );
+    textlinewidth  = ALTIUM_PARSER::property_unit( properties, "TEXTLINEWIDTH", "6mil" );
+    textprecission = ALTIUM_PARSER::property_int( properties, "TEXTPRECISION", 2 );
+    textbold       = ALTIUM_PARSER::property_bool( properties, "TEXTLINEWIDTH", false );
+    textitalic     = ALTIUM_PARSER::property_bool( properties, "ITALIC", false );
+    referencePoint0 =
+            wxPoint( ALTIUM_PARSER::property_unit( properties, "REFERENCE0POINTX", "0mil" ),
+                    -ALTIUM_PARSER::property_unit( properties, "REFERENCE0POINTY", "0mil" ) );
+    referencePoint1 =
+            wxPoint( ALTIUM_PARSER::property_unit( properties, "REFERENCE1POINTX", "0mil" ),
+                    -ALTIUM_PARSER::property_unit( properties, "REFERENCE1POINTY", "0mil" ) );
+
+    std::string dimensionunit =
+            ALTIUM_PARSER::property_string( properties, "TEXTDIMENSIONUNIT", "Millimeters" );
+    if( dimensionunit == "Inches" ) // TODO: correct?
+    {
+        textunit = ALTIUM_UNIT::INCHES;
+    }
+    else if( dimensionunit == "Millimeters" )
+    {
+        textunit = ALTIUM_UNIT::MILLIMETERS;
+    }
+    else
+    {
+        textunit = ALTIUM_UNIT::UNKNOWN;
+    }
 }
 
 ANET6::ANET6( ALTIUM_PARSER& reader )
