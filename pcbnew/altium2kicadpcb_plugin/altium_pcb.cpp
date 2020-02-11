@@ -682,10 +682,10 @@ void ALTIUM_PCB::FinishParsingHelper()
     }
 }
 
-MODULE* ALTIUM_PCB::GetComponent( const u_int16_t id )
+MODULE* ALTIUM_PCB::GetComponent( const uint16_t id )
 {
     // I asume this is a special case where a elements belongs to the board.
-    if( id == std::numeric_limits<u_int16_t>::max() )
+    if( id == std::numeric_limits<uint16_t>::max() )
     {
         MODULE* module = new MODULE( m_board );
         m_board->Add( module, ADD_MODE::APPEND );
@@ -706,9 +706,9 @@ MODULE* ALTIUM_PCB::GetComponent( const u_int16_t id )
     return module;
 }
 
-int ALTIUM_PCB::GetNetCode( const u_int16_t id )
+int ALTIUM_PCB::GetNetCode( const uint16_t id )
 {
-    return id == std::numeric_limits<u_int16_t>::max() ? NETINFO_LIST::UNCONNECTED : id + 1;
+    return id == std::numeric_limits<uint16_t>::max() ? NETINFO_LIST::UNCONNECTED : id + 1;
 }
 
 void ALTIUM_PCB::ParseFileHeader(
@@ -823,7 +823,7 @@ void ALTIUM_PCB::ParseComponents6Data(
 {
     ALTIUM_PARSER reader( aReader, aEntry );
 
-    u_int16_t componentId = 0;
+    uint16_t componentId = 0;
     while( !reader.parser_error()
             && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
     {
@@ -902,7 +902,7 @@ void ALTIUM_PCB::ParseNets6Data(
 {
     ALTIUM_PARSER reader( aReader, aEntry );
 
-    u_int16_t netCode = 1; // 0 = UNCONNECTED
+    uint16_t netCode = 1; // 0 = UNCONNECTED
     while( !reader.parser_error()
             && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
     {
@@ -1058,7 +1058,7 @@ void ALTIUM_PCB::ParseArcs6Data(
 
         // TODO: better approach to select if item belongs to a MODULE
         DRAWSEGMENT* ds = nullptr;
-        if( elem.component == std::numeric_limits<u_int16_t>::max() )
+        if( elem.component == std::numeric_limits<uint16_t>::max() )
         {
             ds = new DRAWSEGMENT( m_board );
             m_board->Add( ds, ADD_MODE::APPEND );
@@ -1094,7 +1094,7 @@ void ALTIUM_PCB::ParseArcs6Data(
             ds->SetArcStart( elem.center + arcStartOffset );
         }
 
-        if( elem.component != std::numeric_limits<u_int16_t>::max() )
+        if( elem.component != std::numeric_limits<uint16_t>::max() )
         {
             dynamic_cast<EDGE_MODULE*>( ds )->SetLocalCoord();
         }
@@ -1289,7 +1289,7 @@ void ALTIUM_PCB::ParseTracks6Data(
         {
             DRAWSEGMENT* ds = nullptr;
 
-            if( elem.component == std::numeric_limits<u_int16_t>::max() )
+            if( elem.component == std::numeric_limits<uint16_t>::max() )
             {
                 ds = new DRAWSEGMENT( m_board );
                 ds->SetShape( STROKE_T::S_SEGMENT );
@@ -1336,7 +1336,7 @@ void ALTIUM_PCB::ParseTexts6Data(
         // TODO: better approach to select if item belongs to a MODULE
         EDA_TEXT*   tx  = nullptr;
         BOARD_ITEM* itm = nullptr;
-        if( elem.component == std::numeric_limits<u_int16_t>::max() )
+        if( elem.component == std::numeric_limits<uint16_t>::max() )
         {
             TEXTE_PCB* txp = new TEXTE_PCB( m_board );
             tx             = txp;
@@ -1379,7 +1379,7 @@ void ALTIUM_PCB::ParseTexts6Data(
 
         itm->SetPosition( elem.position );
         tx->SetTextAngle( elem.rotation * 10. );
-        if( elem.component != std::numeric_limits<u_int16_t>::max() )
+        if( elem.component != std::numeric_limits<uint16_t>::max() )
         {
             dynamic_cast<TEXTE_MODULE*>( tx )->SetLocalCoord();
         }
@@ -1628,7 +1628,7 @@ APOLYGON6::APOLYGON6( ALTIUM_PARSER& reader )
     wxASSERT( !properties.empty() );
 
     layer = ALTIUM_PARSER::property_string( properties, "LAYER", "" );
-    net   = ALTIUM_PARSER::property_int( properties, "NET", std::numeric_limits<u_int16_t>::max() );
+    net    = ALTIUM_PARSER::property_int( properties, "NET", std::numeric_limits<uint16_t>::max() );
     locked = ALTIUM_PARSER::property_bool( properties, "LOCKED", false );
 
     for( size_t i = 0; i < std::numeric_limits<size_t>::max(); i++ )
@@ -1704,23 +1704,23 @@ AARC6::AARC6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<u_int8_t>() );
+    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<uint8_t>() );
     wxASSERT( recordtype == ALTIUM_RECORD::ARC );
 
     // Subrecord 1
     reader.read_subrecord_length();
 
-    layer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
+    layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
     reader.skip( 2 );
-    net = reader.read<u_int16_t>();
+    net = reader.read<uint16_t>();
     reader.skip( 2 );
-    component = reader.read<u_int16_t>();
+    component = reader.read<uint16_t>();
     reader.skip( 4 );
     center     = reader.read_point();
-    radius     = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
+    radius     = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
     startangle = reader.read<double>();
     endangle   = reader.read<double>();
-    width      = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
+    width      = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
 
     reader.subrecord_skip();
 
@@ -1732,7 +1732,7 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<u_int8_t>() );
+    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<uint8_t>() );
     wxASSERT( recordtype == ALTIUM_RECORD::PAD );
 
     // Subrecord 1
@@ -1758,45 +1758,45 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
     size_t subrecord5 = reader.read_subrecord_length();
     wxASSERT( subrecord5 >= 120 ); // TODO: exact minimum length we know?
 
-    layer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
+    layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
 
-    u_int8_t flags1 = reader.read<u_int8_t>();
+    uint8_t flags1  = reader.read<uint8_t>();
     tentbootom      = ( flags1 & 0x40 ) != 0;
     tenttop         = ( flags1 & 0x20 ) != 0;
 
     reader.skip( 1 );
-    net = reader.read<u_int16_t>();
+    net = reader.read<uint16_t>();
     reader.skip( 2 );
-    component = reader.read<u_int16_t>();
+    component = reader.read<uint16_t>();
     reader.skip( 4 );
 
     position = reader.read_point();
     topsize  = reader.read_size();
     midsize  = reader.read_size();
     botsize  = reader.read_size();
-    holesize = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
+    holesize = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
 
-    topshape = static_cast<ALTIUM_PAD_SHAPE>( reader.read<u_int8_t>() );
-    midshape = static_cast<ALTIUM_PAD_SHAPE>( reader.read<u_int8_t>() );
-    botshape = static_cast<ALTIUM_PAD_SHAPE>( reader.read<u_int8_t>() );
+    topshape = static_cast<ALTIUM_PAD_SHAPE>( reader.read<uint8_t>() );
+    midshape = static_cast<ALTIUM_PAD_SHAPE>( reader.read<uint8_t>() );
+    botshape = static_cast<ALTIUM_PAD_SHAPE>( reader.read<uint8_t>() );
 
     direction = reader.read<double>();
-    plated    = reader.read<u_int8_t>() != 0;
+    plated    = reader.read<uint8_t>() != 0;
     reader.skip( 1 );
-    padmode = static_cast<ALTIUM_PAD_MODE>( reader.read<u_int8_t>() );
+    padmode = static_cast<ALTIUM_PAD_MODE>( reader.read<uint8_t>() );
     reader.skip( 23 );
     pastemaskexpansionmanual  = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
     soldermaskexpansionmanual = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
     reader.skip( 7 );
-    pastemaskexpansionmode  = static_cast<ALTIUM_PAD_RULE>( reader.read<u_int8_t>() );
-    soldermaskexpansionmode = static_cast<ALTIUM_PAD_RULE>( reader.read<u_int8_t>() );
+    pastemaskexpansionmode  = static_cast<ALTIUM_PAD_RULE>( reader.read<uint8_t>() );
+    soldermaskexpansionmode = static_cast<ALTIUM_PAD_RULE>( reader.read<uint8_t>() );
     reader.skip( 3 );
     holerotation = reader.read<double>();
     if( subrecord5 == 120 )
     {
-        tolayer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
+        tolayer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
         reader.skip( 2 );
-        fromlayer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
+        fromlayer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
         //reader.skip( 2 );
     }
     else if( subrecord5 == 171 )
@@ -1822,12 +1822,12 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
 
         for( int i = 0; i < 29; i++ )
         {
-            sizeAndShape->inner_shape[i] = static_cast<ALTIUM_PAD_SHAPE>( reader.read<u_int8_t>() );
+            sizeAndShape->inner_shape[i] = static_cast<ALTIUM_PAD_SHAPE>( reader.read<uint8_t>() );
         }
 
         reader.skip( 1 );
 
-        sizeAndShape->isslot       = reader.read<u_int8_t>() == 0x02;
+        sizeAndShape->isslot       = reader.read<uint8_t>() == 0x02;
         sizeAndShape->slotsize     = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
         sizeAndShape->slotrotation = reader.read<double>();
 
@@ -1845,12 +1845,12 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
         for( int i = 0; i < 32; i++ )
         {
             sizeAndShape->alt_shape[i] =
-                    static_cast<ALTIUM_PAD_SHAPE_ALT>( reader.read<u_int8_t>() );
+                    static_cast<ALTIUM_PAD_SHAPE_ALT>( reader.read<uint8_t>() );
         }
 
         for( int i = 0; i < 32; i++ )
         {
-            sizeAndShape->cornerradius[i] = reader.read<u_int8_t>();
+            sizeAndShape->cornerradius[i] = reader.read<uint8_t>();
         }
     }
 
@@ -1864,18 +1864,18 @@ AVIA6::AVIA6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<u_int8_t>() );
+    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<uint8_t>() );
     wxASSERT( recordtype == ALTIUM_RECORD::VIA );
 
     // Subrecord 1
     reader.read_subrecord_length();
 
     reader.skip( 3 );
-    net = reader.read<u_int16_t>();
+    net = reader.read<uint16_t>();
     reader.skip( 8 );
     position = reader.read_point();
-    diameter = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
-    holesize = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
+    diameter = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
+    holesize = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
 
     reader.subrecord_skip();
 
@@ -1887,21 +1887,21 @@ ATRACK6::ATRACK6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<u_int8_t>() );
+    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<uint8_t>() );
     wxASSERT( recordtype == ALTIUM_RECORD::TRACK );
 
     // Subrecord 1
     reader.read_subrecord_length();
 
-    layer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
+    layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
     reader.skip( 2 );
-    net = reader.read<u_int16_t>();
+    net = reader.read<uint16_t>();
     reader.skip( 2 );
-    component = reader.read<u_int16_t>();
+    component = reader.read<uint16_t>();
     reader.skip( 4 );
     start = reader.read_point();
     end   = reader.read_point();
-    width = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
+    width = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
 
     reader.subrecord_skip();
 
@@ -1913,28 +1913,28 @@ ATEXT6::ATEXT6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<u_int8_t>() );
+    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<uint8_t>() );
     wxASSERT( recordtype == ALTIUM_RECORD::TEXT );
 
     // Subrecord 1 - Properties
     size_t subrecord1 = reader.read_subrecord_length();
 
-    layer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
+    layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
     reader.skip( 6 );
-    component = reader.read<u_int16_t>();
+    component = reader.read<uint16_t>();
     reader.skip( 4 );
     position = reader.read_point();
-    height   = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
+    height   = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
     reader.skip( 2 );
     rotation     = reader.read<double>();
-    mirrored     = reader.read<u_int8_t>() != 0;
-    strokewidth  = ALTIUM_PARSER::kicad_unit( reader.read<u_int32_t>() );
-    isComment    = reader.read<u_int8_t>() != 0;
-    isDesignator = reader.read<u_int8_t>() != 0;
+    mirrored     = reader.read<uint8_t>() != 0;
+    strokewidth  = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
+    isComment    = reader.read<uint8_t>() != 0;
+    isDesignator = reader.read<uint8_t>() != 0;
     if( subrecord1 > 230 )
     {
         reader.skip( 90 );
-        textposition = static_cast<ALTIUM_TEXT_POSITION>( reader.read<u_int8_t>() );
+        textposition = static_cast<ALTIUM_TEXT_POSITION>( reader.read<uint8_t>() );
     }
     else
     {
@@ -1963,15 +1963,15 @@ AFILL6::AFILL6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<u_int8_t>() );
+    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<uint8_t>() );
     wxASSERT( recordtype == ALTIUM_RECORD::FILL );
 
     // Subrecord 1
     reader.read_subrecord_length();
 
-    layer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
+    layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
     reader.skip( 2 );
-    net = reader.read<u_int16_t>();
+    net = reader.read<uint16_t>();
     reader.skip( 8 );
     pos1     = reader.read_point();
     pos2     = reader.read_point();
@@ -1987,17 +1987,17 @@ AREGION6::AREGION6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<u_int8_t>() );
+    ALTIUM_RECORD recordtype = static_cast<ALTIUM_RECORD>( reader.read<uint8_t>() );
     wxASSERT( recordtype == ALTIUM_RECORD::REGION );
 
     // Subrecord 1
     reader.read_subrecord_length();
 
-    layer = static_cast<ALTIUM_LAYER>( reader.read<u_int8_t>() );
+    layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
     reader.skip( 2 );
-    net = reader.read<u_int16_t>();
+    net = reader.read<uint16_t>();
     reader.skip( 2 );
-    component = reader.read<u_int16_t>();
+    component = reader.read<uint16_t>();
     reader.skip( 9 );
 
     std::map<std::string, std::string> properties = reader.read_properties();

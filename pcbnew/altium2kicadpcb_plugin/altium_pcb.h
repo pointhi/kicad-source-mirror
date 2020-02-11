@@ -272,9 +272,9 @@ struct ADIMENSION6
 {
     std::string layer;
 
-    u_int32_t linewidth;
-    u_int32_t textheight;
-    u_int32_t textlinewidth;
+    uint32_t  linewidth;
+    uint32_t  textheight;
+    uint32_t  textlinewidth;
     int32_t   textprecission;
     bool      textbold;
     bool      textitalic;
@@ -306,7 +306,7 @@ struct APOLYGON6_VERTICE
 struct APOLYGON6
 {
     std::string layer;
-    u_int16_t   net;
+    uint16_t    net;
     bool        locked;
 
     std::vector<APOLYGON6_VERTICE> vertices;
@@ -330,8 +330,8 @@ struct ARULE6
 struct AREGION6
 {
     ALTIUM_LAYER layer;
-    u_int16_t    net;
-    u_int16_t    component;
+    uint16_t     net;
+    uint16_t     component;
 
     int  kind;      // I asume this means if normal or keepout?
     bool iskeepout; // does not necessary tell us if this is a keepout
@@ -345,14 +345,14 @@ struct AREGION6
 struct AARC6
 {
     ALTIUM_LAYER layer;
-    u_int16_t net;
-    u_int16_t component;
+    uint16_t     net;
+    uint16_t     component;
 
     wxPoint   center;
-    u_int32_t radius;
+    uint32_t  radius;
     double    startangle;
     double    endangle;
-    u_int32_t width;
+    uint32_t  width;
 
     explicit AARC6( ALTIUM_PARSER& reader );
 };
@@ -360,14 +360,14 @@ struct AARC6
 struct APAD6_SIZE_AND_SHAPE
 {
     bool      isslot;
-    u_int32_t slotsize;
+    uint32_t  slotsize;
     double    slotrotation;
 
     wxSize   inner_size[29];
     ALTIUM_PAD_SHAPE inner_shape[29];
     wxPoint  holeoffset[32];
     ALTIUM_PAD_SHAPE_ALT alt_shape[32];
-    u_int8_t cornerradius[32];
+    uint8_t              cornerradius[32];
 };
 
 struct APAD6
@@ -375,14 +375,14 @@ struct APAD6
     std::string name;
 
     ALTIUM_LAYER layer;
-    u_int16_t net;
-    u_int16_t component;
+    uint16_t     net;
+    uint16_t     component;
 
     wxPoint position;
     wxSize  topsize;
     wxSize  midsize;
     wxSize  botsize;
-    u_int32_t holesize;
+    uint32_t holesize;
 
     ALTIUM_PAD_SHAPE topshape;
     ALTIUM_PAD_SHAPE midshape;
@@ -410,11 +410,11 @@ struct APAD6
 
 struct AVIA6
 {
-    u_int16_t net;
+    uint16_t net;
 
     wxPoint   position;
-    u_int32_t diameter;
-    u_int32_t holesize;
+    uint32_t  diameter;
+    uint32_t  holesize;
 
     explicit AVIA6( ALTIUM_PARSER& reader );
 };
@@ -422,12 +422,12 @@ struct AVIA6
 struct ATRACK6
 {
     ALTIUM_LAYER layer;
-    u_int16_t net;
-    u_int16_t component;
+    uint16_t     net;
+    uint16_t     component;
 
     wxPoint   start;
     wxPoint   end;
-    u_int32_t width;
+    uint32_t  width;
 
     explicit ATRACK6( ALTIUM_PARSER& reader );
 };
@@ -435,12 +435,12 @@ struct ATRACK6
 struct ATEXT6
 {
     ALTIUM_LAYER layer;
-    u_int16_t component;
+    uint16_t     component;
 
     wxPoint   position;
-    u_int32_t height;
+    uint32_t             height;
     double    rotation;
-    u_int32_t strokewidth;
+    uint32_t             strokewidth;
     ALTIUM_TEXT_POSITION textposition;
     bool      mirrored;
 
@@ -455,7 +455,7 @@ struct ATEXT6
 struct AFILL6
 {
     ALTIUM_LAYER layer;
-    u_int16_t net;
+    uint16_t     net;
 
     wxPoint pos1;
     wxPoint pos2;
@@ -495,8 +495,8 @@ private:
     ALTIUM_LAYER altium_layer_from_name( const std::string& aName ) const;
     PCB_LAYER_ID kicad_layer( ALTIUM_LAYER aAltiumLayer ) const;
 
-    MODULE* GetComponent( const u_int16_t id );
-    int     GetNetCode( const u_int16_t id );
+    MODULE* GetComponent( const uint16_t id );
+    int     GetNetCode( const uint16_t id );
 
     void ParseHelper( const CFB::CompoundFileReader& aReader, const std::string& streamName,
             parse_function_pointer_t fp );

@@ -61,7 +61,7 @@ std::map<std::string, std::string> ALTIUM_PARSER::read_properties()
 {
     std::map<std::string, std::string> kv;
 
-    u_int32_t length = read<u_int32_t>();
+    uint32_t length = read<uint32_t>();
     if( length > bytes_remaining() || pos[length - 1] != '\0' )
     {
         error = true;

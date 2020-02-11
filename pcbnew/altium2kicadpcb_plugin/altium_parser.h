@@ -61,7 +61,7 @@ public:
 
     std::string read_string()
     {
-        u_int8_t len = read<u_int8_t>();
+        uint8_t len = read<uint8_t>();
         if( bytes_remaining() >= len )
         {
             std::string val = std::string( pos, len );
@@ -91,7 +91,7 @@ public:
 
     size_t read_subrecord_length()
     {
-        u_int32_t length = read<u_int32_t>();
+        uint32_t length  = read<uint32_t>();
         subrecord_end    = pos + length;
         return length;
     }
