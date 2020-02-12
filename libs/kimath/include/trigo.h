@@ -137,6 +137,14 @@ inline double EuclideanNorm( const wxSize &vector )
     return hypot( vector.x, vector.y );
 }
 
+//! @brief normal vector of a 2D vector
+//! @param vector Two-dimensional vector
+//! @return norml vector of the vector
+inline wxPoint VectorNorm( const wxPoint& vector )
+{
+    return wxPoint( -vector.y, vector.x );
+}
+
 //! @brief Compute the distance between a line and a reference point
 //! Reference: http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
 //! @param linePointA Point on line

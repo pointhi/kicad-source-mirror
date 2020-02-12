@@ -49,7 +49,8 @@ enum class ALTIUM_UNIT
     UNKNOWN = 0,
 
     INCHES      = 1,
-    MILLIMETERS = 2
+    MILS        = 2,
+    MILLIMETERS = 3
 };
 
 enum class ALTIUM_RULE_KIND
@@ -283,7 +284,7 @@ struct ADIMENSION6
 
     wxPoint referencePoint0;
     wxPoint referencePoint1;
-    wxPoint textPos;
+    wxPoint xy1;
 
     explicit ADIMENSION6( ALTIUM_PARSER& reader );
 };

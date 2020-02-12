@@ -406,7 +406,7 @@ const std::string BOARD6_DATA       = "96B09F5C6CEE434FBCE0DEB3E88E70\\Data";
 const std::string BOARDREGIONS_DATA = "E3A544335C30403A991912052C936F\\Data";
 const std::string CLASSES6_DATA     = "4F71DD45B09143988210841EA1C28D\\Data";
 const std::string COMPONENTS6_DATA  = "F9D060ACC7DD4A85BC73CB785BAC81\\Data";
-// const std::string DIMENSIONS6_DATA  = "TODO\\Data";
+const std::string DIMENSIONS6_DATA  = "068B9422DBB241258BA2DE9A6BA1A6\\Data";
 const std::string FILLS6_DATA       = "6FFE038462A940E9B422EFC8F5D85E\\Data";
 const std::string NETS6_DATA        = "35D7CF51BB9B4875B3A138B32D80DC\\Data";
 const std::string PADS6_DATA        = "4F501041A9BC4A06BDBDAB67D3820E\\Data";
@@ -611,9 +611,10 @@ void ALTIUM_PCB::ParseCircuitMaker( const CFB::CompoundFileReader& aReader )
                 this->ParseRules6Data( aReader, fileHeader );
             } );
 
-    //    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::DIMENSIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
-    //        this->ParseDimensions6Data( aReader, fileHeader );
-    //    } );
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::DIMENSIONS6_DATA,
+            [this]( auto aReader, auto fileHeader ) {
+                this->ParseDimensions6Data( aReader, fileHeader );
+            } );
 
     ParseHelper(
             aReader, ALTIUM_CIRCUIT_MAKER::POLYGONS6_DATA, [this]( auto aReader, auto fileHeader ) {
@@ -871,12 +872,40 @@ void ALTIUM_PCB::ParseDimensions6Data(
 
         dimension->SetLayer( layer );
         dimension->SetOrigin( elem.referencePoint0, elem.textprecission );
-        dimension->SetEnd( elem.referencePoint1, elem.textprecission );
+        if( elem.referencePoint0 != elem.xy1 )
+        {
+            /**
+             * Basically REFERENCE0POINT and REFERENCE1POINT are the two end points of the dimension.
+             * XY1 is the position of the arrow above REFERENCE0POINT. those three points are not necesarily
+             * in 90degree angle, but KiCad requires this to show the correct measurements.
+             *
+             * Therefore, we take the vector of REFERENCE0POINT -> XY1, calculate the normal, and intersect it with
+             * REFERENCE1POINT pointing the same direction as REFERENCE0POINT -> XY1. This should give us a valid
+             * measurement point where we can place the drawsegment.
+             */
+            wxPoint direction = elem.xy1 - elem.referencePoint0;
+            wxPoint intersection;
+            bool    hasIntersection = SegmentIntersectsSegment( elem.referencePoint0,
+                    elem.referencePoint0 + VectorNorm( direction ), elem.referencePoint1,
+                    elem.referencePoint1 + direction, &intersection );
+            // dimension->SetEnd( intersection, elem.textprecission ); // TODO: the intersection is not correct in all cases
+            dimension->SetEnd(
+                    elem.referencePoint1, elem.textprecission ); // workaround until fixed
+
+            int height = static_cast<int>( EuclideanNorm( direction ) );
+            if( direction.x > 0 || direction.y < 0 )
+            {
+                height = -height;
+            }
+            dimension->SetHeight( height, elem.textprecission );
+        }
+        else
+        {
+            dimension->SetEnd( elem.referencePoint1, elem.textprecission );
+        }
+
         dimension->SetWidth( elem.linewidth );
         // TODO: place measurement
-
-        int hight = DistanceLinePoint( elem.referencePoint0, elem.referencePoint1, elem.textPos );
-        dimension->SetHeight( hight, elem.textprecission );
 
         dimension->Text().SetThickness( elem.textlinewidth );
         dimension->Text().SetTextSize( wxSize( elem.textheight, elem.textheight ) );
@@ -886,6 +915,9 @@ void ALTIUM_PCB::ParseDimensions6Data(
         switch( elem.textunit )
         {
         case ALTIUM_UNIT::INCHES:
+            dimension->SetUnits( EDA_UNITS::INCHES, false );
+            break;
+        case ALTIUM_UNIT::MILS:
             dimension->SetUnits( EDA_UNITS::INCHES, true );
             break;
         case ALTIUM_UNIT::MILLIMETERS:
@@ -1092,7 +1124,7 @@ void ALTIUM_PCB::ParseArcs6Data(
             double angle = elem.endangle - elem.startangle;
             ds->SetAngle( -angle * 10. );
 
-            double  startradiant = elem.startangle * M_PI / 180;
+            double  startradiant = DEG2RAD( elem.startangle );
             wxPoint arcStartOffset =
                     wxPoint( static_cast<int32_t>( std::cos( startradiant ) * elem.radius ),
                             -static_cast<int32_t>( std::sin( startradiant ) * elem.radius ) );
@@ -1148,16 +1180,16 @@ void ALTIUM_PCB::ParsePads6Data(
             if( elem.sizeAndShape && elem.sizeAndShape->isslot )
             {
                 pad->SetDrillShape( PAD_DRILL_SHAPE_T::PAD_DRILL_SHAPE_OBLONG );
-                // ensure 90 degree angles TODO: better solution
-                int angle90 = ( (int) ( elem.sizeAndShape->slotrotation / 90. ) + 4 ) % 4;
-                wxASSERT( ( (double) angle90 * 90. ) == elem.sizeAndShape->slotrotation );
-
-                if( angle90 == 0 || angle90 == 2 )
+                double normalizedSlotrotation =
+                        NormalizeAngleDegreesPos( elem.sizeAndShape->slotrotation );
+                if( normalizedSlotrotation == 0. || normalizedSlotrotation == 180. )
                 {
                     pad->SetDrillSize( wxSize( elem.sizeAndShape->slotsize, elem.holesize ) );
                 }
                 else
                 {
+                    wxASSERT_MSG( normalizedSlotrotation == 90. || normalizedSlotrotation == 270.,
+                            "slotrotation is not in 90degree angle!" );
                     pad->SetDrillSize( wxSize( elem.holesize, elem.sizeAndShape->slotsize ) );
                 }
             }
@@ -1596,14 +1628,18 @@ ADIMENSION6::ADIMENSION6( ALTIUM_PARSER& reader )
     referencePoint1 =
             wxPoint( ALTIUM_PARSER::property_unit( properties, "REFERENCE1POINTX", "0mil" ),
                     -ALTIUM_PARSER::property_unit( properties, "REFERENCE1POINTY", "0mil" ) );
-    textPos = wxPoint( ALTIUM_PARSER::property_unit( properties, "X1", "0mil" ),
-                      -ALTIUM_PARSER::property_unit( properties, "Y1", "0mil" ) );
+    xy1 = wxPoint( ALTIUM_PARSER::property_unit( properties, "X1", "0mil" ),
+            -ALTIUM_PARSER::property_unit( properties, "Y1", "0mil" ) );
 
     std::string dimensionunit =
             ALTIUM_PARSER::property_string( properties, "TEXTDIMENSIONUNIT", "Millimeters" );
-    if( dimensionunit == "Inches" ) // TODO: correct?
+    if( dimensionunit == "Inches" )
     {
         textunit = ALTIUM_UNIT::INCHES;
+    }
+    else if( dimensionunit == "Mils" )
+    {
+        textunit = ALTIUM_UNIT::MILS;
     }
     else if( dimensionunit == "Millimeters" )
     {
@@ -2016,7 +2052,7 @@ AREGION6::AREGION6( ALTIUM_PARSER& reader )
 
     uint32_t num_vertices = reader.read<uint32_t>();
 
-    for( int i = 0; i < num_vertices; i++ )
+    for( uint32_t i = 0; i < num_vertices; i++ )
     {
         // no idea why, but for regions the coordinates are stored as double and not as int32_t
         double x = reader.read<double>();
