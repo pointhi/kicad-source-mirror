@@ -1120,9 +1120,7 @@ void ALTIUM_PCB::ParseArcs6Data(
         else
         {
             ds->SetShape( STROKE_T::S_ARC );
-
-            double angle = elem.endangle - elem.startangle;
-            ds->SetAngle( -angle * 10. );
+            ds->SetAngle( -NormalizeAngleDegreesPos( elem.endangle - elem.startangle ) * 10. );
 
             double  startradiant = DEG2RAD( elem.startangle );
             wxPoint arcStartOffset =
