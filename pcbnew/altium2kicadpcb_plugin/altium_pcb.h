@@ -29,6 +29,15 @@
 #include <vector>
 #include <zconf.h>
 
+enum class ALTIUM_UNIT
+{
+    UNKNOWN = 0,
+
+    INCHES      = 1,
+    MILS        = 2,
+    MILLIMETERS = 3,
+    CENTIMETER  = 4
+};
 
 enum class ALTIUM_CLASS_KIND
 {
@@ -44,13 +53,19 @@ enum class ALTIUM_CLASS_KIND
     POLYGON_CLASS          = 7
 };
 
-enum class ALTIUM_UNIT
+enum class ALTIUM_DIMENSION_KIND
 {
     UNKNOWN = 0,
 
-    INCHES      = 1,
-    MILS        = 2,
-    MILLIMETERS = 3
+    LINEAR          = 1,
+    ANGULAR         = 2,
+    RADIAL          = 3,
+    LEADER          = 4,
+    DATUM           = 5,
+    BASELINE        = 6,
+    CENTER          = 7,
+    LINEAR_DIAMETER = 8,
+    RADIAL_DIAMETER = 9
 };
 
 enum class ALTIUM_RULE_KIND
@@ -272,6 +287,12 @@ struct ACOMPONENT6
 struct ADIMENSION6
 {
     ALTIUM_LAYER layer;
+    ALTIUM_DIMENSION_KIND kind;
+
+    std::string textformat;
+
+    int32_t height;
+    double  angle;
 
     uint32_t  linewidth;
     uint32_t  textheight;
@@ -280,11 +301,14 @@ struct ADIMENSION6
     bool      textbold;
     bool      textitalic;
 
+    int32_t arrowsize;
+
     ALTIUM_UNIT textunit;
 
-    wxPoint referencePoint0;
-    wxPoint referencePoint1;
     wxPoint xy1;
+
+    std::vector<wxPoint> referencePoint;
+    std::vector<wxPoint> textPoint;
 
     explicit ADIMENSION6( ALTIUM_PARSER& reader );
 };
@@ -540,6 +564,11 @@ private:
     void ParseRegions6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
 
+    // Helper Functions
+    void HelperParseDimensions6Linear( const ADIMENSION6& elem );
+    void HelperParseDimensions6Leader( const ADIMENSION6& elem );
+    void HelperParseDimensions6Datum( const ADIMENSION6& elem );
+    void HelperParseDimensions6Center( const ADIMENSION6& elem );
 
     BOARD*                               m_board;
     std::vector<MODULE*>                 m_components;

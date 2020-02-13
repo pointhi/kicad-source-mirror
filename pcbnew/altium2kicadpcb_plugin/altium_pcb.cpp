@@ -850,6 +850,191 @@ void ALTIUM_PCB::ParseComponents6Data(
 }
 
 
+void ALTIUM_PCB::HelperParseDimensions6Linear( const ADIMENSION6& elem )
+{
+    if( elem.referencePoint.size() != 2 )
+    {
+        wxFAIL_MSG( "incorrect number of reference points!" );
+        return;
+    }
+
+    wxPoint referencePoint0 = elem.referencePoint.at( 0 );
+    wxPoint referencePoint1 = elem.referencePoint.at( 1 );
+
+    DIMENSION* dimension = new DIMENSION( m_board );
+    m_board->Add( dimension, ADD_MODE::APPEND );
+
+    dimension->SetLayer( kicad_layer( elem.layer ) );
+    dimension->SetOrigin( referencePoint0, elem.textprecission );
+    if( referencePoint0 != elem.xy1 )
+    {
+        /**
+         * Basically REFERENCE0POINT and REFERENCE1POINT are the two end points of the dimension.
+         * XY1 is the position of the arrow above REFERENCE0POINT. those three points are not necesarily
+         * in 90degree angle, but KiCad requires this to show the correct measurements.
+         *
+         * Therefore, we take the vector of REFERENCE0POINT -> XY1, calculate the normal, and intersect it with
+         * REFERENCE1POINT pointing the same direction as REFERENCE0POINT -> XY1. This should give us a valid
+         * measurement point where we can place the drawsegment.
+         */
+        wxPoint direction = elem.xy1 - referencePoint0;
+        wxPoint intersection;
+        LineIntersectsLine( referencePoint0, referencePoint0 + VectorNorm( direction ),
+                referencePoint1, referencePoint1 + direction, &intersection );
+        dimension->SetEnd( intersection, elem.textprecission );
+
+        int height = static_cast<int>( EuclideanNorm( direction ) );
+        if( direction.x <= 0 && direction.y <= 0 ) // TODO: I suspect this is not always correct
+        {
+            height = -height;
+        }
+        dimension->SetHeight( height, elem.textprecission );
+    }
+    else
+    {
+        dimension->SetEnd( referencePoint1, elem.textprecission );
+    }
+
+    dimension->SetWidth( elem.linewidth );
+
+    dimension->Text().SetThickness( elem.textlinewidth );
+    dimension->Text().SetTextSize( wxSize( elem.textheight, elem.textheight ) );
+    dimension->Text().SetBold( elem.textbold );
+    dimension->Text().SetItalic( elem.textitalic );
+
+    switch( elem.textunit )
+    {
+    case ALTIUM_UNIT::INCHES:
+        dimension->SetUnits( EDA_UNITS::INCHES, false );
+        break;
+    case ALTIUM_UNIT::MILS:
+        dimension->SetUnits( EDA_UNITS::INCHES, true );
+        break;
+    case ALTIUM_UNIT::MILLIMETERS:
+    case ALTIUM_UNIT::CENTIMETER:
+        dimension->SetUnits( EDA_UNITS::MILLIMETRES, false );
+        break;
+    default:
+        break;
+    }
+
+    dimension->AdjustDimensionDetails( elem.textprecission );
+}
+
+void ALTIUM_PCB::HelperParseDimensions6Leader( const ADIMENSION6& elem )
+{
+    PCB_LAYER_ID kilayer = kicad_layer( elem.layer );
+
+    if( !elem.referencePoint.empty() )
+    {
+        wxPoint referencePoint0 = elem.referencePoint.at( 0 );
+
+        // line
+        wxPoint last = referencePoint0;
+        for( size_t i = 1; i < elem.referencePoint.size(); i++ )
+        {
+            DRAWSEGMENT* ds = new DRAWSEGMENT( m_board );
+            m_board->Add( ds, ADD_MODE::APPEND );
+            ds->SetShape( STROKE_T::S_SEGMENT );
+            ds->SetLayer( kilayer );
+            ds->SetWidth( elem.linewidth );
+            ds->SetStart( last );
+            ds->SetEnd( elem.referencePoint.at( i ) );
+            last = elem.referencePoint.at( i );
+        }
+
+        // arrow
+        if( elem.referencePoint.size() >= 2 )
+        {
+            wxPoint dirVec = elem.referencePoint.at( 1 ) - referencePoint0;
+            if( dirVec.x != 0 || dirVec.y != 0 )
+            {
+                double  scaling = EuclideanNorm( dirVec ) / elem.arrowsize;
+                wxPoint arrVec =
+                        wxPoint( KiROUND( dirVec.x / scaling ), KiROUND( dirVec.y / scaling ) );
+                RotatePoint( &arrVec, 200. );
+
+                DRAWSEGMENT* ds1 = new DRAWSEGMENT( m_board );
+                m_board->Add( ds1, ADD_MODE::APPEND );
+                ds1->SetShape( STROKE_T::S_SEGMENT );
+                ds1->SetLayer( kilayer );
+                ds1->SetWidth( elem.linewidth );
+                ds1->SetStart( referencePoint0 );
+                ds1->SetEnd( referencePoint0 + arrVec );
+
+                RotatePoint( &arrVec, -400. );
+
+                DRAWSEGMENT* ds2 = new DRAWSEGMENT( m_board );
+                m_board->Add( ds2, ADD_MODE::APPEND );
+                ds2->SetShape( STROKE_T::S_SEGMENT );
+                ds2->SetLayer( kilayer );
+                ds2->SetWidth( elem.linewidth );
+                ds2->SetStart( referencePoint0 );
+                ds2->SetEnd( referencePoint0 + arrVec );
+            }
+        }
+    }
+
+    if( elem.textPoint.empty() )
+    {
+        wxFAIL_MSG( "textpoint not specified!" );
+        return;
+    }
+
+    TEXTE_PCB* text = new TEXTE_PCB( m_board );
+    m_board->Add( text, ADD_MODE::APPEND );
+    text->SetText( elem.textformat );
+    text->SetPosition( elem.textPoint.at( 0 ) );
+    text->SetLayer( kilayer );
+    text->SetTextSize( wxSize( elem.textheight, elem.textheight ) ); // TODO: parse text width
+    text->SetThickness( elem.textlinewidth );
+    text->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_LEFT );
+    text->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_BOTTOM );
+}
+
+void ALTIUM_PCB::HelperParseDimensions6Datum( const ADIMENSION6& elem )
+{
+    PCB_LAYER_ID kilayer = kicad_layer( elem.layer );
+    for( size_t i = 0; i < elem.referencePoint.size(); i++ )
+    {
+        DRAWSEGMENT* ds1 = new DRAWSEGMENT( m_board );
+        m_board->Add( ds1, ADD_MODE::APPEND );
+        ds1->SetShape( STROKE_T::S_SEGMENT );
+        ds1->SetLayer( kilayer );
+        ds1->SetWidth( elem.linewidth );
+        ds1->SetStart( elem.referencePoint.at( i ) );
+        // ds1->SetEnd( /* TODO: seems to be based on TEXTY */ );
+    }
+}
+
+void ALTIUM_PCB::HelperParseDimensions6Center( const ADIMENSION6& elem )
+{
+    PCB_LAYER_ID kilayer = kicad_layer( elem.layer );
+
+    DRAWSEGMENT* ds1 = new DRAWSEGMENT( m_board );
+    m_board->Add( ds1, ADD_MODE::APPEND );
+    ds1->SetShape( STROKE_T::S_SEGMENT );
+    ds1->SetLayer( kilayer );
+    ds1->SetWidth( elem.linewidth );
+
+    wxPoint vec1 = wxPoint( 0, elem.height / 2 );
+    RotatePoint( &vec1, elem.angle * 10. );
+    ds1->SetStart( elem.xy1 + vec1 );
+    ds1->SetEnd( elem.xy1 - vec1 );
+
+    DRAWSEGMENT* ds2 = new DRAWSEGMENT( m_board );
+    m_board->Add( ds2, ADD_MODE::APPEND );
+    ds2->SetShape( STROKE_T::S_SEGMENT );
+    ds2->SetLayer( kilayer );
+    ds2->SetWidth( elem.linewidth );
+
+    wxPoint vec2 = wxPoint( elem.height / 2, 0 );
+    RotatePoint( &vec2, elem.angle * 10. );
+    ds2->SetStart( elem.xy1 + vec2 );
+    ds2->SetEnd( elem.xy1 - vec2 );
+}
+
+
 void ALTIUM_PCB::ParseDimensions6Data(
         const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
 {
@@ -860,72 +1045,29 @@ void ALTIUM_PCB::ParseDimensions6Data(
     {
         ADIMENSION6 elem( reader );
 
-        PCB_LAYER_ID layer = kicad_layer( elem.layer );
-        if( layer == UNDEFINED_LAYER )
+        if( kicad_layer( elem.layer ) == UNDEFINED_LAYER )
         {
             wxFAIL_MSG( "Ignore Dimension because we do not know on which layer to place " );
             continue;
         }
 
-        DIMENSION* dimension = new DIMENSION( m_board );
-        m_board->Add( dimension, ADD_MODE::APPEND );
-
-        dimension->SetLayer( layer );
-        dimension->SetOrigin( elem.referencePoint0, elem.textprecission );
-        if( elem.referencePoint0 != elem.xy1 )
+        switch( elem.kind )
         {
-            /**
-             * Basically REFERENCE0POINT and REFERENCE1POINT are the two end points of the dimension.
-             * XY1 is the position of the arrow above REFERENCE0POINT. those three points are not necesarily
-             * in 90degree angle, but KiCad requires this to show the correct measurements.
-             *
-             * Therefore, we take the vector of REFERENCE0POINT -> XY1, calculate the normal, and intersect it with
-             * REFERENCE1POINT pointing the same direction as REFERENCE0POINT -> XY1. This should give us a valid
-             * measurement point where we can place the drawsegment.
-             */
-            wxPoint direction = elem.xy1 - elem.referencePoint0;
-            wxPoint intersection;
-            LineIntersectsLine( elem.referencePoint0,
-                    elem.referencePoint0 + VectorNorm( direction ), elem.referencePoint1,
-                    elem.referencePoint1 + direction, &intersection );
-            dimension->SetEnd( intersection, elem.textprecission );
-
-            int height = static_cast<int>( EuclideanNorm( direction ) );
-            if( direction.x <= 0 && direction.y <= 0 ) // TODO: I suspect this is not always correct
-            {
-                height = -height;
-            }
-            dimension->SetHeight( height, elem.textprecission );
-        }
-        else
-        {
-            dimension->SetEnd( elem.referencePoint1, elem.textprecission );
-        }
-
-        dimension->SetWidth( elem.linewidth );
-        // TODO: place measurement
-
-        dimension->Text().SetThickness( elem.textlinewidth );
-        dimension->Text().SetTextSize( wxSize( elem.textheight, elem.textheight ) );
-        dimension->Text().SetBold( elem.textbold );
-        dimension->Text().SetItalic( elem.textitalic );
-
-        switch( elem.textunit )
-        {
-        case ALTIUM_UNIT::INCHES:
-            dimension->SetUnits( EDA_UNITS::INCHES, false );
+        case ALTIUM_DIMENSION_KIND::LINEAR:
+            HelperParseDimensions6Linear( elem );
             break;
-        case ALTIUM_UNIT::MILS:
-            dimension->SetUnits( EDA_UNITS::INCHES, true );
+        case ALTIUM_DIMENSION_KIND::LEADER:
+            HelperParseDimensions6Leader( elem );
             break;
-        case ALTIUM_UNIT::MILLIMETERS:
-            dimension->SetUnits( EDA_UNITS::MILLIMETRES, false );
+        case ALTIUM_DIMENSION_KIND::DATUM:
+            // HelperParseDimensions6Datum( elem );
+            break;
+        case ALTIUM_DIMENSION_KIND::CENTER:
+            HelperParseDimensions6Center( elem );
             break;
         default:
             break;
         }
-
-        dimension->AdjustDimensionDetails( elem.textprecission );
     }
 
     wxASSERT( !reader.parser_error() );
@@ -1610,20 +1752,50 @@ ADIMENSION6::ADIMENSION6( ALTIUM_PARSER& reader )
     wxASSERT( !properties.empty() );
 
     layer = altium_layer_from_name( ALTIUM_PARSER::property_string( properties, "LAYER", "" ) );
+    kind  = static_cast<ALTIUM_DIMENSION_KIND>(
+            ALTIUM_PARSER::property_int( properties, "DIMENSIONKIND", 0 ) );
+
+    textformat = ALTIUM_PARSER::property_string( properties, "TEXTFORMAT", "" );
+
+    height = ALTIUM_PARSER::property_unit( properties, "HEIGHT", "0mil" );
+    angle  = ALTIUM_PARSER::property_double( properties, "ANGLE", 0. );
+
     linewidth      = ALTIUM_PARSER::property_unit( properties, "LINEWIDTH", "10mil" );
     textheight     = ALTIUM_PARSER::property_unit( properties, "TEXTHEIGHT", "10mil" );
     textlinewidth  = ALTIUM_PARSER::property_unit( properties, "TEXTLINEWIDTH", "6mil" );
     textprecission = ALTIUM_PARSER::property_int( properties, "TEXTPRECISION", 2 );
     textbold       = ALTIUM_PARSER::property_bool( properties, "TEXTLINEWIDTH", false );
     textitalic     = ALTIUM_PARSER::property_bool( properties, "ITALIC", false );
-    referencePoint0 =
-            wxPoint( ALTIUM_PARSER::property_unit( properties, "REFERENCE0POINTX", "0mil" ),
-                    -ALTIUM_PARSER::property_unit( properties, "REFERENCE0POINTY", "0mil" ) );
-    referencePoint1 =
-            wxPoint( ALTIUM_PARSER::property_unit( properties, "REFERENCE1POINTX", "0mil" ),
-                    -ALTIUM_PARSER::property_unit( properties, "REFERENCE1POINTY", "0mil" ) );
+
+    arrowsize = ALTIUM_PARSER::property_unit( properties, "ARROWSIZE", "60mil" );
+
     xy1 = wxPoint( ALTIUM_PARSER::property_unit( properties, "X1", "0mil" ),
             -ALTIUM_PARSER::property_unit( properties, "Y1", "0mil" ) );
+
+    int refcount = ALTIUM_PARSER::property_int( properties, "REFERENCES_COUNT", 0 );
+    for( size_t i = 0; i < refcount; i++ )
+    {
+        const std::string refi = "REFERENCE" + std::to_string( i );
+        referencePoint.emplace_back(
+                ALTIUM_PARSER::property_unit( properties, refi + "POINTX", "0mil" ),
+                -ALTIUM_PARSER::property_unit( properties, refi + "POINTY", "0mil" ) );
+    }
+
+    for( size_t i = 1; i < std::numeric_limits<size_t>::max(); i++ )
+    {
+        const std::string texti  = "TEXT" + std::to_string( i );
+        const std::string textix = texti + "X";
+        const std::string textiy = texti + "Y";
+
+        if( properties.find( textix ) == properties.end()
+                || properties.find( textiy ) == properties.end() )
+        {
+            break; // it doesn't seem like we know beforehand how many vertices are inside a polygon
+        }
+
+        textPoint.emplace_back( ALTIUM_PARSER::property_unit( properties, textix, "0mil" ),
+                -ALTIUM_PARSER::property_unit( properties, textiy, "0mil" ) );
+    }
 
     std::string dimensionunit =
             ALTIUM_PARSER::property_string( properties, "TEXTDIMENSIONUNIT", "Millimeters" );
@@ -1638,6 +1810,10 @@ ADIMENSION6::ADIMENSION6( ALTIUM_PARSER& reader )
     else if( dimensionunit == "Millimeters" )
     {
         textunit = ALTIUM_UNIT::MILLIMETERS;
+    }
+    else if( dimensionunit == "Centimeters" )
+    {
+        textunit = ALTIUM_UNIT::CENTIMETER;
     }
     else
     {
