@@ -74,7 +74,7 @@ BOARD* ALTIUM_CIRCUIT_MAKER_PLUGIN::Load(
         m_board->SetFileName( aFileName );
 
     // Open file
-    FILE* fp = fopen( aFileName, "rb" );
+    FILE* fp = fopen( aFileName.c_str(), "rb" );
     if( fp == nullptr )
     {
         std::cerr << "read file error" << std::endl;

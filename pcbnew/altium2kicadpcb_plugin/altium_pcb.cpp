@@ -783,8 +783,9 @@ void ALTIUM_PCB::ParseBoard6Data(
         ++it;
         wxASSERT( ( *it )->GetType() == BS_ITEM_TYPE_DIELECTRIC );
         ( *it )->SetThickness( layer.dielectricthick, 0 );
-        ( *it )->SetMaterial(
-                layer.dielectricmaterial.empty() ? NotSpecifiedPrm() : layer.dielectricmaterial );
+        ( *it )->SetMaterial( layer.dielectricmaterial.empty() ?
+                                      NotSpecifiedPrm() :
+                                      wxString( layer.dielectricmaterial ) );
         ( *it )->SetEpsilonR( layer.dielectricconst, 0 );
 
         ++it;
