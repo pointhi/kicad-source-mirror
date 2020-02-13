@@ -886,15 +886,13 @@ void ALTIUM_PCB::ParseDimensions6Data(
              */
             wxPoint direction = elem.xy1 - elem.referencePoint0;
             wxPoint intersection;
-            bool    hasIntersection = SegmentIntersectsSegment( elem.referencePoint0,
+            LineIntersectsLine( elem.referencePoint0,
                     elem.referencePoint0 + VectorNorm( direction ), elem.referencePoint1,
                     elem.referencePoint1 + direction, &intersection );
-            // dimension->SetEnd( intersection, elem.textprecission ); // TODO: the intersection is not correct in all cases
-            dimension->SetEnd(
-                    elem.referencePoint1, elem.textprecission ); // workaround until fixed
+            dimension->SetEnd( intersection, elem.textprecission );
 
             int height = static_cast<int>( EuclideanNorm( direction ) );
-            if( direction.x > 0 || direction.y < 0 )
+            if( direction.x <= 0 && direction.y <= 0 ) // TODO: I suspect this is not always correct
             {
                 height = -height;
             }
