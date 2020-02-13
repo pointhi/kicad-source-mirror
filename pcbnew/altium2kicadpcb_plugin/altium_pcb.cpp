@@ -878,9 +878,9 @@ void ALTIUM_PCB::HelperParseDimensions6Linear( const ADIMENSION6& elem )
          * measurement point where we can place the drawsegment.
          */
         wxPoint direction = elem.xy1 - referencePoint0;
-        wxPoint intersection;
-        LineIntersectsLine( referencePoint0, referencePoint0 + VectorNorm( direction ),
-                referencePoint1, referencePoint1 + direction, &intersection );
+        SEG     segm1( referencePoint0, referencePoint0 + VectorNorm( direction ) );
+        SEG     segm2( referencePoint1, referencePoint1 + direction );
+        wxPoint intersection( segm1.Intersect( segm2, true, true ).get() );
         dimension->SetEnd( intersection, elem.textprecission );
 
         int height = static_cast<int>( EuclideanNorm( direction ) );

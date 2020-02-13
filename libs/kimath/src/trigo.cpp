@@ -126,44 +126,6 @@ bool SegmentIntersectsSegment( const wxPoint &a_p1_l1, const wxPoint &a_p2_l1,
 }
 
 
-// Returns true if the line 1 intersects line 2.
-bool LineIntersectsLine( const wxPoint &a_p1_l1, const wxPoint &a_p2_l1,
-                         const wxPoint &a_p1_l2, const wxPoint &a_p2_l2,
-                         wxPoint* aIntersectionPoint )
-{
-    // source: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_two_points_on_each_line
-
-    //We are forced to use 64bit ints because the internal units can oveflow 32bit ints when
-    // multiplied with each other, the alternative would be to scale the units down (i.e. divide
-    // by a fixed number).
-    long long dX_a, dY_a, dX_b, dY_b;
-    long long den;
-
-    dX_a = a_p2_l1.x - a_p1_l1.x;
-    dY_a = a_p2_l1.y - a_p1_l1.y;
-    dX_b = a_p2_l2.x - a_p1_l2.x;
-    dY_b = a_p2_l2.y - a_p1_l2.y;
-
-    den = dY_a * dX_b - dY_b * dX_a;
-
-    //Check if lines are parallel
-    if( den == 0 )
-        return false;
-
-    // TODO: remove usage of double. Someone with computer algebra knowledge should optimize this away
-    double p12 = ( (double) a_p1_l1.x * a_p2_l1.y - (double) a_p1_l1.y * a_p2_l1.x );
-    double p34 = ( (double) a_p1_l2.x * a_p2_l2.y - (double) a_p1_l2.y * a_p2_l2.x );
-
-    if( aIntersectionPoint )
-    {
-        aIntersectionPoint->x = KiROUND( ( p12 * dX_b - dX_a * p34 ) / den );
-        aIntersectionPoint->y = KiROUND( ( p12 * dY_b - dY_a * p34 ) / den );
-    }
-
-    return true;
-}
-
-
 bool TestSegmentHit( const wxPoint &aRefPoint, wxPoint aStart, wxPoint aEnd, int aDist )
 {
     int xmin = aStart.x;
