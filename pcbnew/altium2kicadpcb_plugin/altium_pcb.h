@@ -257,21 +257,21 @@ struct ACLASS6
 
 struct ACOMPONENT6
 {
-    std::string layer;
-    wxPoint     position;
-    double      rotation;
-    bool        locked;
-    bool        nameon;
-    bool        commenton;
-    std::string sourcedesignator;
-    std::string sourcelibreference;
+    ALTIUM_LAYER layer;
+    wxPoint      position;
+    double       rotation;
+    bool         locked;
+    bool         nameon;
+    bool         commenton;
+    std::string  sourcedesignator;
+    std::string  sourcelibreference;
 
     explicit ACOMPONENT6( ALTIUM_PARSER& reader );
 };
 
 struct ADIMENSION6
 {
-    std::string layer;
+    ALTIUM_LAYER layer;
 
     uint32_t  linewidth;
     uint32_t  textheight;
@@ -307,9 +307,9 @@ struct APOLYGON6_VERTICE
 
 struct APOLYGON6
 {
-    std::string layer;
-    uint16_t    net;
-    bool        locked;
+    ALTIUM_LAYER layer;
+    uint16_t     net;
+    bool         locked;
 
     std::vector<APOLYGON6_VERTICE> vertices;
 
@@ -494,7 +494,6 @@ public:
     void ParseCircuitMaker( const CFB::CompoundFileReader& aReader );
 
 private:
-    ALTIUM_LAYER altium_layer_from_name( const std::string& aName ) const;
     PCB_LAYER_ID kicad_layer( ALTIUM_LAYER aAltiumLayer ) const;
 
     MODULE* GetComponent( const uint16_t id );

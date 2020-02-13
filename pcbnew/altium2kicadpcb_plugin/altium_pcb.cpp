@@ -72,7 +72,7 @@ const CFB::COMPOUND_FILE_ENTRY* FindStream(
     return ret;
 }
 
-ALTIUM_LAYER ALTIUM_PCB::altium_layer_from_name( const std::string& aName ) const
+ALTIUM_LAYER altium_layer_from_name( const std::string& aName )
 {
     // TODO: only initialize table once
     std::unordered_map<std::string, ALTIUM_LAYER> hash_map;
@@ -840,7 +840,7 @@ void ALTIUM_PCB::ParseComponents6Data(
         module->SetLocked( elem.locked );
         module->Reference().SetVisible( elem.nameon );
         module->Value().SetVisible( elem.commenton );
-        module->SetLayer( elem.layer == "TOP" ? F_Cu : B_Cu );
+        module->SetLayer( elem.layer == ALTIUM_LAYER::TOP_LAYER ? F_Cu : B_Cu );
 
         componentId++;
     }
@@ -860,11 +860,10 @@ void ALTIUM_PCB::ParseDimensions6Data(
     {
         ADIMENSION6 elem( reader );
 
-        PCB_LAYER_ID layer = kicad_layer( altium_layer_from_name( elem.layer ) );
+        PCB_LAYER_ID layer = kicad_layer( elem.layer );
         if( layer == UNDEFINED_LAYER )
         {
-            wxFAIL_MSG( "Ignore Dimension on layer " + elem.layer
-                        + " because we do not know where to place " );
+            wxFAIL_MSG( "Ignore Dimension because we do not know on which layer to place " );
             continue;
         }
 
@@ -963,11 +962,10 @@ void ALTIUM_PCB::ParsePolygons6Data(
     {
         APOLYGON6 elem( reader );
 
-        PCB_LAYER_ID layer = kicad_layer( altium_layer_from_name( elem.layer ) );
+        PCB_LAYER_ID layer = kicad_layer( elem.layer );
         if( layer == UNDEFINED_LAYER )
         {
-            wxFAIL_MSG( "Ignore polygon on layer " + elem.layer
-                        + " because we do not know where to place " );
+            wxFAIL_MSG( "Ignore polygon because we do not know on which layer to place " );
             continue;
         }
 
@@ -1590,7 +1588,7 @@ ACOMPONENT6::ACOMPONENT6( ALTIUM_PARSER& reader )
     std::map<std::string, std::string> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
-    layer              = ALTIUM_PARSER::property_string( properties, "LAYER", "" );
+    layer = altium_layer_from_name( ALTIUM_PARSER::property_string( properties, "LAYER", "" ) );
     position           = wxPoint( ALTIUM_PARSER::property_unit( properties, "X", "0mil" ),
             -ALTIUM_PARSER::property_unit( properties, "Y", "0mil" ) );
     rotation           = ALTIUM_PARSER::property_double( properties, "ROTATION", 0. );
@@ -1611,7 +1609,7 @@ ADIMENSION6::ADIMENSION6( ALTIUM_PARSER& reader )
     std::map<std::string, std::string> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
-    layer          = ALTIUM_PARSER::property_string( properties, "LAYER", "" );
+    layer = altium_layer_from_name( ALTIUM_PARSER::property_string( properties, "LAYER", "" ) );
     linewidth      = ALTIUM_PARSER::property_unit( properties, "LINEWIDTH", "10mil" );
     textheight     = ALTIUM_PARSER::property_unit( properties, "TEXTHEIGHT", "10mil" );
     textlinewidth  = ALTIUM_PARSER::property_unit( properties, "TEXTLINEWIDTH", "6mil" );
@@ -1666,7 +1664,7 @@ APOLYGON6::APOLYGON6( ALTIUM_PARSER& reader )
     std::map<std::string, std::string> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
-    layer = ALTIUM_PARSER::property_string( properties, "LAYER", "" );
+    layer  = altium_layer_from_name( ALTIUM_PARSER::property_string( properties, "LAYER", "" ) );
     net    = ALTIUM_PARSER::property_int( properties, "NET", std::numeric_limits<uint16_t>::max() );
     locked = ALTIUM_PARSER::property_bool( properties, "LOCKED", false );
 
