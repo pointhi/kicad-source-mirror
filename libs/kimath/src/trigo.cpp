@@ -156,8 +156,8 @@ bool LineIntersectsLine( const wxPoint &a_p1_l1, const wxPoint &a_p2_l1,
 
     if( aIntersectionPoint )
     {
-        aIntersectionPoint->x = static_cast<int>( ( p12 * dX_b - dX_a * p34 ) / den );
-        aIntersectionPoint->y = static_cast<int>( ( p12 * dY_b - dY_a * p34 ) / den );
+        aIntersectionPoint->x = KiROUND( ( p12 * dX_b - dX_a * p34 ) / den );
+        aIntersectionPoint->y = KiROUND( ( p12 * dY_b - dY_a * p34 ) / den );
     }
 
     return true;

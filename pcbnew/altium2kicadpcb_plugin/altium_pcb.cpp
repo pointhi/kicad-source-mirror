@@ -1122,9 +1122,8 @@ void ALTIUM_PCB::ParseArcs6Data(
             ds->SetAngle( -NormalizeAngleDegreesPos( elem.endangle - elem.startangle ) * 10. );
 
             double  startradiant = DEG2RAD( elem.startangle );
-            wxPoint arcStartOffset =
-                    wxPoint( static_cast<int32_t>( std::cos( startradiant ) * elem.radius ),
-                            -static_cast<int32_t>( std::sin( startradiant ) * elem.radius ) );
+            wxPoint arcStartOffset = wxPoint( KiROUND( std::cos( startradiant ) * elem.radius ),
+                    -KiROUND( std::sin( startradiant ) * elem.radius ) );
             ds->SetArcStart( elem.center + arcStartOffset );
         }
 
