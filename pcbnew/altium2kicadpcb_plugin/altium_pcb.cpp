@@ -72,10 +72,10 @@ const CFB::COMPOUND_FILE_ENTRY* FindStream(
     return ret;
 }
 
-ALTIUM_LAYER altium_layer_from_name( const std::string& aName )
+ALTIUM_LAYER altium_layer_from_name( const wxString& aName )
 {
     // TODO: only initialize table once
-    std::unordered_map<std::string, ALTIUM_LAYER> hash_map;
+    std::unordered_map<wxString, ALTIUM_LAYER> hash_map;
     hash_map["TOP"]    = ALTIUM_LAYER::TOP_LAYER;
     hash_map["MID1"]   = ALTIUM_LAYER::MID_LAYER_1;
     hash_map["MID2"]   = ALTIUM_LAYER::MID_LAYER_2;
@@ -355,67 +355,67 @@ ALTIUM_PCB::~ALTIUM_PCB()
 
 namespace ALTIUM_DESIGNER
 {
-const std::string FILE_HEADER = "FileHeader";
+const wxString FILE_HEADER = "FileHeader";
 
-const std::string ARCS6_DATA        = "Arcs6\\Data";
-const std::string BOARD6_DATA       = "Board6\\Data";
-const std::string BOARDREGIONS_DATA = "BoardRegions\\Data";
-const std::string CLASSES6_DATA     = "Classes6\\Data";
-const std::string COMPONENTS6_DATA  = "Components6\\Data";
-const std::string DIMENSIONS6_DATA  = "Dimensions6\\Data";
-const std::string FILLS6_DATA       = "Fills6\\Data";
-const std::string NETS6_DATA        = "Nets6\\Data";
-const std::string PADS6_DATA        = "Pads6\\Data";
-const std::string POLYGONS6_DATA    = "Polygons6\\Data";
-const std::string REGIONS6_DATA     = "Regions6\\Data";
-const std::string RULES6_DATA       = "Rules6\\Data";
-const std::string TEXTS6_DATA       = "Texts6\\Data";
-const std::string TRACKS6_DATA      = "Tracks6\\Data";
-const std::string VIAS6_DATA        = "Vias6\\Data";
+const wxString ARCS6_DATA        = "Arcs6\\Data";
+const wxString BOARD6_DATA       = "Board6\\Data";
+const wxString BOARDREGIONS_DATA = "BoardRegions\\Data";
+const wxString CLASSES6_DATA     = "Classes6\\Data";
+const wxString COMPONENTS6_DATA  = "Components6\\Data";
+const wxString DIMENSIONS6_DATA  = "Dimensions6\\Data";
+const wxString FILLS6_DATA       = "Fills6\\Data";
+const wxString NETS6_DATA        = "Nets6\\Data";
+const wxString PADS6_DATA        = "Pads6\\Data";
+const wxString POLYGONS6_DATA    = "Polygons6\\Data";
+const wxString REGIONS6_DATA     = "Regions6\\Data";
+const wxString RULES6_DATA       = "Rules6\\Data";
+const wxString TEXTS6_DATA       = "Texts6\\Data";
+const wxString TRACKS6_DATA      = "Tracks6\\Data";
+const wxString VIAS6_DATA        = "Vias6\\Data";
 }; // namespace ALTIUM_DESIGNER
 
 // those directories were found by searching for equivalent files in both formats
 namespace ALTIUM_CIRCUIT_STUDIO
 {
-const std::string FILE_HEADER = "FileHeader";
+const wxString FILE_HEADER = "FileHeader";
 
-const std::string ARCS6_DATA       = "00C595EB90524FFC8C3BD9670020A2\\Data";
-const std::string BOARD6_DATA      = "88857D7F1DF64F7BBB61848C965636\\Data";
-// const std::string BOARDREGIONS_DATA = "TODO\\Data";
-// const std::string CLASSES6_DATA     = "TODO\\Data";
-const std::string COMPONENTS6_DATA = "465416896A15486999A39C643935D2\\Data";
-// const std::string DIMENSIONS6_DATA  = "TODO\\Data";
-const std::string FILLS6_DATA      = "4E83BDC3253747F08E9006D7F57020\\Data";
-const std::string NETS6_DATA       = "D95A0DA2FE9047779A5194C127F30B\\Data";
-const std::string PADS6_DATA       = "47D69BC5107A4B8DB8DAA23E39C238\\Data";
-const std::string POLYGONS6_DATA   = "D7038392280E4E229B9D9B5426B295\\Data";
-// const std::string REGIONS6_DATA = "TODO\\Data";
-// const std::string RULES6_DATA   = "TODO\\Data";
-const std::string TEXTS6_DATA      = "349ABBB211DB4F5B8AE41B1B49555A\\Data";
-const std::string TRACKS6_DATA     = "530C20C225354B858B2578CAB8C08D\\Data";
-const std::string VIAS6_DATA       = "CA5F5989BCDB404DA70A9D1D3D5758\\Data";
+const wxString ARCS6_DATA  = "00C595EB90524FFC8C3BD9670020A2\\Data";
+const wxString BOARD6_DATA = "88857D7F1DF64F7BBB61848C965636\\Data";
+// const wxString BOARDREGIONS_DATA = "TODO\\Data";
+// const wxString CLASSES6_DATA     = "TODO\\Data";
+const wxString COMPONENTS6_DATA = "465416896A15486999A39C643935D2\\Data";
+// const wxString DIMENSIONS6_DATA  = "TODO\\Data";
+const wxString FILLS6_DATA    = "4E83BDC3253747F08E9006D7F57020\\Data";
+const wxString NETS6_DATA     = "D95A0DA2FE9047779A5194C127F30B\\Data";
+const wxString PADS6_DATA     = "47D69BC5107A4B8DB8DAA23E39C238\\Data";
+const wxString POLYGONS6_DATA = "D7038392280E4E229B9D9B5426B295\\Data";
+// const wxString REGIONS6_DATA = "TODO\\Data";
+// const wxString RULES6_DATA   = "TODO\\Data";
+const wxString TEXTS6_DATA  = "349ABBB211DB4F5B8AE41B1B49555A\\Data";
+const wxString TRACKS6_DATA = "530C20C225354B858B2578CAB8C08D\\Data";
+const wxString VIAS6_DATA   = "CA5F5989BCDB404DA70A9D1D3D5758\\Data";
 }; // namespace ALTIUM_CIRCUIT_STUDIO
 
 // those directories were found by searching for equivalent files in both formats
 namespace ALTIUM_CIRCUIT_MAKER
 {
-const std::string FILE_HEADER = "FileHeader";
+const wxString FILE_HEADER = "FileHeader";
 
-const std::string ARCS6_DATA        = "1CEEB63FB33847F8AFC4485F64735E\\Data";
-const std::string BOARD6_DATA       = "96B09F5C6CEE434FBCE0DEB3E88E70\\Data";
-const std::string BOARDREGIONS_DATA = "E3A544335C30403A991912052C936F\\Data";
-const std::string CLASSES6_DATA     = "4F71DD45B09143988210841EA1C28D\\Data";
-const std::string COMPONENTS6_DATA  = "F9D060ACC7DD4A85BC73CB785BAC81\\Data";
-const std::string DIMENSIONS6_DATA  = "068B9422DBB241258BA2DE9A6BA1A6\\Data";
-const std::string FILLS6_DATA       = "6FFE038462A940E9B422EFC8F5D85E\\Data";
-const std::string NETS6_DATA        = "35D7CF51BB9B4875B3A138B32D80DC\\Data";
-const std::string PADS6_DATA        = "4F501041A9BC4A06BDBDAB67D3820E\\Data";
-const std::string POLYGONS6_DATA    = "A1931C8B0B084A61AA45146575FDD3\\Data";
-const std::string REGIONS6_DATA     = "F513A5885418472886D3EF18A09E46\\Data";
-const std::string RULES6_DATA       = "C27718A40C94421388FAE5BD7785D7\\Data";
-const std::string TEXTS6_DATA       = "A34BC67C2A5F408D8F377378C5C5E2\\Data";
-const std::string TRACKS6_DATA      = "412A754DBB864645BF01CD6A80C358\\Data";
-const std::string VIAS6_DATA        = "C87A685A0EFA4A90BEEFD666198B56\\Data";
+const wxString ARCS6_DATA        = "1CEEB63FB33847F8AFC4485F64735E\\Data";
+const wxString BOARD6_DATA       = "96B09F5C6CEE434FBCE0DEB3E88E70\\Data";
+const wxString BOARDREGIONS_DATA = "E3A544335C30403A991912052C936F\\Data";
+const wxString CLASSES6_DATA     = "4F71DD45B09143988210841EA1C28D\\Data";
+const wxString COMPONENTS6_DATA  = "F9D060ACC7DD4A85BC73CB785BAC81\\Data";
+const wxString DIMENSIONS6_DATA  = "068B9422DBB241258BA2DE9A6BA1A6\\Data";
+const wxString FILLS6_DATA       = "6FFE038462A940E9B422EFC8F5D85E\\Data";
+const wxString NETS6_DATA        = "35D7CF51BB9B4875B3A138B32D80DC\\Data";
+const wxString PADS6_DATA        = "4F501041A9BC4A06BDBDAB67D3820E\\Data";
+const wxString POLYGONS6_DATA    = "A1931C8B0B084A61AA45146575FDD3\\Data";
+const wxString REGIONS6_DATA     = "F513A5885418472886D3EF18A09E46\\Data";
+const wxString RULES6_DATA       = "C27718A40C94421388FAE5BD7785D7\\Data";
+const wxString TEXTS6_DATA       = "A34BC67C2A5F408D8F377378C5C5E2\\Data";
+const wxString TRACKS6_DATA      = "412A754DBB864645BF01CD6A80C358\\Data";
+const wxString VIAS6_DATA        = "C87A685A0EFA4A90BEEFD666198B56\\Data";
 }; // namespace ALTIUM_CIRCUIT_MAKER
 
 void ALTIUM_PCB::ParseDesigner( const CFB::CompoundFileReader& aReader )
@@ -664,7 +664,7 @@ void ALTIUM_PCB::ParseCircuitMaker( const CFB::CompoundFileReader& aReader )
     FinishParsingHelper();
 }
 
-void ALTIUM_PCB::ParseHelper( const CFB::CompoundFileReader& aReader, const std::string& streamName,
+void ALTIUM_PCB::ParseHelper( const CFB::CompoundFileReader& aReader, const wxString& streamName,
         parse_function_pointer_t fp )
 {
     const CFB::COMPOUND_FILE_ENTRY* file = FindStream( aReader, streamName.c_str() );
@@ -719,7 +719,8 @@ void ALTIUM_PCB::ParseFileHeader(
     ALTIUM_PARSER reader( aReader, aEntry );
 
     reader.read_subrecord_length();
-    std::string header = reader.read_string();
+    wxString header = reader.read_string();
+
     //std::cout << "HEADER: " << header << std::endl;  // tells me: PCB 5.0 Binary File
 
     //reader.subrecord_skip();
@@ -1261,7 +1262,7 @@ void ALTIUM_PCB::ParseArcs6Data(
             ds->SetShape( STROKE_T::S_ARC );
             ds->SetAngle( -NormalizeAngleDegreesPos( elem.endangle - elem.startangle ) * 10. );
 
-            double  startradiant = DEG2RAD( elem.startangle );
+            double  startradiant   = DEG2RAD( elem.startangle );
             wxPoint arcStartOffset = wxPoint( KiROUND( std::cos( startradiant ) * elem.radius ),
                     -KiROUND( std::sin( startradiant ) * elem.radius ) );
             ds->SetArcStart( elem.center + arcStartOffset );
@@ -1654,7 +1655,7 @@ ABOARD6::ABOARD6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    std::map<std::string, std::string> properties = reader.read_properties();
+    std::map<wxString, wxString> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
     /*for (auto & property : properties) {
@@ -1670,8 +1671,8 @@ ABOARD6::ABOARD6( ALTIUM_PARSER& reader )
 
     for( size_t i = 1; i < std::numeric_limits<size_t>::max(); i++ )
     {
-        const std::string layeri    = "LAYER" + std::to_string( i );
-        const std::string layername = layeri + "NAME";
+        const wxString layeri    = "LAYER" + std::to_string( i );
+        const wxString layername = layeri + "NAME";
 
         auto layernameit = properties.find( layername );
         if( layernameit == properties.end() )
@@ -1704,7 +1705,7 @@ ACLASS6::ACLASS6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    std::map<std::string, std::string> properties = reader.read_properties();
+    std::map<wxString, wxString> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
     name     = ALTIUM_PARSER::property_string( properties, "NAME", "" );
@@ -1727,7 +1728,7 @@ ACOMPONENT6::ACOMPONENT6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    std::map<std::string, std::string> properties = reader.read_properties();
+    std::map<wxString, wxString> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
     layer = altium_layer_from_name( ALTIUM_PARSER::property_string( properties, "LAYER", "" ) );
@@ -1748,7 +1749,7 @@ ADIMENSION6::ADIMENSION6( ALTIUM_PARSER& reader )
 
     reader.skip( 2 );
 
-    std::map<std::string, std::string> properties = reader.read_properties();
+    std::map<wxString, wxString> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
     layer = altium_layer_from_name( ALTIUM_PARSER::property_string( properties, "LAYER", "" ) );
@@ -1797,7 +1798,7 @@ ADIMENSION6::ADIMENSION6( ALTIUM_PARSER& reader )
                 -ALTIUM_PARSER::property_unit( properties, textiy, "0mil" ) );
     }
 
-    std::string dimensionunit =
+    wxString dimensionunit =
             ALTIUM_PARSER::property_string( properties, "TEXTDIMENSIONUNIT", "Millimeters" );
     if( dimensionunit == "Inches" )
     {
@@ -1826,7 +1827,7 @@ ANET6::ANET6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    std::map<std::string, std::string> properties = reader.read_properties();
+    std::map<wxString, wxString> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
     name = ALTIUM_PARSER::property_string( properties, "NAME", "" );
@@ -1837,7 +1838,7 @@ APOLYGON6::APOLYGON6( ALTIUM_PARSER& reader )
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
 
-    std::map<std::string, std::string> properties = reader.read_properties();
+    std::map<wxString, wxString> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
     layer  = altium_layer_from_name( ALTIUM_PARSER::property_string( properties, "LAYER", "" ) );
@@ -1846,8 +1847,8 @@ APOLYGON6::APOLYGON6( ALTIUM_PARSER& reader )
 
     for( size_t i = 0; i < std::numeric_limits<size_t>::max(); i++ )
     {
-        const std::string vxi = "VX" + std::to_string( i );
-        const std::string vyi = "VY" + std::to_string( i );
+        const wxString vxi = wxString::Format( "VX%llu", (unsigned long long) i );
+        const wxString vyi = wxString::Format( "VY%llu", (unsigned long long) i );
 
         auto vxit = properties.find( vxi );
         auto vyit = properties.find( vyi );
@@ -1871,13 +1872,13 @@ ARULE6::ARULE6( ALTIUM_PARSER& reader )
 
     reader.skip( 2 );
 
-    std::map<std::string, std::string> properties = reader.read_properties();
+    std::map<wxString, wxString> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
     name     = ALTIUM_PARSER::property_string( properties, "NAME", "" );
     priority = ALTIUM_PARSER::property_int( properties, "PRIORITY", 1 );
 
-    std::string rulekind = ALTIUM_PARSER::property_string( properties, "RULEKIND", "" );
+    wxString rulekind = ALTIUM_PARSER::property_string( properties, "RULEKIND", "" );
     if( rulekind == "Clearance" )
     {
         kind = ALTIUM_RULE_KIND::CLEARANCE;
@@ -2213,7 +2214,7 @@ AREGION6::AREGION6( ALTIUM_PARSER& reader )
     component = reader.read<uint16_t>();
     reader.skip( 9 );
 
-    std::map<std::string, std::string> properties = reader.read_properties();
+    std::map<wxString, wxString> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
     kind          = ALTIUM_PARSER::property_int( properties, "KIND", 0 );

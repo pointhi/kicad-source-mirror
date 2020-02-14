@@ -9,7 +9,7 @@
 meta:
   id: altium_binary
   endian: le
-  encoding: UTF-8
+  encoding: ISO8859-1
 
 seq:
   - id: record

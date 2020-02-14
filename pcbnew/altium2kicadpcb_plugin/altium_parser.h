@@ -59,19 +59,21 @@ public:
         }
     }
 
-    std::string read_string()
+    wxString read_string()
     {
         uint8_t len = read<uint8_t>();
         if( bytes_remaining() >= len )
         {
-            std::string val = std::string( pos, len );
+
+            //altium uses LATIN1/ISO 8859-1, convert it
+            wxString val = wxString( pos, wxConvISO8859_1, len );
             pos += len;
             return val;
         }
         else
         {
             error = true;
-            return "";
+            return wxString( "" );
         }
     }
 
@@ -96,7 +98,7 @@ public:
         return length;
     }
 
-    std::map<std::string, std::string> read_properties();
+    std::map<wxString, wxString> read_properties();
 
     static int32_t kicad_unit( const int32_t x )
     {
@@ -114,19 +116,19 @@ public:
     }
 
     static int property_int(
-            const std::map<std::string, std::string>& properties, const std::string& key, int def );
+            const std::map<wxString, wxString>& properties, const wxString& key, int def );
 
-    static double property_double( const std::map<std::string, std::string>& properties,
-            const std::string& key, double def );
+    static double property_double(
+            const std::map<wxString, wxString>& properties, const wxString& key, double def );
 
-    static bool property_bool( const std::map<std::string, std::string>& properties,
-            const std::string& key, bool def );
+    static bool property_bool(
+            const std::map<wxString, wxString>& properties, const wxString& key, bool def );
 
-    static int32_t property_unit( const std::map<std::string, std::string>& properties,
-            const std::string& key, const std::string& def );
+    static int32_t property_unit( const std::map<wxString, wxString>& properties,
+            const wxString& key, const wxString& def );
 
-    static std::string property_string( const std::map<std::string, std::string>& properties,
-            const std::string& key, std::string def );
+    static wxString property_string(
+            const std::map<wxString, wxString>& properties, const wxString& key, wxString def );
 
     void skip( size_t len )
     {

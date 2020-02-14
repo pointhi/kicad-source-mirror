@@ -235,7 +235,7 @@ class ALTIUM_PARSER;
 
 struct ABOARD6_LAYER_STACKUP
 {
-    std::string name;
+    wxString name;
 
     size_t nextId;
     size_t prevId;
@@ -244,7 +244,7 @@ struct ABOARD6_LAYER_STACKUP
 
     double      dielectricconst;
     int32_t     dielectricthick;
-    std::string dielectricmaterial;
+    wxString    dielectricmaterial;
 };
 
 struct ABOARD6
@@ -260,12 +260,12 @@ struct ABOARD6
 
 struct ACLASS6
 {
-    std::string name;
-    std::string uniqueid;
+    wxString name;
+    wxString uniqueid;
 
     ALTIUM_CLASS_KIND kind;
 
-    std::vector<std::string> names;
+    std::vector<wxString> names;
 
     explicit ACLASS6( ALTIUM_PARSER& reader );
 };
@@ -278,9 +278,8 @@ struct ACOMPONENT6
     bool         locked;
     bool         nameon;
     bool         commenton;
-    std::string  sourcedesignator;
-    std::string  sourcelibreference;
-
+    wxString     sourcedesignator;
+    wxString     sourcelibreference;
     explicit ACOMPONENT6( ALTIUM_PARSER& reader );
 };
 
@@ -289,7 +288,7 @@ struct ADIMENSION6
     ALTIUM_LAYER layer;
     ALTIUM_DIMENSION_KIND kind;
 
-    std::string textformat;
+    wxString textformat;
 
     int32_t height;
     double  angle;
@@ -315,7 +314,7 @@ struct ADIMENSION6
 
 struct ANET6
 {
-    std::string name;
+    wxString name;
 
     explicit ANET6( ALTIUM_PARSER& reader );
 };
@@ -343,7 +342,7 @@ struct APOLYGON6
 
 struct ARULE6
 {
-    std::string name;
+    wxString    name;
     int         priority;
 
     ALTIUM_RULE_KIND kind;
@@ -398,7 +397,7 @@ struct APAD6_SIZE_AND_SHAPE
 
 struct APAD6
 {
-    std::string name;
+    wxString name;
 
     ALTIUM_LAYER layer;
     uint16_t     net;
@@ -473,7 +472,7 @@ struct ATEXT6
     bool isComment;
     bool isDesignator;
 
-    std::string text;
+    wxString text;
 
     explicit ATEXT6( ALTIUM_PARSER& reader );
 };
@@ -523,7 +522,7 @@ private:
     MODULE* GetComponent( const uint16_t id );
     int     GetNetCode( const uint16_t id );
 
-    void ParseHelper( const CFB::CompoundFileReader& aReader, const std::string& streamName,
+    void ParseHelper( const CFB::CompoundFileReader& aReader, const wxString& streamName,
             parse_function_pointer_t fp );
     void FinishParsingHelper();
 

@@ -57,9 +57,9 @@ ALTIUM_PARSER::~ALTIUM_PARSER()
 {
 }
 
-std::map<std::string, std::string> ALTIUM_PARSER::read_properties()
+std::map<wxString, wxString> ALTIUM_PARSER::read_properties()
 {
-    std::map<std::string, std::string> kv;
+    std::map<wxString, wxString> kv;
 
     uint32_t length = read<uint32_t>();
     if( length > bytes_remaining() || pos[length - 1] != '\0' )
@@ -68,6 +68,8 @@ std::map<std::string, std::string> ALTIUM_PARSER::read_properties()
         return kv;
     }
 
+    //we use std::string because std::string can handle NULL-bytes
+    //wxString would end the string at the first NULL-byte
     std::string str = std::string( pos, length - 1 );
     pos += length;
 
@@ -78,8 +80,14 @@ std::map<std::string, std::string> ALTIUM_PARSER::read_properties()
         std::size_t token_equal = str.find( '=', token_start );
         token_end               = str.find( '|', token_equal );
 
-        std::string key   = str.substr( token_start + 1, token_equal - token_start - 1 );
-        std::string value = str.substr( token_equal + 1, token_end - token_equal - 1 );
+        std::string keyS   = str.substr( token_start + 1, token_equal - token_start - 1 );
+        std::string valueS = str.substr( token_equal + 1, token_end - token_equal - 1 );
+
+        //convert the strings to wxStrings, since we use them everywhere
+        //value can have non-ASCII characters, so we convert them from LATIN1/ISO8859-1
+        wxString key( keyS.c_str(), wxConvISO8859_1 );
+        wxString value( valueS.c_str(), wxConvISO8859_1 );
+
         kv.insert( { key, value } );
     }
 
@@ -87,13 +95,13 @@ std::map<std::string, std::string> ALTIUM_PARSER::read_properties()
 }
 
 int ALTIUM_PARSER::property_int(
-        const std::map<std::string, std::string>& properties, const std::string& key, int def )
+        const std::map<wxString, wxString>& properties, const wxString& key, int def )
 {
     try
     {
-        const std::string& value = properties.at( key );
+        const wxString& value = properties.at( key );
 
-        return std::stoi( value );
+        return wxAtoi( value );
     }
     catch( const std::out_of_range& oor )
     {
@@ -102,19 +110,18 @@ int ALTIUM_PARSER::property_int(
 }
 
 double ALTIUM_PARSER::property_double(
-        const std::map<std::string, std::string>& properties, const std::string& key, double def )
+        const std::map<wxString, wxString>& properties, const wxString& key, double def )
 {
     try
     {
-        const std::string& value = properties.at( key );
+        const wxString& value = properties.at( key );
 
         // Locale independent str -> double conversation
-        std::istringstream istr( value );
+        std::istringstream istr( (const char*) value.mb_str() );
         istr.imbue( std::locale( "C" ) );
 
         double doubleValue;
         istr >> doubleValue;
-
         return doubleValue;
     }
     catch( const std::out_of_range& oor )
@@ -124,11 +131,11 @@ double ALTIUM_PARSER::property_double(
 }
 
 bool ALTIUM_PARSER::property_bool(
-        const std::map<std::string, std::string>& properties, const std::string& key, bool def )
+        const std::map<wxString, wxString>& properties, const wxString& key, bool def )
 {
     try
     {
-        const std::string& value = properties.at( key );
+        const wxString& value = properties.at( key );
 
         return value == "TRUE";
     }
@@ -138,22 +145,21 @@ bool ALTIUM_PARSER::property_bool(
     }
 }
 
-int32_t ALTIUM_PARSER::property_unit( const std::map<std::string, std::string>& properties,
-        const std::string& key, const std::string& def )
+int32_t ALTIUM_PARSER::property_unit(
+        const std::map<wxString, wxString>& properties, const wxString& key, const wxString& def )
 {
-    const std::string& value = property_string( properties, key, def );
+    const wxString& value = property_string( properties, key, def );
 
-    bool        positive      = value.at( 0 ) != '-';
-    std::size_t decimal_point = value.find( '.' );
-    std::size_t value_end     = value.find_first_not_of( "0123456789." );
+    int decimal_point = value.find( '.' );
+    int value_end     = value.find_first_not_of( "+-0123456789." );
 
-    std::string before_decimal_str   = value.substr( positive ? 0 : 1, decimal_point );
-    int         before_decimal       = std::stoi( before_decimal_str );
+    wxString    before_decimal_str   = value.Left( decimal_point );
+    int         before_decimal       = wxAtoi( before_decimal_str );
     int         after_decimal        = 0;
     int         after_decimal_digits = 0;
-    if( decimal_point != std::string::npos )
+    if( decimal_point != wxString::npos )
     {
-        if( value_end != std::string::npos )
+        if( value_end != wxString::npos )
         {
             after_decimal_digits = value_end - ( decimal_point + 1 );
         }
@@ -161,8 +167,8 @@ int32_t ALTIUM_PARSER::property_unit( const std::map<std::string, std::string>& 
         {
             after_decimal_digits = value.size() - ( decimal_point + 1 ); // TODO: correct?
         }
-        std::string after_decimal_str = value.substr( decimal_point + 1, after_decimal_digits );
-        after_decimal                 = std::stoi( after_decimal_str );
+        wxString after_decimal_str = value.Mid( decimal_point + 1, after_decimal_digits );
+        after_decimal              = wxAtoi( after_decimal_str );
     }
 
     if( value.length() > 3 && value.compare( value.length() - 3, 3, "mil" ) == 0 )
@@ -178,7 +184,7 @@ int32_t ALTIUM_PARSER::property_unit( const std::map<std::string, std::string>& 
             after_decimal_1000 = after_decimal / std::pow( 10, after_decimal_digits - 4 );
         }
 
-        long mils = ( positive ? 1 : -1 ) * ( before_decimal * 10000 + after_decimal_1000 );
+        long mils = before_decimal * 10000 + after_decimal_1000;
         return kicad_unit( mils );
     }
 
@@ -186,8 +192,8 @@ int32_t ALTIUM_PARSER::property_unit( const std::map<std::string, std::string>& 
     return 0;
 }
 
-std::string ALTIUM_PARSER::property_string( const std::map<std::string, std::string>& properties,
-        const std::string& key, std::string def )
+wxString ALTIUM_PARSER::property_string(
+        const std::map<wxString, wxString>& properties, const wxString& key, wxString def )
 {
     try
     {
