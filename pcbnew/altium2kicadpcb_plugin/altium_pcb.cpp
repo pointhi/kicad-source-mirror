@@ -713,6 +713,32 @@ int ALTIUM_PCB::GetNetCode( const uint16_t id )
     return id == std::numeric_limits<uint16_t>::max() ? NETINFO_LIST::UNCONNECTED : id + 1;
 }
 
+ARULE6* ALTIUM_PCB::GetRule( ALTIUM_RULE_KIND kind, const wxString& name )
+{
+    std::vector<ARULE6>& rules = m_rules[kind];
+    for( ARULE6& rule : rules )
+    {
+        if( rule.name == name )
+        {
+            return &rule;
+        }
+    }
+    return nullptr;
+}
+
+ARULE6* ALTIUM_PCB::GetRuleDefault( ALTIUM_RULE_KIND kind )
+{
+    std::vector<ARULE6>& rules = m_rules[kind];
+    for( ARULE6& rule : rules )
+    {
+        if( rule.scope1expr == "All" && rule.scope2expr == "All" )
+        {
+            return &rule;
+        }
+    }
+    return nullptr;
+}
+
 void ALTIUM_PCB::ParseFileHeader(
         const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
 {
@@ -1131,6 +1157,21 @@ void ALTIUM_PCB::ParsePolygons6Data(
         SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
         outline->AddOutline( linechain );
         zone->SetOutline( outline );
+
+        // TODO: more flexible rule parsing
+        ARULE6* clearanceRule = GetRuleDefault( ALTIUM_RULE_KIND::PLANE_CLEARANCE );
+        if( clearanceRule != nullptr )
+        {
+            zone->SetZoneClearance( clearanceRule->planeclearanceClearance );
+        }
+        ARULE6* polygonConnectRule = GetRuleDefault( ALTIUM_RULE_KIND::POLYGON_CONNECT );
+        if( clearanceRule != nullptr )
+        {
+            // TODO: correct variables?
+            zone->SetThermalReliefCopperBridge(
+                    polygonConnectRule->polygonconnectReliefconductorwidth );
+            zone->SetThermalReliefGap( polygonConnectRule->polygonconnectAirgapwidth );
+        }
     }
 
     wxASSERT( !reader.parser_error() );
@@ -1146,6 +1187,15 @@ void ALTIUM_PCB::ParseRules6Data(
             && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
     {
         ARULE6 elem( reader );
+
+        m_rules[elem.kind].emplace_back( elem );
+    }
+
+    // sort rules by priority
+    for( auto&& val : m_rules )
+    {
+        std::sort( val.second.begin(), val.second.end(),
+                []( const auto& lhs, const auto& rhs ) { return lhs.priority < rhs.priority; } );
     }
 
     wxASSERT( !reader.parser_error() );
@@ -1643,6 +1693,21 @@ void ALTIUM_PCB::ParseFills6Data(
         SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
         outline->AddOutline( linechain );
         zone->SetOutline( outline );
+
+        // TODO: more flexible rule parsing
+        ARULE6* clearanceRule = GetRuleDefault( ALTIUM_RULE_KIND::PLANE_CLEARANCE );
+        if( clearanceRule != nullptr )
+        {
+            zone->SetZoneClearance( clearanceRule->planeclearanceClearance );
+        }
+        ARULE6* polygonConnectRule = GetRuleDefault( ALTIUM_RULE_KIND::POLYGON_CONNECT );
+        if( clearanceRule != nullptr )
+        {
+            // TODO: correct variables?
+            zone->SetThermalReliefCopperBridge(
+                    polygonConnectRule->polygonconnectReliefconductorwidth );
+            zone->SetThermalReliefGap( polygonConnectRule->polygonconnectAirgapwidth );
+        }
     }
 
     wxASSERT( !reader.parser_error() );
@@ -1774,7 +1839,7 @@ ADIMENSION6::ADIMENSION6( ALTIUM_PARSER& reader )
             -ALTIUM_PARSER::property_unit( properties, "Y1", "0mil" ) );
 
     int refcount = ALTIUM_PARSER::property_int( properties, "REFERENCES_COUNT", 0 );
-    for( size_t i = 0; i < refcount; i++ )
+    for( int i = 0; i < refcount; i++ )
     {
         const std::string refi = "REFERENCE" + std::to_string( i );
         referencePoint.emplace_back(
@@ -1878,10 +1943,14 @@ ARULE6::ARULE6( ALTIUM_PARSER& reader )
     name     = ALTIUM_PARSER::property_string( properties, "NAME", "" );
     priority = ALTIUM_PARSER::property_int( properties, "PRIORITY", 1 );
 
+    scope1expr = ALTIUM_PARSER::property_string( properties, "SCOPE1EXPRESSION", "" );
+    scope2expr = ALTIUM_PARSER::property_string( properties, "SCOPE2EXPRESSION", "" );
+
     wxString rulekind = ALTIUM_PARSER::property_string( properties, "RULEKIND", "" );
     if( rulekind == "Clearance" )
     {
         kind = ALTIUM_RULE_KIND::CLEARANCE;
+        clearanceGap = ALTIUM_PARSER::property_unit( properties, "GAP", "10mil" );
     }
     else if( rulekind == "DiffPairsRouting" )
     {
@@ -1906,6 +1975,20 @@ ARULE6::ARULE6( ALTIUM_PARSER& reader )
     else if( rulekind == "PasteMaskExpansion" )
     {
         kind = ALTIUM_RULE_KIND::PASTE_MASK_EXPANSION;
+    }
+    else if( rulekind == "PlaneClearance" )
+    {
+        kind                    = ALTIUM_RULE_KIND::PLANE_CLEARANCE;
+        planeclearanceClearance = ALTIUM_PARSER::property_unit( properties, "CLEARANCE", "10mil" );
+    }
+    else if( rulekind == "PolygonConnect" )
+    {
+        kind = ALTIUM_RULE_KIND::POLYGON_CONNECT;
+        polygonconnectAirgapwidth =
+                ALTIUM_PARSER::property_unit( properties, "AIRGAPWIDTH", "10mil" );
+        polygonconnectReliefconductorwidth =
+                ALTIUM_PARSER::property_unit( properties, "RELIEFCONDUCTORWIDTH", "10mil" );
+        polygonconnectReliefentries = ALTIUM_PARSER::property_int( properties, "RELIEFENTRIES", 4 );
     }
     else
     {

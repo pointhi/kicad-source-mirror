@@ -79,6 +79,8 @@ enum class ALTIUM_RULE_KIND
     HOLE_TO_HOLE_CLEARANCE = 5,
     WIDTH                  = 6,
     PASTE_MASK_EXPANSION   = 7,
+    PLANE_CLEARANCE        = 8,
+    POLYGON_CONNECT        = 9,
 };
 
 enum class ALTIUM_RECORD
@@ -347,6 +349,20 @@ struct ARULE6
 
     ALTIUM_RULE_KIND kind;
 
+    wxString scope1expr;
+    wxString scope2expr;
+
+    // ALTIUM_RULE_KIND::CLEARANCE
+    int clearanceGap;
+
+    // ALTIUM_RULE_KIND::PLANE_CLEARANCE
+    int planeclearanceClearance;
+
+    // ALTIUM_RULE_KIND::POLYGON_CONNECT
+    int32_t polygonconnectAirgapwidth;
+    int32_t polygonconnectReliefconductorwidth;
+    int     polygonconnectReliefentries;
+
     // TODO: implement different types of rules we need to parse
 
     explicit ARULE6( ALTIUM_PARSER& reader );
@@ -521,6 +537,8 @@ private:
 
     MODULE* GetComponent( const uint16_t id );
     int     GetNetCode( const uint16_t id );
+    ARULE6* GetRule( ALTIUM_RULE_KIND kind, const wxString& name );
+    ARULE6* GetRuleDefault( ALTIUM_RULE_KIND kind );
 
     void ParseHelper( const CFB::CompoundFileReader& aReader, const wxString& streamName,
             parse_function_pointer_t fp );
@@ -572,6 +590,7 @@ private:
     BOARD*                               m_board;
     std::vector<MODULE*>                 m_components;
     std::map<ALTIUM_LAYER, PCB_LAYER_ID> m_layermap; // used to correctly map copper layers
+    std::map<ALTIUM_RULE_KIND, std::vector<ARULE6>> m_rules;
 };
 
 
