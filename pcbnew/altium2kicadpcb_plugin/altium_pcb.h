@@ -139,6 +139,26 @@ enum class ALTIUM_TEXT_POSITION
     RIGHT_BOTTOM  = 9
 };
 
+struct ALTIUM_VERTICE
+{
+    const bool    isRound;
+    const int32_t radius;
+    const double  startangle;
+    const double  endangle;
+    const wxPoint position;
+    const wxPoint center;
+
+    explicit ALTIUM_VERTICE( bool isRound, int32_t radius, double startangle, double endangle,
+            const wxPoint position, const wxPoint center )
+            : isRound( isRound ),
+              radius( radius ),
+              startangle( startangle ),
+              endangle( endangle ),
+              position( position ),
+              center( center )
+    {
+    }
+};
 
 enum class ALTIUM_LAYER
 {
@@ -257,6 +277,8 @@ struct ABOARD6
     int layercount;
     std::vector<ABOARD6_LAYER_STACKUP> stackup;
 
+    std::vector<ALTIUM_VERTICE> board_vertices;
+
     explicit ABOARD6( ALTIUM_PARSER& reader );
 };
 
@@ -321,22 +343,13 @@ struct ANET6
     explicit ANET6( ALTIUM_PARSER& reader );
 };
 
-struct APOLYGON6_VERTICE
-{
-    const wxPoint position;
-
-    explicit APOLYGON6_VERTICE( const wxPoint position ) : position( position )
-    {
-    }
-};
-
 struct APOLYGON6
 {
     ALTIUM_LAYER layer;
     uint16_t     net;
     bool         locked;
 
-    std::vector<APOLYGON6_VERTICE> vertices;
+    std::vector<ALTIUM_VERTICE> vertices;
 
     explicit APOLYGON6( ALTIUM_PARSER& reader );
 };

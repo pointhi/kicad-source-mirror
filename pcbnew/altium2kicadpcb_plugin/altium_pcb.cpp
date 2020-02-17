@@ -291,7 +291,7 @@ PCB_LAYER_ID ALTIUM_PCB::kicad_layer( ALTIUM_LAYER aAltiumLayer ) const
         return UNDEFINED_LAYER;
 
     case ALTIUM_LAYER::MECHANICAL_1:
-        return Edge_Cuts;
+        return Dwgs_User; //Edge_Cuts;
     case ALTIUM_LAYER::MECHANICAL_2:
         return Dwgs_User;
     case ALTIUM_LAYER::MECHANICAL_3:
@@ -828,6 +828,68 @@ void ALTIUM_PCB::ParseBoard6Data(
         ( *it )->SetEpsilonR( layer.dielectricconst, 0 );
 
         ++it;
+    }
+
+    if( !elem.board_vertices.empty() )
+    {
+        ALTIUM_VERTICE* last = &elem.board_vertices.at( 0 );
+        for( size_t i = 0; i < elem.board_vertices.size(); i++ )
+        {
+            ALTIUM_VERTICE* cur = &elem.board_vertices.at( ( i + 1 ) % elem.board_vertices.size() );
+
+            DRAWSEGMENT* ds = new DRAWSEGMENT( m_board );
+            m_board->Add( ds, ADD_MODE::APPEND );
+
+            ds->SetWidth( m_board->GetDesignSettings().GetLineThickness( Edge_Cuts ) );
+            ds->SetLayer( Edge_Cuts );
+
+            if( !last->isRound && !cur->isRound )
+            {
+                ds->SetShape( STROKE_T::S_SEGMENT );
+                ds->SetStart( last->position );
+                ds->SetEnd( cur->position );
+            }
+            else if( cur->isRound )
+            {
+                ds->SetShape( STROKE_T::S_ARC );
+                ds->SetAngle( -NormalizeAngleDegreesPos( cur->endangle - cur->startangle ) * 10. );
+
+                double  startradiant   = DEG2RAD( cur->startangle );
+                wxPoint arcStartOffset = wxPoint( KiROUND( std::cos( startradiant ) * cur->radius ),
+                        -KiROUND( std::sin( startradiant ) * cur->radius ) );
+                wxPoint arcStart       = cur->center + arcStartOffset;
+                ds->SetCenter( cur->center );
+                ds->SetArcStart( arcStart );
+
+                if( !last->isRound )
+                {
+                    double  endradiant   = DEG2RAD( cur->endangle );
+                    wxPoint arcEndOffset = wxPoint( KiROUND( std::cos( endradiant ) * cur->radius ),
+                            -KiROUND( std::sin( endradiant ) * cur->radius ) );
+                    wxPoint arcEnd       = cur->center + arcEndOffset;
+
+                    DRAWSEGMENT* ds2 = new DRAWSEGMENT( m_board );
+                    ds2->SetShape( STROKE_T::S_SEGMENT );
+                    m_board->Add( ds2, ADD_MODE::APPEND );
+                    ds2->SetWidth( m_board->GetDesignSettings().GetLineThickness( Edge_Cuts ) );
+                    ds2->SetLayer( Edge_Cuts );
+                    ds2->SetStart( last->position );
+
+                    // TODO: this is more of a hack than the real solution
+                    double lineLengthStart = GetLineLength( last->position, arcStart );
+                    double lineLengthEnd   = GetLineLength( last->position, arcEnd );
+                    if( lineLengthStart > lineLengthEnd )
+                    {
+                        ds2->SetEnd( cur->center + arcEndOffset );
+                    }
+                    else
+                    {
+                        ds2->SetEnd( cur->center + arcStartOffset );
+                    }
+                }
+            }
+            last = cur;
+        }
     }
 }
 
@@ -1764,6 +1826,35 @@ void ALTIUM_PCB::ParseFills6Data(
 }
 
 
+void altium_parse_polygons(
+        std::map<wxString, wxString>& properties, std::vector<ALTIUM_VERTICE>& vertices )
+{
+    for( size_t i = 0; i < std::numeric_limits<size_t>::max(); i++ )
+    {
+        const wxString si = std::to_string( i );
+
+        const wxString vxi = "VX" + si;
+        const wxString vyi = "VY" + si;
+
+        if( properties.find( vxi ) == properties.end()
+                || properties.find( vyi ) == properties.end() )
+        {
+            break; // it doesn't seem like we know beforehand how many vertices are inside a polygon
+        }
+
+        const bool    isRound = ALTIUM_PARSER::property_int( properties, "KIND" + si, 0 ) != 0;
+        const int32_t radius  = ALTIUM_PARSER::property_unit( properties, "R" + si, "0mil" );
+        const double  sa      = ALTIUM_PARSER::property_double( properties, "SA" + si, 0. );
+        const double  ea      = ALTIUM_PARSER::property_double( properties, "EA" + si, 0. );
+        const wxPoint vp      = wxPoint( ALTIUM_PARSER::property_unit( properties, vxi, "0mil" ),
+                -ALTIUM_PARSER::property_unit( properties, vyi, "0mil" ) );
+        const wxPoint cp = wxPoint( ALTIUM_PARSER::property_unit( properties, "CX" + si, "0mil" ),
+                -ALTIUM_PARSER::property_unit( properties, "CY" + si, "0mil" ) );
+
+        vertices.emplace_back( isRound, radius, sa, ea, vp, cp );
+    }
+}
+
 ABOARD6::ABOARD6( ALTIUM_PARSER& reader )
 {
     wxASSERT( reader.bytes_remaining() > 4 );
@@ -1812,6 +1903,8 @@ ABOARD6::ABOARD6( ALTIUM_PARSER& reader )
 
         stackup.push_back( curlayer );
     }
+
+    altium_parse_polygons( properties, board_vertices );
 }
 
 ACLASS6::ACLASS6( ALTIUM_PARSER& reader )
@@ -1959,24 +2052,7 @@ APOLYGON6::APOLYGON6( ALTIUM_PARSER& reader )
     net    = ALTIUM_PARSER::property_int( properties, "NET", std::numeric_limits<uint16_t>::max() );
     locked = ALTIUM_PARSER::property_bool( properties, "LOCKED", false );
 
-    for( size_t i = 0; i < std::numeric_limits<size_t>::max(); i++ )
-    {
-        const wxString vxi = wxString::Format( "VX%llu", (unsigned long long) i );
-        const wxString vyi = wxString::Format( "VY%llu", (unsigned long long) i );
-
-        auto vxit = properties.find( vxi );
-        auto vyit = properties.find( vyi );
-        if( vxit == properties.end() || vyit == properties.end() )
-        {
-            break; // it doesn't seem like we know beforehand how many vertices are inside a polygon
-        }
-
-        const wxPoint vertice_position =
-                wxPoint( ALTIUM_PARSER::property_unit( properties, vxi, "0mil" ),
-                        -ALTIUM_PARSER::property_unit( properties, vyi, "0mil" ) );
-
-        vertices.emplace_back( vertice_position );
-    }
+    altium_parse_polygons( properties, vertices );
 }
 
 ARULE6::ARULE6( ALTIUM_PARSER& reader )
