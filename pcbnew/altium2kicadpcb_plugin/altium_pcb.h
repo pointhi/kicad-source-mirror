@@ -507,6 +507,7 @@ struct AFILL6
 
 class BOARD;
 class MODULE;
+class ZONE_CONTAINER;
 
 
 namespace CFB
@@ -591,6 +592,8 @@ private:
     std::vector<MODULE*>                 m_components;
     std::map<ALTIUM_LAYER, PCB_LAYER_ID> m_layermap; // used to correctly map copper layers
     std::map<ALTIUM_RULE_KIND, std::vector<ARULE6>> m_rules;
+
+    std::map<ALTIUM_LAYER, ZONE_CONTAINER*> m_outer_plane;
 };
 
 

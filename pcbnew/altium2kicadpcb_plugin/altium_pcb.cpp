@@ -155,6 +155,12 @@ ALTIUM_LAYER altium_layer_from_name( const wxString& aName )
 }
 
 
+bool altium_layer_is_plane( ALTIUM_LAYER aLayer )
+{
+    return aLayer >= ALTIUM_LAYER::INTERNAL_PLANE_1 && aLayer <= ALTIUM_LAYER::INTERNAL_PLANE_16;
+}
+
+
 PCB_LAYER_ID ALTIUM_PCB::kicad_layer( ALTIUM_LAYER aAltiumLayer ) const
 {
     auto override = m_layermap.find( aAltiumLayer );
@@ -677,6 +683,12 @@ void ALTIUM_PCB::ParseHelper( const CFB::CompoundFileReader& aReader, const wxSt
 
 void ALTIUM_PCB::FinishParsingHelper()
 {
+    // change priority of outer zone to zero
+    for( auto& zone : m_outer_plane )
+    {
+        zone.second->SetPriority( 0 );
+    }
+
     // Finish Board by recalculating module boundingboxes
     for( auto& module : m_board->Modules() )
     {
@@ -1172,6 +1184,22 @@ void ALTIUM_PCB::ParsePolygons6Data(
                     polygonConnectRule->polygonconnectReliefconductorwidth );
             zone->SetThermalReliefGap( polygonConnectRule->polygonconnectAirgapwidth );
         }
+
+
+        if( altium_layer_is_plane( elem.layer ) )
+        {
+            // outer zone will be set to priority 0 later.
+            zone->SetPriority( 1 );
+
+            // check if this is the outer zone by simply comparing the BBOX
+            const auto& cur_outer_plane = m_outer_plane.find( elem.layer );
+            if( cur_outer_plane == m_outer_plane.end()
+                    || zone->GetBoundingBox().Contains(
+                            cur_outer_plane->second->GetBoundingBox() ) )
+            {
+                m_outer_plane[elem.layer] = zone;
+            }
+        }
     }
 
     wxASSERT( !reader.parser_error() );
@@ -1282,6 +1310,12 @@ void ALTIUM_PCB::ParseArcs6Data(
             && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
     {
         AARC6 elem( reader );
+
+        // element in plane is in fact substracted from the plane. Should be already done by Altium?
+        if( altium_layer_is_plane( elem.layer ) )
+        {
+            continue;
+        }
 
         // TODO: better approach to select if item belongs to a MODULE
         DRAWSEGMENT* ds = nullptr;
@@ -1497,6 +1531,12 @@ void ALTIUM_PCB::ParseTracks6Data(
     {
         ATRACK6 elem( reader );
 
+        // element in plane is in fact substracted from the plane. Should be already done by Altium?
+        if( altium_layer_is_plane( elem.layer ) )
+        {
+            continue;
+        }
+
         PCB_LAYER_ID klayer = kicad_layer( elem.layer );
         if( klayer >= F_Cu && klayer <= B_Cu )
         {
@@ -1707,6 +1747,15 @@ void ALTIUM_PCB::ParseFills6Data(
             zone->SetThermalReliefCopperBridge(
                     polygonConnectRule->polygonconnectReliefconductorwidth );
             zone->SetThermalReliefGap( polygonConnectRule->polygonconnectAirgapwidth );
+        }
+
+        // zones in planes, this is in fact a keepout
+        if( altium_layer_is_plane( elem.layer ) )
+        {
+            zone->SetIsKeepout( true );
+            zone->SetDoNotAllowTracks( false );
+            zone->SetDoNotAllowVias( false );
+            zone->SetDoNotAllowCopperPour( true );
         }
     }
 
