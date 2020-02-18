@@ -126,6 +126,18 @@ enum class ALTIUM_PAD_RULE
     MANUAL  = 2
 };
 
+enum class ALTIUM_POLYGON_HATCHSTYLE
+{
+    UNKNOWN = 0,
+
+    SOLID      = 1,
+    DEGREE_45  = 2,
+    DEGREE_90  = 3,
+    HORIZONTAL = 4,
+    VERTICAL   = 5,
+    NONE       = 6
+};
+
 enum class ALTIUM_TEXT_POSITION
 {
     LEFT_TOP      = 1,
@@ -348,6 +360,13 @@ struct APOLYGON6
     ALTIUM_LAYER layer;
     uint16_t     net;
     bool         locked;
+
+    ALTIUM_POLYGON_HATCHSTYLE hatchstyle;
+
+    int32_t gridsize;
+    int32_t trackwidth;
+    int32_t minprimlength;
+    bool    useoctagons;
 
     std::vector<ALTIUM_VERTICE> vertices;
 

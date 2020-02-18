@@ -1262,6 +1262,26 @@ void ALTIUM_PCB::ParsePolygons6Data(
                 m_outer_plane[elem.layer] = zone;
             }
         }
+
+        if( elem.hatchstyle != ALTIUM_POLYGON_HATCHSTYLE::SOLID )
+        {
+            zone->SetFillMode( ZONE_FILL_MODE::HATCH_PATTERN );
+            zone->SetHatchFillTypeThickness( elem.trackwidth );
+            if( elem.hatchstyle == ALTIUM_POLYGON_HATCHSTYLE::NONE )
+            {
+                // use a small hack to get us only an outline (hopefully)
+                const EDA_RECT& bbox = zone->GetBoundingBox();
+                zone->SetHatchFillTypeGap( std::max( bbox.GetHeight(), bbox.GetWidth() ) );
+            }
+            else
+            {
+                zone->SetHatchFillTypeGap( elem.gridsize - elem.trackwidth );
+            }
+            zone->SetHatchFillTypeOrientation(
+                    elem.hatchstyle == ALTIUM_POLYGON_HATCHSTYLE::DEGREE_45 ? 45 : 0 );
+        }
+
+        zone->SetHatch( ZONE_HATCH_STYLE::DIAGONAL_EDGE, zone->GetDefaultHatchPitch(), true );
     }
 
     wxASSERT( !reader.parser_error() );
@@ -1355,6 +1375,8 @@ void ALTIUM_PCB::ParseRegions6Data(
             SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
             outline->AddOutline( linechain );
             zone->SetOutline( outline );
+
+            zone->SetHatch( ZONE_HATCH_STYLE::DIAGONAL_EDGE, zone->GetDefaultHatchPitch(), true );
         }
         // TODO: handle other regions
     }
@@ -1819,6 +1841,8 @@ void ALTIUM_PCB::ParseFills6Data(
             zone->SetDoNotAllowVias( false );
             zone->SetDoNotAllowCopperPour( true );
         }
+
+        zone->SetHatch( ZONE_HATCH_STYLE::DIAGONAL_EDGE, zone->GetDefaultHatchPitch(), true );
     }
 
     wxASSERT( !reader.parser_error() );
@@ -2051,6 +2075,43 @@ APOLYGON6::APOLYGON6( ALTIUM_PARSER& reader )
     layer  = altium_layer_from_name( ALTIUM_PARSER::property_string( properties, "LAYER", "" ) );
     net    = ALTIUM_PARSER::property_int( properties, "NET", std::numeric_limits<uint16_t>::max() );
     locked = ALTIUM_PARSER::property_bool( properties, "LOCKED", false );
+
+    // TODO: kind
+
+    gridsize      = ALTIUM_PARSER::property_unit( properties, "GRIDSIZE", "0mil" );
+    trackwidth    = ALTIUM_PARSER::property_unit( properties, "TRACKWIDTH", "0mil" );
+    minprimlength = ALTIUM_PARSER::property_unit( properties, "MINPRIMLENGTH", "0mil" );
+    useoctagons   = ALTIUM_PARSER::property_bool( properties, "USEOCTAGONS", false );
+
+    wxString hatchstyleraw = ALTIUM_PARSER::property_string( properties, "HATCHSTYLE", "" );
+    if( hatchstyleraw == "Solid" )
+    {
+        hatchstyle = ALTIUM_POLYGON_HATCHSTYLE::SOLID;
+    }
+    else if( hatchstyleraw == "45Degree" )
+    {
+        hatchstyle = ALTIUM_POLYGON_HATCHSTYLE::DEGREE_45;
+    }
+    else if( hatchstyleraw == "90Degree" )
+    {
+        hatchstyle = ALTIUM_POLYGON_HATCHSTYLE::DEGREE_90;
+    }
+    else if( hatchstyleraw == "Horizontal" )
+    {
+        hatchstyle = ALTIUM_POLYGON_HATCHSTYLE::HORIZONTAL;
+    }
+    else if( hatchstyleraw == "Vertical" )
+    {
+        hatchstyle = ALTIUM_POLYGON_HATCHSTYLE::VERTICAL;
+    }
+    else if( hatchstyleraw == "None" )
+    {
+        hatchstyle = ALTIUM_POLYGON_HATCHSTYLE::NONE;
+    }
+    else
+    {
+        hatchstyle = ALTIUM_POLYGON_HATCHSTYLE::UNKNOWN;
+    }
 
     altium_parse_polygons( properties, vertices );
 }
