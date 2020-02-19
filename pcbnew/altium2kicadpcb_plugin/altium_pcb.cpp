@@ -1223,6 +1223,7 @@ void ALTIUM_PCB::ParsePolygons6Data(
         SHAPE_LINE_CHAIN linechain;
         for( auto& vertice : elem.vertices )
         {
+            // TODO: arcs
             linechain.Append( vertice.position );
         }
         linechain.Append( elem.vertices.at( 0 ).position );
@@ -1246,7 +1247,6 @@ void ALTIUM_PCB::ParsePolygons6Data(
                     polygonConnectRule->polygonconnectReliefconductorwidth );
             zone->SetThermalReliefGap( polygonConnectRule->polygonconnectAirgapwidth );
         }
-
 
         if( altium_layer_is_plane( elem.layer ) )
         {
@@ -1339,19 +1339,25 @@ void ALTIUM_PCB::ParseRegions6Data(
     {
         AREGION6 elem( reader );
 
-        if( elem.kind == 1 ) // TODO: is kind==1 always keepout?
+        // TODO: at least on copper it seems this is the filled zone, not the definition of it!
+        if( ( elem.kind == ALTIUM_REGION_KIND::COPPER && elem.is_keepout )
+                || elem.kind == ALTIUM_REGION_KIND::POLYGON_CUTOUT )
         {
             ZONE_CONTAINER* zone = new ZONE_CONTAINER( m_board );
-            zone->SetIsKeepout( true );
-            zone->SetDoNotAllowTracks( false );
-            zone->SetDoNotAllowVias( false );
-            zone->SetDoNotAllowCopperPour( true );
-            // TODO: contours are not visible in editor?
-
             m_board->Add( zone, ADD_MODE::APPEND );
-            // TODO: part of component
 
-            //zone->SetNetCode( GetNetCode( elem.net ) );
+            if( elem.kind == ALTIUM_REGION_KIND::POLYGON_CUTOUT || elem.is_keepout )
+            {
+                zone->SetIsKeepout( true );
+                zone->SetDoNotAllowTracks( false );
+                zone->SetDoNotAllowVias( false );
+                zone->SetDoNotAllowCopperPour( true );
+            }
+            else
+            {
+                zone->SetNetCode( GetNetCode( elem.net ) );
+            }
+
             if( elem.layer == ALTIUM_LAYER::MULTI_LAYER )
             {
                 zone->SetLayer( F_Cu );
@@ -1377,6 +1383,23 @@ void ALTIUM_PCB::ParseRegions6Data(
             zone->SetOutline( outline );
 
             zone->SetHatch( ZONE_HATCH_STYLE::DIAGONAL_EDGE, zone->GetDefaultHatchPitch(), true );
+        }
+        else if( elem.kind == ALTIUM_REGION_KIND::BOARD_CUTOUT && !elem.vertices.empty() )
+        {
+            wxPoint last = elem.vertices.back();
+            for( auto& vertice : elem.vertices )
+            {
+                DRAWSEGMENT* ds = new DRAWSEGMENT( m_board );
+                ds->SetShape( STROKE_T::S_SEGMENT );
+                m_board->Add( ds, ADD_MODE::APPEND );
+
+                ds->SetStart( last );
+                ds->SetEnd( vertice );
+                ds->SetWidth( m_board->GetDesignSettings().GetLineThickness( Edge_Cuts ) );
+                ds->SetLayer( Edge_Cuts );
+
+                last = vertice;
+            }
         }
         // TODO: handle other regions
     }
@@ -2477,7 +2500,13 @@ AREGION6::AREGION6( ALTIUM_PARSER& reader )
     reader.read_subrecord_length();
 
     layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
-    reader.skip( 2 );
+
+    uint8_t flags1 = reader.read<uint8_t>();
+    is_locked      = ( flags1 & 0x04 ) == 0;
+
+    uint8_t flags2 = reader.read<uint8_t>();
+    is_keepout     = flags2 == 2;
+
     net = reader.read<uint16_t>();
     reader.skip( 2 );
     component = reader.read<uint16_t>();
@@ -2486,9 +2515,31 @@ AREGION6::AREGION6( ALTIUM_PARSER& reader )
     std::map<wxString, wxString> properties = reader.read_properties();
     wxASSERT( !properties.empty() );
 
-    kind          = ALTIUM_PARSER::property_int( properties, "KIND", 0 );
-    iskeepout     = ALTIUM_PARSER::property_bool( properties, "KEEPOUT", false );
-    isboardcutout = ALTIUM_PARSER::property_bool( properties, "ISBOARDCUTOUT", false );
+    int  pkind     = ALTIUM_PARSER::property_int( properties, "KIND", 0 );
+    bool is_cutout = ALTIUM_PARSER::property_bool( properties, "ISBOARDCUTOUT", false );
+
+    switch( pkind )
+    {
+    case 0:
+        if( is_cutout )
+        {
+            kind = ALTIUM_REGION_KIND::BOARD_CUTOUT;
+        }
+        else
+        {
+            kind = ALTIUM_REGION_KIND::COPPER;
+        }
+        break;
+    case 1:
+        kind = ALTIUM_REGION_KIND::POLYGON_CUTOUT;
+        break;
+    case 4:
+        kind = ALTIUM_REGION_KIND::CAVITY_DEFINITION;
+        break;
+    default:
+        kind = ALTIUM_REGION_KIND::UNKNOWN;
+        break;
+    }
 
     uint32_t num_vertices = reader.read<uint32_t>();
 

@@ -68,6 +68,16 @@ enum class ALTIUM_DIMENSION_KIND
     RADIAL_DIAMETER = 9
 };
 
+enum class ALTIUM_REGION_KIND
+{
+    UNKNOWN = -1,
+
+    COPPER            = 0, // KIND=0
+    POLYGON_CUTOUT    = 1, // KIND=1
+    BOARD_CUTOUT      = 2, // KIND=0 AND ISBOARDCUTOUT=TRUE
+    CAVITY_DEFINITION = 3, // KIND=4
+};
+
 enum class ALTIUM_RULE_KIND
 {
     UNKNOWN = 0,
@@ -402,13 +412,14 @@ struct ARULE6
 
 struct AREGION6
 {
+    bool is_locked;
+    bool is_keepout;
+
     ALTIUM_LAYER layer;
     uint16_t     net;
     uint16_t     component;
 
-    int  kind;      // I asume this means if normal or keepout?
-    bool iskeepout; // does not necessary tell us if this is a keepout
-    bool isboardcutout;
+    ALTIUM_REGION_KIND kind; // I asume this means if normal or keepout?
 
     std::vector<wxPoint> vertices;
 
