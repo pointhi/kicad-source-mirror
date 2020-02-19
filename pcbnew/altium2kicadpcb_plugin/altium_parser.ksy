@@ -33,7 +33,7 @@ types:
             record_id::track6: track
             record_id::text6: text
             record_id::fill6: fill
-            record_id::boardregion6: boardregion
+            record_id::region6: region
 
   arc:
     seq:
@@ -47,7 +47,24 @@ types:
     seq:
       - id: layer
         type: u1
-      - size: 2
+      - #id: flags_u7
+        type: b1
+      - #id: flags_u6
+        type: b1
+      - #id: flags_u5
+        type: b1
+      - #id: flags_u4
+        type: b1
+      - #id: flags_u3
+        type: b1
+      - id: is_not_locked
+        type: b1
+      - id: is_not_userrouted  # or: is_part_of_polygon?
+        type: b1
+      - #id: flags_u0
+        type: b1
+      - id: is_keepout
+        type: u1  # KEEPOUT = 2
       - id: net
         type: u2
       - size: 2
@@ -106,13 +123,40 @@ types:
       - id: layer  # $pos+23
         type: u1
         enum: layer
-      - type: b1
+      - id: test_fab_top
+        type: b1
       - id: tent_bottom
         type: b1
       - id: tent_top
         type: b1
-      - type: b5
-      - size: 1
+      - #id: flags_u4
+        type: b1
+      - #id: flags_u3
+        type: b1
+      - id: is_not_locked
+        type: b1
+      - #id: flags_u1
+        type: b1
+      - #id: flags_u0
+        type: b1
+      - #id: flags2_u7
+        type: b1
+      - #id: flags2_u6
+        type: b1
+      - #id: flags2_u5
+        type: b1
+      - #id: flags2_u4
+        type: b1
+      - #id: flags2_u3
+        type: b1
+      - #id: flags2_u2
+        type: b1
+      - #id: flags2_u1
+        type: b1
+      - id: test_fab_bottom
+        type: b1
+      #- id: u
+      #  size: 1
       - id: net  # $pos+26
         type: u2
       - size: 2
@@ -236,16 +280,65 @@ types:
 
   via_sub1:
     seq:
-      - size: 3
+      - size: 1
+      - id: test_fab_top
+        type: b1
+      - id: tent_bottom
+        type: b1
+      - id: tent_top
+        type: b1
+      - #id: flags_u4
+        type: b1
+      - #id: flags_u3
+        type: b1
+      - id: is_not_locked
+        type: b1
+      - #id: flags_u1
+        type: b1
+      - #id: flags_u0
+        type: b1
+      - #id: flags2_u7
+        type: b1
+      - #id: flags2_u6
+        type: b1
+      - #id: flags2_u5
+        type: b1
+      - #id: flags2_u4
+        type: b1
+      - #id: flags2_u3
+        type: b1
+      - #id: flags2_u2
+        type: b1
+      - #id: flags2_u1
+        type: b1
+      - id: test_fab_bottom
+        type: b1
       - id: net
         type: u2
-      - size: 8
+      - size: 2
+      - id: component
+        type: u2
+      - size: 4
       - id: pos  # 13
         type: xy
       - id: diameter # 21
         type: s4
       - id: holesize # 29
         type: s4
+      - id: start_layer
+        type: u1
+        enum: layer
+      - id: end_layer
+        type: u1
+        enum: layer
+      - size: 43
+      - id: via_mode
+        type: u1
+        enum: pad_mode
+      - id: diameter_alt
+        type: s4
+        repeat: expr
+        repeat-expr: 32
 
   track:
     seq:
@@ -260,7 +353,24 @@ types:
       - id: layer
         type: u1
         enum: layer
-      - size: 2
+      - #id: flags_u7
+        type: b1
+      - #id: flags_u6
+        type: b1
+      - #id: flags_u5
+        type: b1
+      - #id: flags_u4
+        type: b1
+      - #id: flags_u3
+        type: b1
+      - id: is_not_locked
+        type: b1
+      - id: is_not_userrouted  # or: is_part_of_polygon?
+        type: b1
+      - #id: flags_u0
+        type: b1
+      - id: is_keepout
+        type: u1  # KEEPOUT = 2
       - id: net
         type: u2
       - size: 2
@@ -291,7 +401,23 @@ types:
     seq:
       - id: layer
         type: u1
-      - size: 2
+      - #id: flags_u7
+        type: b1
+      - #id: flags_u6
+        type: b1
+      - #id: flags_u5
+        type: b1
+      - #id: flags_u4
+        type: b1
+      - #id: flags_u3
+        type: b1
+      - id: is_not_locked
+        type: b1
+      - #id: flags_u1
+        type: b1
+      - #id: flags_u0
+        type: b1
+      - size: 1
       - id: net
         type: u2
       - size: 2
@@ -318,10 +444,23 @@ types:
       - id: is_designator
         type: u1
         enum: boolean
-      - size: 90
+      - size: 4
+      - id: font_name
+        size: 64
+        type: str  # TODO: terminates with [0, 0]
+        encoding: UTF-16
+      - size: 22
       - id: position
         type: u1
         enum: text_position
+      - size: 27
+      - id: truetype
+        type: u1
+        enum: boolean
+      - id: barcode_name
+        size: 64
+        type: str   # TODO: terminates with [0, 0]
+        encoding: UTF-16
 
   text_sub2:
     seq:
@@ -343,7 +482,24 @@ types:
     seq:
       - id: layer
         type: u1
-      - size: 2
+      - #id: flags_u7
+        type: b1
+      - #id: flags_u6
+        type: b1
+      - #id: flags_u5
+        type: b1
+      - #id: flags_u4
+        type: b1
+      - #id: flags_u3
+        type: b1
+      - id: is_not_locked
+        type: b1
+      - #id: flags_u1
+        type: b1
+      - #id: flags_u0
+        type: b1
+      - id: is_keepout
+        type: u1  # KEEPOUT = 2
       - id: net
         type: u2
       - size: 8
@@ -354,19 +510,36 @@ types:
       - id: rotation
         type: f8
 
-  boardregion:
+  region:
     seq:
     - id: sub1_len
       type: u4
     - id: data
-      type: boardregion_sub1
+      type: region_sub1
       size: sub1_len
 
-  boardregion_sub1:
+  region_sub1:
     seq:
     - id: layer
       type: u1
-    - size: 2
+    - #id: flags_u7
+      type: b1
+    - #id: flags_u6
+      type: b1
+    - #id: flags_u5
+      type: b1
+    - #id: flags_u4
+      type: b1
+    - #id: flags_u3
+      type: b1
+    - id: is_not_locked
+      type: b1
+    - #id: flags_u1
+      type: b1
+    - #id: flags_u0
+      type: b1
+    - id: is_keepout
+      type: u1  # KEEPOUT = 2
     - id: net
       type: u2
     - size: 2
@@ -410,7 +583,7 @@ enums:
     0x04: track6
     0x05: text6
     0x06: fill6
-    0x0b: boardregion6
+    0x0b: region6
 
   boolean:
     0: false
