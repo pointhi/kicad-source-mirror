@@ -170,6 +170,16 @@ struct ALTIUM_VERTICE
     const wxPoint position;
     const wxPoint center;
 
+    explicit ALTIUM_VERTICE( const wxPoint position )
+            : isRound( false ),
+              radius( 0 ),
+              startangle( 0. ),
+              endangle( 0. ),
+              position( position ),
+              center( wxPoint( 0, 0 ) )
+    {
+    }
+
     explicit ALTIUM_VERTICE( bool isRound, int32_t radius, double startangle, double endangle,
             const wxPoint position, const wxPoint center )
             : isRound( isRound ),
@@ -415,15 +425,17 @@ struct AREGION6
     bool is_locked;
     bool is_keepout;
 
+    bool is_shapebased;
+
     ALTIUM_LAYER layer;
     uint16_t     net;
     uint16_t     component;
 
     ALTIUM_REGION_KIND kind; // I asume this means if normal or keepout?
 
-    std::vector<wxPoint> vertices;
+    std::vector<ALTIUM_VERTICE> vertices;
 
-    explicit AREGION6( ALTIUM_PARSER& reader );
+    explicit AREGION6( ALTIUM_PARSER& reader, bool aExtendedVertices );
 };
 
 struct AARC6
@@ -538,6 +550,9 @@ struct ATEXT6
 
 struct AFILL6
 {
+    bool is_locked;
+    bool is_keepout;
+
     ALTIUM_LAYER layer;
     uint16_t     net;
 
@@ -622,6 +637,8 @@ private:
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseBoardRegionsData(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
+    void ParseShapeBasedRegions6Data(
+            const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
     void ParseRegions6Data(
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
 
@@ -630,6 +647,8 @@ private:
     void HelperParseDimensions6Leader( const ADIMENSION6& elem );
     void HelperParseDimensions6Datum( const ADIMENSION6& elem );
     void HelperParseDimensions6Center( const ADIMENSION6& elem );
+
+    void HelperCreateBoardOutline( const std::vector<ALTIUM_VERTICE>& vertices );
 
     BOARD*                               m_board;
     std::vector<MODULE*>                 m_components;

@@ -375,6 +375,7 @@ const wxString PADS6_DATA        = "Pads6\\Data";
 const wxString POLYGONS6_DATA    = "Polygons6\\Data";
 const wxString REGIONS6_DATA     = "Regions6\\Data";
 const wxString RULES6_DATA       = "Rules6\\Data";
+const wxString SHAREREGION6_DATA = "ShapeBasedRegions6\\Data";
 const wxString TEXTS6_DATA       = "Texts6\\Data";
 const wxString TRACKS6_DATA      = "Tracks6\\Data";
 const wxString VIAS6_DATA        = "Vias6\\Data";
@@ -397,6 +398,7 @@ const wxString PADS6_DATA     = "47D69BC5107A4B8DB8DAA23E39C238\\Data";
 const wxString POLYGONS6_DATA = "D7038392280E4E229B9D9B5426B295\\Data";
 // const wxString REGIONS6_DATA = "TODO\\Data";
 // const wxString RULES6_DATA   = "TODO\\Data";
+// const wxString SHAREREGION6_DATA = "TODO\\Data";
 const wxString TEXTS6_DATA  = "349ABBB211DB4F5B8AE41B1B49555A\\Data";
 const wxString TRACKS6_DATA = "530C20C225354B858B2578CAB8C08D\\Data";
 const wxString VIAS6_DATA   = "CA5F5989BCDB404DA70A9D1D3D5758\\Data";
@@ -419,6 +421,7 @@ const wxString PADS6_DATA        = "4F501041A9BC4A06BDBDAB67D3820E\\Data";
 const wxString POLYGONS6_DATA    = "A1931C8B0B084A61AA45146575FDD3\\Data";
 const wxString REGIONS6_DATA     = "F513A5885418472886D3EF18A09E46\\Data";
 const wxString RULES6_DATA       = "C27718A40C94421388FAE5BD7785D7\\Data";
+const wxString SHAREREGION6_DATA = "BDAA2C70289849078C8EBEEC7F0848\\Data";
 const wxString TEXTS6_DATA       = "A34BC67C2A5F408D8F377378C5C5E2\\Data";
 const wxString TRACKS6_DATA      = "412A754DBB864645BF01CD6A80C358\\Data";
 const wxString VIAS6_DATA        = "C87A685A0EFA4A90BEEFD666198B56\\Data";
@@ -488,6 +491,11 @@ void ALTIUM_PCB::ParseDesigner( const CFB::CompoundFileReader& aReader )
     ParseHelper(
             aReader, ALTIUM_DESIGNER::BOARDREGIONS_DATA, [this]( auto aReader, auto fileHeader ) {
                 this->ParseBoardRegionsData( aReader, fileHeader );
+            } );
+
+    ParseHelper(
+            aReader, ALTIUM_DESIGNER::SHAREREGION6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseShapeBasedRegions6Data( aReader, fileHeader );
             } );
 
     ParseHelper( aReader, ALTIUM_DESIGNER::REGIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
@@ -574,11 +582,13 @@ void ALTIUM_PCB::ParseCircuitStudio( const CFB::CompoundFileReader& aReader )
     //            aReader, ALTIUM_CIRCUIT_STUDIO::BOARDREGIONS_DATA, [this]( auto aReader, auto fileHeader ) {
     //                this->ParseBoardRegionsData( aReader, fileHeader );
     //            } );
-    //
     //    ParseHelper(
     //            aReader, ALTIUM_CIRCUIT_STUDIO::REGIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
     //                this->ParseRegions6Data( aReader, fileHeader );
     //            } );
+    //    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::SHAREREGION6_DATA, [this]( auto aReader, auto fileHeader ) {
+    //        this->ParseShapeBasedRegions6Data( aReader, fileHeader );
+    //    } );
 
     FinishParsingHelper();
 }
@@ -660,6 +670,11 @@ void ALTIUM_PCB::ParseCircuitMaker( const CFB::CompoundFileReader& aReader )
     ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::BOARDREGIONS_DATA,
             [this]( auto aReader, auto fileHeader ) {
                 this->ParseBoardRegionsData( aReader, fileHeader );
+            } );
+
+    ParseHelper( aReader, ALTIUM_CIRCUIT_MAKER::SHAREREGION6_DATA,
+            [this]( auto aReader, auto fileHeader ) {
+                this->ParseShapeBasedRegions6Data( aReader, fileHeader );
             } );
 
     ParseHelper(
@@ -830,12 +845,17 @@ void ALTIUM_PCB::ParseBoard6Data(
         ++it;
     }
 
-    if( !elem.board_vertices.empty() )
+    HelperCreateBoardOutline( elem.board_vertices );
+}
+
+void ALTIUM_PCB::HelperCreateBoardOutline( const std::vector<ALTIUM_VERTICE>& vertices )
+{
+    if( !vertices.empty() )
     {
-        ALTIUM_VERTICE* last = &elem.board_vertices.at( 0 );
-        for( size_t i = 0; i < elem.board_vertices.size(); i++ )
+        const ALTIUM_VERTICE* last = &vertices.at( 0 );
+        for( size_t i = 0; i < vertices.size(); i++ )
         {
-            ALTIUM_VERTICE* cur = &elem.board_vertices.at( ( i + 1 ) % elem.board_vertices.size() );
+            const ALTIUM_VERTICE* cur = &vertices.at( ( i + 1 ) % vertices.size() );
 
             DRAWSEGMENT* ds = new DRAWSEGMENT( m_board );
             m_board->Add( ds, ADD_MODE::APPEND );
@@ -1320,7 +1340,7 @@ void ALTIUM_PCB::ParseBoardRegionsData(
     while( !reader.parser_error()
             && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
     {
-        AREGION6 elem( reader );
+        AREGION6 elem( reader, false );
 
         // TODO: implement?
     }
@@ -1329,7 +1349,7 @@ void ALTIUM_PCB::ParseBoardRegionsData(
     wxASSERT( reader.bytes_remaining() == 0 );
 }
 
-void ALTIUM_PCB::ParseRegions6Data(
+void ALTIUM_PCB::ParseShapeBasedRegions6Data(
         const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
 {
     ALTIUM_PARSER reader( aReader, aEntry );
@@ -1337,11 +1357,13 @@ void ALTIUM_PCB::ParseRegions6Data(
     while( !reader.parser_error()
             && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
     {
-        AREGION6 elem( reader );
+        AREGION6 elem( reader, true );
 
-        // TODO: at least on copper it seems this is the filled zone, not the definition of it!
-        if( ( elem.kind == ALTIUM_REGION_KIND::COPPER && elem.is_keepout )
-                || elem.kind == ALTIUM_REGION_KIND::POLYGON_CUTOUT )
+        if( elem.kind == ALTIUM_REGION_KIND::BOARD_CUTOUT )
+        {
+            HelperCreateBoardOutline( elem.vertices );
+        }
+        else if( elem.kind == ALTIUM_REGION_KIND::POLYGON_CUTOUT )
         {
             ZONE_CONTAINER* zone = new ZONE_CONTAINER( m_board );
             m_board->Add( zone, ADD_MODE::APPEND );
@@ -1369,13 +1391,13 @@ void ALTIUM_PCB::ParseRegions6Data(
                 zone->SetLayer( klayer != UNDEFINED_LAYER ? klayer : Eco1_User );
             }
 
-            zone->SetPosition( elem.vertices.at( 0 ) );
+            zone->SetPosition( elem.vertices.at( 0 ).position );
             SHAPE_LINE_CHAIN linechain;
             for( auto& vertice : elem.vertices )
             {
-                linechain.Append( vertice );
+                linechain.Append( vertice.position );
             }
-            linechain.Append( elem.vertices.at( 0 ) );
+            linechain.Append( elem.vertices.at( 0 ).position );
             linechain.SetClosed( true );
 
             SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
@@ -1384,24 +1406,44 @@ void ALTIUM_PCB::ParseRegions6Data(
 
             zone->SetHatch( ZONE_HATCH_STYLE::DIAGONAL_EDGE, zone->GetDefaultHatchPitch(), true );
         }
-        else if( elem.kind == ALTIUM_REGION_KIND::BOARD_CUTOUT && !elem.vertices.empty() )
+        else if( elem.kind == ALTIUM_REGION_KIND::COPPER && false )
         {
-            wxPoint last = elem.vertices.back();
+            // TODO: detect copper polygon vs. zone difference
+            DRAWSEGMENT* ds = new DRAWSEGMENT( m_board );
+            m_board->Add( ds, ADD_MODE::APPEND );
+            ds->SetShape( STROKE_T::S_POLYGON );
+            ds->SetLayer( kicad_layer( elem.layer ) );
+            ds->SetWidth( 0 );
+
+            SHAPE_LINE_CHAIN linechain;
             for( auto& vertice : elem.vertices )
             {
-                DRAWSEGMENT* ds = new DRAWSEGMENT( m_board );
-                ds->SetShape( STROKE_T::S_SEGMENT );
-                m_board->Add( ds, ADD_MODE::APPEND );
-
-                ds->SetStart( last );
-                ds->SetEnd( vertice );
-                ds->SetWidth( m_board->GetDesignSettings().GetLineThickness( Edge_Cuts ) );
-                ds->SetLayer( Edge_Cuts );
-
-                last = vertice;
+                linechain.Append( vertice.position );
             }
+            linechain.Append( elem.vertices.at( 0 ).position );
+            linechain.SetClosed( true );
+
+            SHAPE_POLY_SET polyset;
+            polyset.AddOutline( linechain );
+            ds->SetPolyShape( polyset );
         }
-        // TODO: handle other regions
+    }
+
+    wxASSERT( !reader.parser_error() );
+    wxASSERT( reader.bytes_remaining() == 0 );
+}
+
+void ALTIUM_PCB::ParseRegions6Data(
+        const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
+{
+    ALTIUM_PARSER reader( aReader, aEntry );
+
+    while( !reader.parser_error()
+            && reader.bytes_remaining() >= 4 /* TODO: use Header section of file */ )
+    {
+        AREGION6 elem( reader, false );
+
+        // it seems this only contains the actual fill, but the outlines are defined in Polygons6 and ShapeBasedRegions6
     }
 
     wxASSERT( !reader.parser_error() );
@@ -1856,8 +1898,7 @@ void ALTIUM_PCB::ParseFills6Data(
             zone->SetThermalReliefGap( polygonConnectRule->polygonconnectAirgapwidth );
         }
 
-        // zones in planes, this is in fact a keepout
-        if( altium_layer_is_plane( elem.layer ) )
+        if( elem.is_keepout )
         {
             zone->SetIsKeepout( true );
             zone->SetDoNotAllowTracks( false );
@@ -2476,7 +2517,13 @@ AFILL6::AFILL6( ALTIUM_PARSER& reader )
     reader.read_subrecord_length();
 
     layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
-    reader.skip( 2 );
+
+    uint8_t flags1 = reader.read<uint8_t>();
+    is_locked      = ( flags1 & 0x04 ) == 0;
+
+    uint8_t flags2 = reader.read<uint8_t>();
+    is_keepout     = flags2 == 2;
+
     net = reader.read<uint16_t>();
     reader.skip( 8 );
     pos1     = reader.read_point();
@@ -2488,7 +2535,7 @@ AFILL6::AFILL6( ALTIUM_PARSER& reader )
     wxASSERT( !reader.parser_error() );
 }
 
-AREGION6::AREGION6( ALTIUM_PARSER& reader )
+AREGION6::AREGION6( ALTIUM_PARSER& reader, bool aExtendedVertices )
 {
     wxASSERT( reader.bytes_remaining() > 4 );
     wxASSERT( !reader.parser_error() );
@@ -2518,6 +2565,8 @@ AREGION6::AREGION6( ALTIUM_PARSER& reader )
     int  pkind     = ALTIUM_PARSER::property_int( properties, "KIND", 0 );
     bool is_cutout = ALTIUM_PARSER::property_bool( properties, "ISBOARDCUTOUT", false );
 
+    is_shapebased = ALTIUM_PARSER::property_bool( properties, "ISSHAPEBASED", false );
+
     switch( pkind )
     {
     case 0:
@@ -2545,11 +2594,23 @@ AREGION6::AREGION6( ALTIUM_PARSER& reader )
 
     for( uint32_t i = 0; i < num_vertices; i++ )
     {
-        // no idea why, but for regions the coordinates are stored as double and not as int32_t
-        double x = reader.read<double>();
-        double y = -reader.read<double>();
-
-        vertices.emplace_back( x * 2.54, y * 2.54 );
+        if( aExtendedVertices )
+        {
+            bool    isRound  = reader.read<u_int8_t>() != 0;
+            wxPoint position = reader.read_point();
+            wxPoint center   = reader.read_point();
+            int32_t radius   = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
+            double  angle1   = reader.read<double>();
+            double  angle2   = reader.read<double>();
+            vertices.emplace_back( isRound, radius, angle1, angle2, position, center );
+        }
+        else
+        {
+            // no idea why, but for some regions the coordinates are stored as double and not as int32_t
+            double x = reader.read<double>();
+            double y = -reader.read<double>();
+            vertices.emplace_back( wxPoint( KiROUND( x ), KiROUND( y ) ) );
+        }
     }
 
     reader.subrecord_skip();

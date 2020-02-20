@@ -556,10 +556,14 @@ types:
       type: str
     - id: vertices_num
       type: u4
-    - id: vertices
+    - id: vertices  # region1 type
       repeat: expr
       repeat-expr: vertices_num
       type: xyf
+    #- id: vertices2 # region2 type
+    #  repeat: expr
+    #  repeat-expr: vertices_num+1
+    #  type: xyf2
 
   xy:
     seq:
@@ -568,11 +572,27 @@ types:
       - id: y
         type: s4
 
-  xyf:  # no idea why a different format?
+  xyf:  # no idea why two different formats?
     seq:
       - id: x
         type: f8
       - id: y
+        type: f8
+
+  xyf2:  # no idea why two different formats?
+    seq:
+      - id: is_round
+        type: u1
+        enum: boolean
+      - id: position
+        type: xy
+      - id: center
+        type: xy
+      - id: radius
+        type: u4
+      - id: angle1
+        type: f8
+      - id: angle2
         type: f8
 
 enums:
