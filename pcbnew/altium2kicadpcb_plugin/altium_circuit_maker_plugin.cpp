@@ -82,8 +82,8 @@ BOARD* ALTIUM_CIRCUIT_MAKER_PLUGIN::Load(
     }
 
     fseek( fp, 0, SEEK_END );
-    size_t                         len = ftell( fp );
-    std::unique_ptr<unsigned char> buffer( new unsigned char[len] );
+    size_t                           len = ftell( fp );
+    std::unique_ptr<unsigned char[]> buffer( new unsigned char[len] );
     fseek( fp, 0, SEEK_SET );
 
     len = fread( buffer.get(), 1, len, fp );
