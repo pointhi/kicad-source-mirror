@@ -1569,6 +1569,7 @@ void ALTIUM_PCB::ParsePads6Data(
 
         pad->SetName( elem.name );
         pad->SetNetCode( GetNetCode( elem.net ) );
+        pad->SetLocked( elem.is_locked );
 
         pad->SetPosition( elem.position );
         pad->SetOrientationDegrees( elem.direction );
@@ -1673,11 +1674,11 @@ void ALTIUM_PCB::ParsePads6Data(
             pad->SetLocalSolderMaskMargin( elem.soldermaskexpansionmanual );
         }
 
-        if( elem.tenttop )
+        if( elem.is_tent_top )
         {
             pad->SetLayerSet( pad->GetLayerSet().reset( F_Mask ) );
         }
-        if( elem.tentbootom )
+        if( elem.is_tent_bottom )
         {
             pad->SetLayerSet( pad->GetLayerSet().reset( B_Mask ) );
         }
@@ -1703,8 +1704,28 @@ void ALTIUM_PCB::ParseVias6Data(
         via->SetPosition( elem.position );
         via->SetWidth( elem.diameter );
         via->SetDrill( elem.holesize );
-        via->SetViaType( VIATYPE::THROUGH ); // TODO
         via->SetNetCode( GetNetCode( elem.net ) );
+        via->SetLocked( elem.is_locked );
+
+        bool start_layer_outside = elem.layer_start == ALTIUM_LAYER::TOP_LAYER
+                                   || elem.layer_start == ALTIUM_LAYER::BOTTOM_LAYER;
+        bool end_layer_outside = elem.layer_end == ALTIUM_LAYER::TOP_LAYER
+                                 || elem.layer_end == ALTIUM_LAYER::BOTTOM_LAYER;
+        if( start_layer_outside && end_layer_outside )
+        {
+            via->SetViaType( VIATYPE::THROUGH );
+        }
+        else if( ( !start_layer_outside ) && ( !end_layer_outside ) )
+        {
+            via->SetViaType( VIATYPE::BLIND_BURIED );
+        }
+        else
+        {
+            via->SetViaType( VIATYPE::MICROVIA ); // TODO: always a microvia?
+        }
+
+        // we need VIATYPE set!
+        via->SetLayerPair( kicad_layer( elem.layer_start ), kicad_layer( elem.layer_end ) );
     }
 
     wxASSERT( !reader.parser_error() );
@@ -2381,8 +2402,13 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
     layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
 
     uint8_t flags1  = reader.read<uint8_t>();
-    tentbootom      = ( flags1 & 0x40 ) != 0;
-    tenttop         = ( flags1 & 0x20 ) != 0;
+    is_test_fab_top = ( flags1 & 0x80 ) != 0;
+    is_tent_bottom  = ( flags1 & 0x40 ) != 0;
+    is_tent_top     = ( flags1 & 0x20 ) != 0;
+    is_locked       = ( flags1 & 0x04 ) == 0;
+
+    uint8_t flags2     = reader.read<uint8_t>();
+    is_test_fab_bottom = ( flags2 & 0x01 ) != 0;
 
     reader.skip( 1 );
     net = reader.read<uint16_t>();
@@ -2490,12 +2516,27 @@ AVIA6::AVIA6( ALTIUM_PARSER& reader )
     // Subrecord 1
     reader.read_subrecord_length();
 
-    reader.skip( 3 );
+    reader.skip( 1 );
+
+    uint8_t flags1  = reader.read<uint8_t>();
+    is_test_fab_top = ( flags1 & 0x80 ) != 0;
+    is_tent_bottom  = ( flags1 & 0x40 ) != 0;
+    is_tent_top     = ( flags1 & 0x20 ) != 0;
+    is_locked       = ( flags1 & 0x04 ) == 0;
+
+    uint8_t flags2     = reader.read<uint8_t>();
+    is_test_fab_bottom = ( flags2 & 0x01 ) != 0;
+
     net = reader.read<uint16_t>();
     reader.skip( 8 );
     position = reader.read_point();
     diameter = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
     holesize = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
+
+    layer_start = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
+    layer_end   = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
+    reader.skip( 43 );
+    viamode = static_cast<ALTIUM_PAD_MODE>( reader.read<uint8_t>() );
 
     reader.subrecord_skip();
 

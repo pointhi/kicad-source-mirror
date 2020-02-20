@@ -471,6 +471,12 @@ struct APAD6_SIZE_AND_SHAPE
 
 struct APAD6
 {
+    bool is_locked;
+    bool is_tent_top;
+    bool is_tent_bottom;
+    bool is_test_fab_top;
+    bool is_test_fab_bottom;
+
     wxString name;
 
     ALTIUM_LAYER layer;
@@ -491,8 +497,6 @@ struct APAD6
 
     double   direction;
     bool     plated;
-    bool     tenttop;
-    bool     tentbootom;
     ALTIUM_PAD_RULE pastemaskexpansionmode;
     int32_t         pastemaskexpansionmanual;
     ALTIUM_PAD_RULE soldermaskexpansionmode;
@@ -509,11 +513,21 @@ struct APAD6
 
 struct AVIA6
 {
+    bool is_locked;
+    bool is_tent_top;
+    bool is_tent_bottom;
+    bool is_test_fab_top;
+    bool is_test_fab_bottom;
+
     uint16_t net;
 
     wxPoint   position;
     uint32_t  diameter;
     uint32_t  holesize;
+
+    ALTIUM_LAYER    layer_start;
+    ALTIUM_LAYER    layer_end;
+    ALTIUM_PAD_MODE viamode;
 
     explicit AVIA6( ALTIUM_PARSER& reader );
 };
