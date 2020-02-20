@@ -59,7 +59,7 @@ types:
         type: b1
       - id: is_not_locked
         type: b1
-      - id: is_not_userrouted  # or: is_part_of_polygon?
+      - id: is_not_userrouted  # not really sure what this tells us
         type: b1
       - #id: flags_u0
         type: b1
@@ -365,7 +365,7 @@ types:
         type: b1
       - id: is_not_locked
         type: b1
-      - id: is_not_userrouted  # or: is_part_of_polygon?
+      - id: is_not_userrouted  # not really sure what this tells us
         type: b1
       - #id: flags_u0
         type: b1

@@ -1461,8 +1461,49 @@ void ALTIUM_PCB::ParseArcs6Data(
         AARC6 elem( reader );
 
         // element in plane is in fact substracted from the plane. Should be already done by Altium?
-        if( altium_layer_is_plane( elem.layer ) )
+        /*if( altium_layer_is_plane( elem.layer ) )
         {
+            continue;
+        }*/
+
+        if( elem.is_keepout || altium_layer_is_plane( elem.layer ) )
+        {
+            DRAWSEGMENT ds( nullptr ); // just a helper to get the graphic
+            ds.SetWidth( elem.width );
+            ds.SetCenter( elem.center );
+            if( elem.startangle == 0. && elem.endangle == 360. )
+            { // TODO: other variants to define circle?
+                ds.SetShape( STROKE_T::S_CIRCLE );
+                ds.SetArcStart( elem.center - wxPoint( 0, elem.radius ) );
+            }
+            else
+            {
+                ds.SetShape( STROKE_T::S_ARC );
+                ds.SetAngle( -NormalizeAngleDegreesPos( elem.endangle - elem.startangle ) * 10. );
+
+                double  startradiant   = DEG2RAD( elem.startangle );
+                wxPoint arcStartOffset = wxPoint( KiROUND( std::cos( startradiant ) * elem.radius ),
+                        -KiROUND( std::sin( startradiant ) * elem.radius ) );
+                ds.SetArcStart( elem.center + arcStartOffset );
+            }
+
+            ZONE_CONTAINER* zone = new ZONE_CONTAINER( m_board );
+            m_board->Add( zone, ADD_MODE::APPEND );
+
+            zone->SetLayer( kicad_layer( elem.layer ) );
+            zone->SetIsKeepout( true );
+            zone->SetDoNotAllowTracks( false );
+            zone->SetDoNotAllowVias( false );
+            zone->SetDoNotAllowCopperPour( true );
+
+            SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
+            ds.TransformShapeWithClearanceToPolygon( *outline, 0, ARC_HIGH_DEF, false );
+            outline->Simplify(
+                    SHAPE_POLY_SET::PM_STRICTLY_SIMPLE ); // the outline is not a single polygon!
+            zone->SetOutline( outline );
+
+            zone->SetHatch(
+                    ZONE_HATCH_STYLE::DIAGONAL_EDGE, ZONE_CONTAINER::GetDefaultHatchPitch(), true );
             continue;
         }
 
@@ -1680,9 +1721,35 @@ void ALTIUM_PCB::ParseTracks6Data(
     {
         ATRACK6 elem( reader );
 
-        // element in plane is in fact substracted from the plane. Should be already done by Altium?
-        if( altium_layer_is_plane( elem.layer ) )
+        // element in plane is in fact substracted from the plane. Already done by Altium?
+        /*if( altium_layer_is_plane( elem.layer ) )
         {
+            continue;
+        }*/
+
+        if( elem.is_keepout || altium_layer_is_plane( elem.layer ) )
+        {
+            DRAWSEGMENT ds( nullptr ); // just a helper to get the graphic
+            ds.SetShape( STROKE_T::S_SEGMENT );
+            ds.SetStart( elem.start );
+            ds.SetEnd( elem.end );
+            ds.SetWidth( elem.width );
+
+            ZONE_CONTAINER* zone = new ZONE_CONTAINER( m_board );
+            m_board->Add( zone, ADD_MODE::APPEND );
+
+            zone->SetLayer( kicad_layer( elem.layer ) );
+            zone->SetIsKeepout( true );
+            zone->SetDoNotAllowTracks( false );
+            zone->SetDoNotAllowVias( false );
+            zone->SetDoNotAllowCopperPour( true );
+
+            SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
+            ds.TransformShapeWithClearanceToPolygon( *outline, 0, ARC_HIGH_DEF, false );
+            zone->SetOutline( outline );
+
+            zone->SetHatch(
+                    ZONE_HATCH_STYLE::DIAGONAL_EDGE, ZONE_CONTAINER::GetDefaultHatchPitch(), true );
             continue;
         }
 
@@ -2258,7 +2325,13 @@ AARC6::AARC6( ALTIUM_PARSER& reader )
     reader.read_subrecord_length();
 
     layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
-    reader.skip( 2 );
+
+    uint8_t flags1 = reader.read<uint8_t>();
+    is_locked      = ( flags1 & 0x04 ) == 0;
+
+    uint8_t flags2 = reader.read<uint8_t>();
+    is_keepout     = flags2 == 2;
+
     net = reader.read<uint16_t>();
     reader.skip( 2 );
     component = reader.read<uint16_t>();
@@ -2441,7 +2514,13 @@ ATRACK6::ATRACK6( ALTIUM_PARSER& reader )
     reader.read_subrecord_length();
 
     layer = static_cast<ALTIUM_LAYER>( reader.read<uint8_t>() );
-    reader.skip( 2 );
+
+    uint8_t flags1 = reader.read<uint8_t>();
+    is_locked      = ( flags1 & 0x04 ) == 0;
+
+    uint8_t flags2 = reader.read<uint8_t>();
+    is_keepout     = flags2 == 2;
+
     net = reader.read<uint16_t>();
     reader.skip( 2 );
     component = reader.read<uint16_t>();

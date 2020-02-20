@@ -440,6 +440,9 @@ struct AREGION6
 
 struct AARC6
 {
+    bool is_locked;
+    bool is_keepout;
+
     ALTIUM_LAYER layer;
     uint16_t     net;
     uint16_t     component;
@@ -517,6 +520,9 @@ struct AVIA6
 
 struct ATRACK6
 {
+    bool is_locked;
+    bool is_keepout;
+
     ALTIUM_LAYER layer;
     uint16_t     net;
     uint16_t     component;
