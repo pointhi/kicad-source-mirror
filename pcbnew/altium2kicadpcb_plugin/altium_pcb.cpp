@@ -1508,44 +1508,62 @@ void ALTIUM_PCB::ParseArcs6Data(
             continue;
         }
 
-        // TODO: better approach to select if item belongs to a MODULE
-        DRAWSEGMENT* ds = nullptr;
-        if( elem.component == std::numeric_limits<uint16_t>::max() )
-        {
-            ds = new DRAWSEGMENT( m_board );
-            m_board->Add( ds, ADD_MODE::APPEND );
-        }
-        else
-        {
-            MODULE* module = GetComponent( elem.component );
-            ds             = new EDGE_MODULE( module );
-            module->Add( ds, ADD_MODE::APPEND );
-        }
-
-        ds->SetCenter( elem.center );
-        ds->SetWidth( elem.width );
         PCB_LAYER_ID klayer = kicad_layer( elem.layer );
-        ds->SetLayer( klayer != UNDEFINED_LAYER ? klayer : Eco1_User );
-
-        if( elem.startangle == 0. && elem.endangle == 360. )
-        { // TODO: other variants to define circle?
-            ds->SetShape( STROKE_T::S_CIRCLE );
-            ds->SetArcStart( elem.center - wxPoint( 0, elem.radius ) );
-        }
-        else
+        if( klayer >= F_Cu && klayer <= B_Cu )
         {
-            ds->SetShape( STROKE_T::S_ARC );
-            ds->SetAngle( -NormalizeAngleDegreesPos( elem.endangle - elem.startangle ) * 10. );
-
+            double  angle          = -NormalizeAngleDegreesPos( elem.endangle - elem.startangle );
             double  startradiant   = DEG2RAD( elem.startangle );
             wxPoint arcStartOffset = wxPoint( KiROUND( std::cos( startradiant ) * elem.radius ),
                     -KiROUND( std::sin( startradiant ) * elem.radius ) );
-            ds->SetArcStart( elem.center + arcStartOffset );
-        }
 
-        if( elem.component != std::numeric_limits<uint16_t>::max() )
+            SHAPE_ARC shapeArc( elem.center, elem.center + arcStartOffset, angle, elem.width );
+            ARC*      arc = new ARC( m_board, &shapeArc );
+            m_board->Add( arc, ADD_MODE::APPEND );
+
+            arc->SetWidth( elem.width );
+            arc->SetLayer( klayer );
+            arc->SetNetCode( GetNetCode( elem.net ) );
+        }
+        else
         {
-            dynamic_cast<EDGE_MODULE*>( ds )->SetLocalCoord();
+            // TODO: better approach to select if item belongs to a MODULE
+            DRAWSEGMENT* ds = nullptr;
+            if( elem.component == std::numeric_limits<uint16_t>::max() )
+            {
+                ds = new DRAWSEGMENT( m_board );
+                m_board->Add( ds, ADD_MODE::APPEND );
+            }
+            else
+            {
+                MODULE* module = GetComponent( elem.component );
+                ds             = new EDGE_MODULE( module );
+                module->Add( ds, ADD_MODE::APPEND );
+            }
+
+            ds->SetCenter( elem.center );
+            ds->SetWidth( elem.width );
+            ds->SetLayer( klayer != UNDEFINED_LAYER ? klayer : Eco1_User );
+
+            if( elem.startangle == 0. && elem.endangle == 360. )
+            { // TODO: other variants to define circle?
+                ds->SetShape( STROKE_T::S_CIRCLE );
+                ds->SetArcStart( elem.center - wxPoint( 0, elem.radius ) );
+            }
+            else
+            {
+                ds->SetShape( STROKE_T::S_ARC );
+                ds->SetAngle( -NormalizeAngleDegreesPos( elem.endangle - elem.startangle ) * 10. );
+
+                double  startradiant   = DEG2RAD( elem.startangle );
+                wxPoint arcStartOffset = wxPoint( KiROUND( std::cos( startradiant ) * elem.radius ),
+                        -KiROUND( std::sin( startradiant ) * elem.radius ) );
+                ds->SetArcStart( elem.center + arcStartOffset );
+            }
+
+            if( elem.component != std::numeric_limits<uint16_t>::max() )
+            {
+                dynamic_cast<EDGE_MODULE*>( ds )->SetLocalCoord();
+            }
         }
     }
 
