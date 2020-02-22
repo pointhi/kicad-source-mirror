@@ -2411,7 +2411,6 @@ APAD6::APAD6( ALTIUM_PARSER& reader )
     uint8_t flags2     = reader.read<uint8_t>();
     is_test_fab_bottom = ( flags2 & 0x01 ) != 0;
 
-    reader.skip( 1 );
     net = reader.read<uint16_t>();
     reader.skip( 2 );
     component = reader.read<uint16_t>();
