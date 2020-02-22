@@ -28,6 +28,7 @@
 #include <class_dimension.h>
 #include <class_drawsegment.h>
 #include <class_pcb_text.h>
+#include <class_track.h>
 
 #include <class_edge_mod.h>
 #include <class_text_mod.h>
