@@ -2734,7 +2734,7 @@ AREGION6::AREGION6( ALTIUM_PARSER& reader, bool aExtendedVertices )
     {
         if( aExtendedVertices )
         {
-            bool    isRound  = reader.read<u_int8_t>() != 0;
+            bool    isRound  = reader.read<uint8_t>() != 0;
             wxPoint position = reader.read_point();
             wxPoint center   = reader.read_point();
             int32_t radius   = ALTIUM_PARSER::kicad_unit( reader.read<int32_t>() );
