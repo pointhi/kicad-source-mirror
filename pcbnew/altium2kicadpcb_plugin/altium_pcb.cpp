@@ -387,22 +387,22 @@ namespace ALTIUM_CIRCUIT_STUDIO
 {
 const wxString FILE_HEADER = "FileHeader";
 
-const wxString ARCS6_DATA  = "00C595EB90524FFC8C3BD9670020A2\\Data";
-const wxString BOARD6_DATA = "88857D7F1DF64F7BBB61848C965636\\Data";
-// const wxString BOARDREGIONS_DATA = "TODO\\Data";
-// const wxString CLASSES6_DATA     = "TODO\\Data";
-const wxString COMPONENTS6_DATA = "465416896A15486999A39C643935D2\\Data";
+const wxString ARCS6_DATA        = "00C595EB90524FFC8C3BD9670020A2\\Data";
+const wxString BOARD6_DATA       = "88857D7F1DF64F7BBB61848C965636\\Data";
+const wxString BOARDREGIONS_DATA = "8957CF30F167408D9D263D23FE7C89\\Data";
+const wxString CLASSES6_DATA     = "847EFBF87A5149B1AA326A52AD6357\\Data";
+const wxString COMPONENTS6_DATA  = "465416896A15486999A39C643935D2\\Data";
 // const wxString DIMENSIONS6_DATA  = "TODO\\Data";
-const wxString FILLS6_DATA    = "4E83BDC3253747F08E9006D7F57020\\Data";
-const wxString NETS6_DATA     = "D95A0DA2FE9047779A5194C127F30B\\Data";
-const wxString PADS6_DATA     = "47D69BC5107A4B8DB8DAA23E39C238\\Data";
-const wxString POLYGONS6_DATA = "D7038392280E4E229B9D9B5426B295\\Data";
-// const wxString REGIONS6_DATA = "TODO\\Data";
-// const wxString RULES6_DATA   = "TODO\\Data";
-// const wxString SHAREREGION6_DATA = "TODO\\Data";
-const wxString TEXTS6_DATA  = "349ABBB211DB4F5B8AE41B1B49555A\\Data";
-const wxString TRACKS6_DATA = "530C20C225354B858B2578CAB8C08D\\Data";
-const wxString VIAS6_DATA   = "CA5F5989BCDB404DA70A9D1D3D5758\\Data";
+const wxString FILLS6_DATA       = "4E83BDC3253747F08E9006D7F57020\\Data";
+const wxString NETS6_DATA        = "D95A0DA2FE9047779A5194C127F30B\\Data";
+const wxString PADS6_DATA        = "47D69BC5107A4B8DB8DAA23E39C238\\Data";
+const wxString POLYGONS6_DATA    = "D7038392280E4E229B9D9B5426B295\\Data";
+const wxString REGIONS6_DATA     = "FFDDC21382BB42FE8A7D0C328D272C\\Data";
+const wxString RULES6_DATA       = "48B2FA96DB7546818752B34373D6C6\\Data";
+const wxString SHAREREGION6_DATA = "D5F54B536E124FB89E2D51B1121508\\Data";
+const wxString TEXTS6_DATA       = "349ABBB211DB4F5B8AE41B1B49555A\\Data";
+const wxString TRACKS6_DATA      = "530C20C225354B858B2578CAB8C08D\\Data";
+const wxString VIAS6_DATA        = "CA5F5989BCDB404DA70A9D1D3D5758\\Data";
 }; // namespace ALTIUM_CIRCUIT_STUDIO
 
 // those directories were found by searching for equivalent files in both formats
@@ -530,14 +530,15 @@ void ALTIUM_PCB::ParseCircuitStudio( const CFB::CompoundFileReader& aReader )
             } );
 
     // we need the nets assigned beforehand? Or use the UUID?
-    //    ParseHelper(
-    //            aReader, ALTIUM_CIRCUIT_MAKER::CLASSES6_DATA, [this]( auto aReader, auto fileHeader ) {
-    //                this->ParseClasses6Data( aReader, fileHeader );
-    //            } );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::CLASSES6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseClasses6Data( aReader, fileHeader );
+            } );
 
-    //    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::RULES6_DATA, [this]( auto aReader, auto fileHeader ) {
-    //        this->ParseRules6Data( aReader, fileHeader );
-    //    } );
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::RULES6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseRules6Data( aReader, fileHeader );
+            } );
 
     //    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::DIMENSIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
     //        this->ParseDimensions6Data( aReader, fileHeader );
@@ -578,18 +579,20 @@ void ALTIUM_PCB::ParseCircuitStudio( const CFB::CompoundFileReader& aReader )
                 this->ParseFills6Data( aReader, fileHeader );
             } );
 
-    // TODO: enable
-    //    ParseHelper(
-    //            aReader, ALTIUM_CIRCUIT_STUDIO::BOARDREGIONS_DATA, [this]( auto aReader, auto fileHeader ) {
-    //                this->ParseBoardRegionsData( aReader, fileHeader );
-    //            } );
-    //    ParseHelper(
-    //            aReader, ALTIUM_CIRCUIT_STUDIO::REGIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
-    //                this->ParseRegions6Data( aReader, fileHeader );
-    //            } );
-    //    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::SHAREREGION6_DATA, [this]( auto aReader, auto fileHeader ) {
-    //        this->ParseShapeBasedRegions6Data( aReader, fileHeader );
-    //    } );
+    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::BOARDREGIONS_DATA,
+            [this]( auto aReader, auto fileHeader ) {
+                this->ParseBoardRegionsData( aReader, fileHeader );
+            } );
+
+    ParseHelper( aReader, ALTIUM_CIRCUIT_STUDIO::SHAREREGION6_DATA,
+            [this]( auto aReader, auto fileHeader ) {
+                this->ParseShapeBasedRegions6Data( aReader, fileHeader );
+            } );
+
+    ParseHelper(
+            aReader, ALTIUM_CIRCUIT_STUDIO::REGIONS6_DATA, [this]( auto aReader, auto fileHeader ) {
+                this->ParseRegions6Data( aReader, fileHeader );
+            } );
 
     FinishParsingHelper();
 }
@@ -2576,6 +2579,7 @@ ATRACK6::ATRACK6( ALTIUM_PARSER& reader )
 
     uint8_t flags1 = reader.read<uint8_t>();
     is_locked      = ( flags1 & 0x04 ) == 0;
+    // is_polygon_outline = ( flags1 & 0x02 ) != 0;  // TODO: only matches on outline?
 
     uint8_t flags2 = reader.read<uint8_t>();
     is_keepout     = flags2 == 2;
