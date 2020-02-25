@@ -1974,49 +1974,64 @@ void ALTIUM_PCB::ParseFills6Data(
     {
         AFILL6 elem( reader );
 
-        ZONE_CONTAINER* zone = new ZONE_CONTAINER( m_board );
-        m_board->Add( zone, ADD_MODE::APPEND );
-
-        zone->SetNetCode( GetNetCode( elem.net ) );
-        zone->SetLayer( kicad_layer( elem.layer ) );
-        zone->SetPosition( elem.pos1 );
-
         SHAPE_LINE_CHAIN linechain;
-        linechain.Append( elem.pos1.x, elem.pos1.y );
-        linechain.Append( elem.pos2.x, elem.pos1.y );
-        linechain.Append( elem.pos2.x, elem.pos2.y );
-        linechain.Append( elem.pos1.x, elem.pos2.y );
-        linechain.Append( elem.pos1.x, elem.pos1.y );
+
+        wxPoint p11( elem.pos1.x, elem.pos1.y );
+        wxPoint p12( elem.pos1.x, elem.pos2.y );
+        wxPoint p22( elem.pos2.x, elem.pos2.y );
+        wxPoint p21( elem.pos2.x, elem.pos1.y );
+
+        // rotate of the linechain behaves different than this?
+        wxPoint center( ( elem.pos1.x + elem.pos2.x ) / 2, ( elem.pos1.y + elem.pos2.y ) / 2 );
+        RotatePoint( &p11, center, elem.rotation * 10. );
+        RotatePoint( &p12, center, elem.rotation * 10. );
+        RotatePoint( &p22, center, elem.rotation * 10. );
+        RotatePoint( &p21, center, elem.rotation * 10. );
+
+        linechain.Append( p11 );
+        linechain.Append( p12 );
+        linechain.Append( p22 );
+        linechain.Append( p21 );
+        linechain.Append( p11 );
         linechain.SetClosed( true );
 
         SHAPE_POLY_SET* outline = new SHAPE_POLY_SET();
         outline->AddOutline( linechain );
-        zone->SetOutline( outline );
 
-        // TODO: more flexible rule parsing
-        ARULE6* clearanceRule = GetRuleDefault( ALTIUM_RULE_KIND::PLANE_CLEARANCE );
-        if( clearanceRule != nullptr )
+        if( elem.is_keepout || elem.net != std::numeric_limits<uint16_t>::max() )
         {
-            zone->SetZoneClearance( clearanceRule->planeclearanceClearance );
-        }
-        ARULE6* polygonConnectRule = GetRuleDefault( ALTIUM_RULE_KIND::POLYGON_CONNECT );
-        if( clearanceRule != nullptr )
-        {
-            // TODO: correct variables?
-            zone->SetThermalReliefCopperBridge(
-                    polygonConnectRule->polygonconnectReliefconductorwidth );
-            zone->SetThermalReliefGap( polygonConnectRule->polygonconnectAirgapwidth );
-        }
+            ZONE_CONTAINER* zone = new ZONE_CONTAINER( m_board );
+            m_board->Add( zone, ADD_MODE::APPEND );
 
-        if( elem.is_keepout )
-        {
-            zone->SetIsKeepout( true );
-            zone->SetDoNotAllowTracks( false );
-            zone->SetDoNotAllowVias( false );
-            zone->SetDoNotAllowCopperPour( true );
-        }
+            zone->SetNetCode( GetNetCode( elem.net ) );
+            zone->SetLayer( kicad_layer( elem.layer ) );
+            zone->SetPosition( elem.pos1 );
+            zone->SetOutline( outline );
+            zone->SetPriority( 1000 );
 
-        zone->SetHatch( ZONE_HATCH_STYLE::DIAGONAL_EDGE, zone->GetDefaultHatchPitch(), true );
+            // should be correct?
+            zone->SetZoneClearance( 0 );
+            zone->SetPadConnection( ZONE_CONNECTION::FULL );
+
+            if( elem.is_keepout )
+            {
+                zone->SetIsKeepout( true );
+                zone->SetDoNotAllowTracks( false );
+                zone->SetDoNotAllowVias( false );
+                zone->SetDoNotAllowCopperPour( true );
+            }
+
+            zone->SetHatch( ZONE_HATCH_STYLE::DIAGONAL_EDGE, zone->GetDefaultHatchPitch(), true );
+        }
+        else
+        {
+            DRAWSEGMENT* ds = new DRAWSEGMENT( m_board );
+            m_board->Add( ds, ADD_MODE::APPEND );
+
+            ds->SetShape( STROKE_T::S_POLYGON );
+            ds->SetPolyShape( *outline );
+            ds->SetLayer( kicad_layer( elem.layer ) );
+        }
     }
 
     wxASSERT( !reader.parser_error() );
@@ -2667,7 +2682,9 @@ AFILL6::AFILL6( ALTIUM_PARSER& reader )
     is_keepout     = flags2 == 2;
 
     net = reader.read<uint16_t>();
-    reader.skip( 8 );
+    reader.skip( 2 );
+    component = reader.read<uint16_t>();
+    reader.skip( 4 );
     pos1     = reader.read_point();
     pos2     = reader.read_point();
     rotation = reader.read<double>();

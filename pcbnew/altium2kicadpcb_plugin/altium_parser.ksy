@@ -502,7 +502,10 @@ types:
         type: u1  # KEEPOUT = 2
       - id: net
         type: u2
-      - size: 8
+      - size: 2
+      - id: component
+        type: u2
+      - size: 4
       - id: pos1
         type: xy
       - id: pos2

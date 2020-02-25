@@ -574,6 +574,7 @@ struct AFILL6
     bool is_keepout;
 
     ALTIUM_LAYER layer;
+    uint16_t     component;
     uint16_t     net;
 
     wxPoint pos1;
