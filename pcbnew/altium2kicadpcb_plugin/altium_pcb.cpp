@@ -715,30 +715,6 @@ void ALTIUM_PCB::FinishParsingHelper()
     }
 }
 
-MODULE* ALTIUM_PCB::GetComponent( const uint16_t id )
-{
-    // I asume this is a special case where a elements belongs to the board.
-    if( id == std::numeric_limits<uint16_t>::max() )
-    {
-        MODULE* module = new MODULE( m_board );
-        m_board->Add( module, ADD_MODE::APPEND );
-        return module;
-    }
-
-    MODULE* module = m_components.size() > id ? m_components.at( id ) : nullptr;
-    if( module == nullptr )
-    {
-        module = new MODULE( m_board );
-        m_board->Add( module, ADD_MODE::APPEND );
-        if( id >= m_components.size() )
-        {
-            m_components.resize( id + 1, nullptr );
-        }
-        m_components.insert( m_components.begin() + id, module );
-    }
-    return module;
-}
-
 int ALTIUM_PCB::GetNetCode( const uint16_t id )
 {
     return id == std::numeric_limits<uint16_t>::max() ? NETINFO_LIST::UNCONNECTED : id + 1;
@@ -957,7 +933,9 @@ void ALTIUM_PCB::ParseComponents6Data(
     {
         ACOMPONENT6 elem( reader );
 
-        MODULE* module = GetComponent( componentId );
+        MODULE* module = new MODULE( m_board );
+        m_board->Add( module, ADD_MODE::APPEND );
+        m_components.emplace_back( module );
 
         module->SetPosition( elem.position );
         module->SetOrientationDegrees( elem.rotation );
@@ -1538,7 +1516,7 @@ void ALTIUM_PCB::ParseArcs6Data(
             }
             else
             {
-                MODULE* module = GetComponent( elem.component );
+                MODULE* module = m_components.at( elem.component );
                 ds             = new EDGE_MODULE( module );
                 module->Add( ds, ADD_MODE::APPEND );
             }
@@ -1585,7 +1563,18 @@ void ALTIUM_PCB::ParsePads6Data(
         APAD6 elem( reader );
 
         // Create Pad
-        MODULE* module = GetComponent( elem.component );
+        MODULE* module = nullptr;
+        if( elem.component == std::numeric_limits<uint16_t>::max() )
+        {
+            module = new MODULE( m_board ); // We cannot add a pad directly into the PCB
+            m_board->Add( module, ADD_MODE::APPEND );
+            module->SetPosition( elem.position );
+        }
+        else
+        {
+            module = m_components.at( elem.component );
+        }
+
         D_PAD*  pad    = new D_PAD( module );
         module->Add( pad, ADD_MODE::APPEND );
 
@@ -1823,7 +1812,7 @@ void ALTIUM_PCB::ParseTracks6Data(
             }
             else
             {
-                MODULE*      module = GetComponent( elem.component );
+                MODULE*      module = m_components.at( elem.component );
                 EDGE_MODULE* em     = new EDGE_MODULE( module, STROKE_T::S_SEGMENT );
                 module->Add( em, ADD_MODE::APPEND );
 
@@ -1868,7 +1857,7 @@ void ALTIUM_PCB::ParseTexts6Data(
         }
         else
         {
-            MODULE*       module = GetComponent( elem.component );
+            MODULE*       module = m_components.at( elem.component );
             TEXTE_MODULE* txm;
             if( elem.isDesignator )
             {

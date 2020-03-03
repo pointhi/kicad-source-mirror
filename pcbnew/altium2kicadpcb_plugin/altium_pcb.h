@@ -616,7 +616,6 @@ public:
 private:
     PCB_LAYER_ID kicad_layer( ALTIUM_LAYER aAltiumLayer ) const;
 
-    MODULE* GetComponent( const uint16_t id );
     int     GetNetCode( const uint16_t id );
     ARULE6* GetRule( ALTIUM_RULE_KIND kind, const wxString& name );
     ARULE6* GetRuleDefault( ALTIUM_RULE_KIND kind );
