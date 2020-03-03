@@ -1888,23 +1888,27 @@ void ALTIUM_PCB::ParseTexts6Data(
             itm = txm;
         }
 
-        if( !elem.isDesignator )
+        if( !elem.isDesignator && elem.text == ".Designator" )
         {
-            if( elem.text == ".Designator" )
-            {
-                tx->SetText( "%R" );
-            }
-            else
-            {
-                tx->SetText( elem.text );
-            }
+            tx->SetText( "%R" );
+        }
+        else
+        {
+            tx->SetText( elem.text );
         }
 
         itm->SetPosition( elem.position );
         tx->SetTextAngle( elem.rotation * 10. );
         if( elem.component != std::numeric_limits<uint16_t>::max() )
         {
-            dynamic_cast<TEXTE_MODULE*>( tx )->SetLocalCoord();
+            TEXTE_MODULE* txm = dynamic_cast<TEXTE_MODULE*>( tx );
+            if( elem.isDesignator || elem.isComment )
+            {
+                double orientation =
+                        static_cast<const MODULE*>( txm->GetParent() )->GetOrientation();
+                txm->SetTextAngle( orientation + txm->GetTextAngle() );
+            }
+            txm->SetLocalCoord();
         }
 
         PCB_LAYER_ID klayer = kicad_layer( elem.layer );
@@ -1913,48 +1917,56 @@ void ALTIUM_PCB::ParseTexts6Data(
         tx->SetTextSize( wxSize( elem.height, elem.height ) ); // TODO: parse text width
         tx->SetThickness( elem.strokewidth );
         tx->SetMirrored( elem.mirrored );
-        switch( elem.textposition )
+        if( elem.isDesignator || elem.isComment ) // That's just a bold assumption
         {
-        case ALTIUM_TEXT_POSITION::LEFT_TOP:
-        case ALTIUM_TEXT_POSITION::LEFT_CENTER:
-        case ALTIUM_TEXT_POSITION::LEFT_BOTTOM:
             tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_LEFT );
-            break;
-        case ALTIUM_TEXT_POSITION::CENTER_TOP:
-        case ALTIUM_TEXT_POSITION::CENTER_CENTER:
-        case ALTIUM_TEXT_POSITION::CENTER_BOTTOM:
-            tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_CENTER );
-            break;
-        case ALTIUM_TEXT_POSITION::RIGHT_TOP:
-        case ALTIUM_TEXT_POSITION::RIGHT_CENTER:
-        case ALTIUM_TEXT_POSITION::RIGHT_BOTTOM:
-            tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_RIGHT );
-            break;
-        default:
-            wxFAIL_MSG( "unexpected horizontal text position" );
-            break;
-        }
-
-        switch( elem.textposition )
-        {
-        case ALTIUM_TEXT_POSITION::LEFT_TOP:
-        case ALTIUM_TEXT_POSITION::CENTER_TOP:
-        case ALTIUM_TEXT_POSITION::RIGHT_TOP:
-            tx->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_TOP );
-            break;
-        case ALTIUM_TEXT_POSITION::LEFT_CENTER:
-        case ALTIUM_TEXT_POSITION::CENTER_CENTER:
-        case ALTIUM_TEXT_POSITION::RIGHT_CENTER:
-            tx->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_CENTER );
-            break;
-        case ALTIUM_TEXT_POSITION::LEFT_BOTTOM:
-        case ALTIUM_TEXT_POSITION::CENTER_BOTTOM:
-        case ALTIUM_TEXT_POSITION::RIGHT_BOTTOM:
             tx->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_BOTTOM );
-            break;
-        default:
-            wxFAIL_MSG( "unexpected vertical text position" );
-            break;
+        }
+        else
+        {
+            switch( elem.textposition )
+            {
+            case ALTIUM_TEXT_POSITION::LEFT_TOP:
+            case ALTIUM_TEXT_POSITION::LEFT_CENTER:
+            case ALTIUM_TEXT_POSITION::LEFT_BOTTOM:
+                tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_LEFT );
+                break;
+            case ALTIUM_TEXT_POSITION::CENTER_TOP:
+            case ALTIUM_TEXT_POSITION::CENTER_CENTER:
+            case ALTIUM_TEXT_POSITION::CENTER_BOTTOM:
+                tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_CENTER );
+                break;
+            case ALTIUM_TEXT_POSITION::RIGHT_TOP:
+            case ALTIUM_TEXT_POSITION::RIGHT_CENTER:
+            case ALTIUM_TEXT_POSITION::RIGHT_BOTTOM:
+                tx->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_RIGHT );
+                break;
+            default:
+                wxFAIL_MSG( "unexpected horizontal text position" );
+                break;
+            }
+
+            switch( elem.textposition )
+            {
+            case ALTIUM_TEXT_POSITION::LEFT_TOP:
+            case ALTIUM_TEXT_POSITION::CENTER_TOP:
+            case ALTIUM_TEXT_POSITION::RIGHT_TOP:
+                tx->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_TOP );
+                break;
+            case ALTIUM_TEXT_POSITION::LEFT_CENTER:
+            case ALTIUM_TEXT_POSITION::CENTER_CENTER:
+            case ALTIUM_TEXT_POSITION::RIGHT_CENTER:
+                tx->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_CENTER );
+                break;
+            case ALTIUM_TEXT_POSITION::LEFT_BOTTOM:
+            case ALTIUM_TEXT_POSITION::CENTER_BOTTOM:
+            case ALTIUM_TEXT_POSITION::RIGHT_BOTTOM:
+                tx->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_BOTTOM );
+                break;
+            default:
+                wxFAIL_MSG( "unexpected vertical text position" );
+                break;
+            }
         }
 
         wxASSERT( !reader.parser_error() );
@@ -2635,20 +2647,18 @@ ATEXT6::ATEXT6( ALTIUM_PARSER& reader )
     strokewidth  = ALTIUM_PARSER::kicad_unit( reader.read<uint32_t>() );
     isComment    = reader.read<uint8_t>() != 0;
     isDesignator = reader.read<uint8_t>() != 0;
-    if( subrecord1 > 230 )
+    reader.skip( 90 );
+    textposition = static_cast<ALTIUM_TEXT_POSITION>( reader.read<uint8_t>() );
+    /**
+     * In Altium 14 (subrecord1 == 230) only left bottom is valid? I think there is a bit missing.
+     * https://gitlab.com/kicad/code/kicad/merge_requests/60#note_274913397
+     */
+    if( subrecord1 <= 230 )
     {
-        reader.skip( 90 );
-        textposition = static_cast<ALTIUM_TEXT_POSITION>( reader.read<uint8_t>() );
-    }
-    else
-    {
-        /**
-         * In Altium 14 (subrecord1 == 230) only left bottom is valid?
-         * https://gitlab.com/kicad/code/kicad/merge_requests/60#note_274913397
-         */
         textposition = ALTIUM_TEXT_POSITION::LEFT_BOTTOM;
     }
-
+    reader.skip( 27 );
+    isTruetype = reader.read<uint8_t>() != 0;
 
     reader.subrecord_skip();
 

@@ -562,6 +562,7 @@ struct ATEXT6
 
     bool isComment;
     bool isDesignator;
+    bool isTruetype;
 
     wxString text;
 
