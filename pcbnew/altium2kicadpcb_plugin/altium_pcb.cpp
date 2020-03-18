@@ -42,39 +42,6 @@
 #include <utf.h>
 
 
-const CFB::COMPOUND_FILE_ENTRY* FindStream(
-        const CFB::CompoundFileReader& reader, const char* streamName )
-{
-    const CFB::COMPOUND_FILE_ENTRY* ret = nullptr;
-    reader.EnumFiles( reader.GetRootEntry(), -1,
-            [&]( const CFB::COMPOUND_FILE_ENTRY* entry, const CFB::utf16string& u16dir,
-                    int level ) -> void {
-                if( reader.IsStream( entry ) )
-                {
-                    std::string name = UTF16ToUTF8( entry->name );
-                    if( u16dir.length() > 0 )
-                    {
-                        std::string dir = UTF16ToUTF8( u16dir.c_str() );
-                        if( strncmp( streamName, dir.c_str(), dir.length() ) == 0
-                                && streamName[dir.length()] == '\\'
-                                && strcmp( streamName + dir.length() + 1, name.c_str() ) == 0 )
-                        {
-                            ret = entry;
-                        }
-                    }
-                    else
-                    {
-                        if( strcmp( streamName, name.c_str() ) == 0 )
-                        {
-                            ret = entry;
-                        }
-                    }
-                }
-            } );
-    return ret;
-}
-
-
 bool altium_layer_is_plane( ALTIUM_LAYER aLayer )
 {
     return aLayer >= ALTIUM_LAYER::INTERNAL_PLANE_1 && aLayer <= ALTIUM_LAYER::INTERNAL_PLANE_16;
@@ -608,14 +575,14 @@ void ALTIUM_PCB::ParseCircuitMaker( const CFB::CompoundFileReader& aReader )
     FinishParsingHelper();
 }
 
-void ALTIUM_PCB::ParseHelper( const CFB::CompoundFileReader& aReader, const wxString& streamName,
-        parse_function_pointer_t fp )
+void ALTIUM_PCB::ParseHelper( const CFB::CompoundFileReader& aReader, const wxString& aStreamName,
+        PARSE_FUNCTION_POINTER_fp aFP )
 {
-    const CFB::COMPOUND_FILE_ENTRY* file = FindStream( aReader, streamName.c_str() );
-    wxASSERT_MSG( file != nullptr, "File not found: " + streamName );
+    const CFB::COMPOUND_FILE_ENTRY* file = FindStream( aReader, aStreamName.c_str() );
+    wxASSERT_MSG( file != nullptr, "File not found: " + aStreamName );
     if( file != nullptr )
     {
-        fp( aReader, file );
+        aFP( aReader, file );
     }
 }
 
@@ -634,17 +601,17 @@ void ALTIUM_PCB::FinishParsingHelper()
     }
 }
 
-int ALTIUM_PCB::GetNetCode( const uint16_t id )
+int ALTIUM_PCB::GetNetCode( uint16_t aId )
 {
-    return id == std::numeric_limits<uint16_t>::max() ? NETINFO_LIST::UNCONNECTED : id + 1;
+    return aId == std::numeric_limits<uint16_t>::max() ? NETINFO_LIST::UNCONNECTED : aId + 1;
 }
 
-ARULE6* ALTIUM_PCB::GetRule( ALTIUM_RULE_KIND kind, const wxString& name )
+ARULE6* ALTIUM_PCB::GetRule( ALTIUM_RULE_KIND aKind, const wxString& aName )
 {
-    std::vector<ARULE6>& rules = m_rules[kind];
+    std::vector<ARULE6>& rules = m_rules[aKind];
     for( ARULE6& rule : rules )
     {
-        if( rule.name == name )
+        if( rule.name == aName )
         {
             return &rule;
         }
@@ -652,9 +619,9 @@ ARULE6* ALTIUM_PCB::GetRule( ALTIUM_RULE_KIND kind, const wxString& name )
     return nullptr;
 }
 
-ARULE6* ALTIUM_PCB::GetRuleDefault( ALTIUM_RULE_KIND kind )
+ARULE6* ALTIUM_PCB::GetRuleDefault( ALTIUM_RULE_KIND aKind )
 {
-    std::vector<ARULE6>& rules = m_rules[kind];
+    std::vector<ARULE6>& rules = m_rules[aKind];
     for( ARULE6& rule : rules )
     {
         if( rule.scope1expr == "All" && rule.scope2expr == "All" )
@@ -747,14 +714,14 @@ void ALTIUM_PCB::ParseBoard6Data(
     HelperCreateBoardOutline( elem.board_vertices );
 }
 
-void ALTIUM_PCB::HelperCreateBoardOutline( const std::vector<ALTIUM_VERTICE>& vertices )
+void ALTIUM_PCB::HelperCreateBoardOutline( const std::vector<ALTIUM_VERTICE>& aVertices )
 {
-    if( !vertices.empty() )
+    if( !aVertices.empty() )
     {
-        const ALTIUM_VERTICE* last = &vertices.at( 0 );
-        for( size_t i = 0; i < vertices.size(); i++ )
+        const ALTIUM_VERTICE* last = &aVertices.at( 0 );
+        for( size_t i = 0; i < aVertices.size(); i++ )
         {
-            const ALTIUM_VERTICE* cur = &vertices.at( ( i + 1 ) % vertices.size() );
+            const ALTIUM_VERTICE* cur = &aVertices.at( ( i + 1 ) % aVertices.size() );
 
             DRAWSEGMENT* ds = new DRAWSEGMENT( m_board );
             m_board->Add( ds, ADD_MODE::APPEND );
@@ -872,23 +839,23 @@ void ALTIUM_PCB::ParseComponents6Data(
 }
 
 
-void ALTIUM_PCB::HelperParseDimensions6Linear( const ADIMENSION6& elem )
+void ALTIUM_PCB::HelperParseDimensions6Linear( const ADIMENSION6& aElem )
 {
-    if( elem.referencePoint.size() != 2 )
+    if( aElem.referencePoint.size() != 2 )
     {
         wxFAIL_MSG( "incorrect number of reference points!" );
         return;
     }
 
-    wxPoint referencePoint0 = elem.referencePoint.at( 0 );
-    wxPoint referencePoint1 = elem.referencePoint.at( 1 );
+    wxPoint referencePoint0 = aElem.referencePoint.at( 0 );
+    wxPoint referencePoint1 = aElem.referencePoint.at( 1 );
 
     DIMENSION* dimension = new DIMENSION( m_board );
     m_board->Add( dimension, ADD_MODE::APPEND );
 
-    dimension->SetLayer( kicad_layer( elem.layer ) );
-    dimension->SetOrigin( referencePoint0, elem.textprecission );
-    if( referencePoint0 != elem.xy1 )
+    dimension->SetLayer( kicad_layer( aElem.layer ) );
+    dimension->SetOrigin( referencePoint0, aElem.textprecission );
+    if( referencePoint0 != aElem.xy1 )
     {
         /**
          * Basically REFERENCE0POINT and REFERENCE1POINT are the two end points of the dimension.
@@ -899,32 +866,32 @@ void ALTIUM_PCB::HelperParseDimensions6Linear( const ADIMENSION6& elem )
          * REFERENCE1POINT pointing the same direction as REFERENCE0POINT -> XY1. This should give us a valid
          * measurement point where we can place the drawsegment.
          */
-        wxPoint direction = elem.xy1 - referencePoint0;
+        wxPoint direction = aElem.xy1 - referencePoint0;
         SEG     segm1( referencePoint0, referencePoint0 + VectorNorm( direction ) );
         SEG     segm2( referencePoint1, referencePoint1 + direction );
         wxPoint intersection( segm1.Intersect( segm2, true, true ).get() );
-        dimension->SetEnd( intersection, elem.textprecission );
+        dimension->SetEnd( intersection, aElem.textprecission );
 
         int height = static_cast<int>( EuclideanNorm( direction ) );
         if( direction.x <= 0 && direction.y <= 0 ) // TODO: I suspect this is not always correct
         {
             height = -height;
         }
-        dimension->SetHeight( height, elem.textprecission );
+        dimension->SetHeight( height, aElem.textprecission );
     }
     else
     {
-        dimension->SetEnd( referencePoint1, elem.textprecission );
+        dimension->SetEnd( referencePoint1, aElem.textprecission );
     }
 
-    dimension->SetWidth( elem.linewidth );
+    dimension->SetWidth( aElem.linewidth );
 
-    dimension->Text().SetThickness( elem.textlinewidth );
-    dimension->Text().SetTextSize( wxSize( elem.textheight, elem.textheight ) );
-    dimension->Text().SetBold( elem.textbold );
-    dimension->Text().SetItalic( elem.textitalic );
+    dimension->Text().SetThickness( aElem.textlinewidth );
+    dimension->Text().SetTextSize( wxSize( aElem.textheight, aElem.textheight ) );
+    dimension->Text().SetBold( aElem.textbold );
+    dimension->Text().SetItalic( aElem.textitalic );
 
-    switch( elem.textunit )
+    switch( aElem.textunit )
     {
     case ALTIUM_UNIT::INCHES:
         dimension->SetUnits( EDA_UNITS::INCHES, false );
@@ -940,38 +907,38 @@ void ALTIUM_PCB::HelperParseDimensions6Linear( const ADIMENSION6& elem )
         break;
     }
 
-    dimension->AdjustDimensionDetails( elem.textprecission );
+    dimension->AdjustDimensionDetails( aElem.textprecission );
 }
 
-void ALTIUM_PCB::HelperParseDimensions6Leader( const ADIMENSION6& elem )
+void ALTIUM_PCB::HelperParseDimensions6Leader( const ADIMENSION6& aElem )
 {
-    PCB_LAYER_ID kilayer = kicad_layer( elem.layer );
+    PCB_LAYER_ID kilayer = kicad_layer( aElem.layer );
 
-    if( !elem.referencePoint.empty() )
+    if( !aElem.referencePoint.empty() )
     {
-        wxPoint referencePoint0 = elem.referencePoint.at( 0 );
+        wxPoint referencePoint0 = aElem.referencePoint.at( 0 );
 
         // line
         wxPoint last = referencePoint0;
-        for( size_t i = 1; i < elem.referencePoint.size(); i++ )
+        for( size_t i = 1; i < aElem.referencePoint.size(); i++ )
         {
             DRAWSEGMENT* ds = new DRAWSEGMENT( m_board );
             m_board->Add( ds, ADD_MODE::APPEND );
             ds->SetShape( STROKE_T::S_SEGMENT );
             ds->SetLayer( kilayer );
-            ds->SetWidth( elem.linewidth );
+            ds->SetWidth( aElem.linewidth );
             ds->SetStart( last );
-            ds->SetEnd( elem.referencePoint.at( i ) );
-            last = elem.referencePoint.at( i );
+            ds->SetEnd( aElem.referencePoint.at( i ) );
+            last = aElem.referencePoint.at( i );
         }
 
         // arrow
-        if( elem.referencePoint.size() >= 2 )
+        if( aElem.referencePoint.size() >= 2 )
         {
-            wxPoint dirVec = elem.referencePoint.at( 1 ) - referencePoint0;
+            wxPoint dirVec = aElem.referencePoint.at( 1 ) - referencePoint0;
             if( dirVec.x != 0 || dirVec.y != 0 )
             {
-                double  scaling = EuclideanNorm( dirVec ) / elem.arrowsize;
+                double  scaling = EuclideanNorm( dirVec ) / aElem.arrowsize;
                 wxPoint arrVec =
                         wxPoint( KiROUND( dirVec.x / scaling ), KiROUND( dirVec.y / scaling ) );
                 RotatePoint( &arrVec, 200. );
@@ -980,7 +947,7 @@ void ALTIUM_PCB::HelperParseDimensions6Leader( const ADIMENSION6& elem )
                 m_board->Add( ds1, ADD_MODE::APPEND );
                 ds1->SetShape( STROKE_T::S_SEGMENT );
                 ds1->SetLayer( kilayer );
-                ds1->SetWidth( elem.linewidth );
+                ds1->SetWidth( aElem.linewidth );
                 ds1->SetStart( referencePoint0 );
                 ds1->SetEnd( referencePoint0 + arrVec );
 
@@ -990,14 +957,14 @@ void ALTIUM_PCB::HelperParseDimensions6Leader( const ADIMENSION6& elem )
                 m_board->Add( ds2, ADD_MODE::APPEND );
                 ds2->SetShape( STROKE_T::S_SEGMENT );
                 ds2->SetLayer( kilayer );
-                ds2->SetWidth( elem.linewidth );
+                ds2->SetWidth( aElem.linewidth );
                 ds2->SetStart( referencePoint0 );
                 ds2->SetEnd( referencePoint0 + arrVec );
             }
         }
     }
 
-    if( elem.textPoint.empty() )
+    if( aElem.textPoint.empty() )
     {
         wxFAIL_MSG( "textpoint not specified!" );
         return;
@@ -1005,55 +972,55 @@ void ALTIUM_PCB::HelperParseDimensions6Leader( const ADIMENSION6& elem )
 
     TEXTE_PCB* text = new TEXTE_PCB( m_board );
     m_board->Add( text, ADD_MODE::APPEND );
-    text->SetText( elem.textformat );
-    text->SetPosition( elem.textPoint.at( 0 ) );
+    text->SetText( aElem.textformat );
+    text->SetPosition( aElem.textPoint.at( 0 ) );
     text->SetLayer( kilayer );
-    text->SetTextSize( wxSize( elem.textheight, elem.textheight ) ); // TODO: parse text width
-    text->SetThickness( elem.textlinewidth );
+    text->SetTextSize( wxSize( aElem.textheight, aElem.textheight ) ); // TODO: parse text width
+    text->SetThickness( aElem.textlinewidth );
     text->SetHorizJustify( EDA_TEXT_HJUSTIFY_T::GR_TEXT_HJUSTIFY_LEFT );
     text->SetVertJustify( EDA_TEXT_VJUSTIFY_T::GR_TEXT_VJUSTIFY_BOTTOM );
 }
 
-void ALTIUM_PCB::HelperParseDimensions6Datum( const ADIMENSION6& elem )
+void ALTIUM_PCB::HelperParseDimensions6Datum( const ADIMENSION6& aElem )
 {
-    PCB_LAYER_ID kilayer = kicad_layer( elem.layer );
-    for( size_t i = 0; i < elem.referencePoint.size(); i++ )
+    PCB_LAYER_ID kilayer = kicad_layer( aElem.layer );
+    for( size_t i = 0; i < aElem.referencePoint.size(); i++ )
     {
         DRAWSEGMENT* ds1 = new DRAWSEGMENT( m_board );
         m_board->Add( ds1, ADD_MODE::APPEND );
         ds1->SetShape( STROKE_T::S_SEGMENT );
         ds1->SetLayer( kilayer );
-        ds1->SetWidth( elem.linewidth );
-        ds1->SetStart( elem.referencePoint.at( i ) );
+        ds1->SetWidth( aElem.linewidth );
+        ds1->SetStart( aElem.referencePoint.at( i ) );
         // ds1->SetEnd( /* TODO: seems to be based on TEXTY */ );
     }
 }
 
-void ALTIUM_PCB::HelperParseDimensions6Center( const ADIMENSION6& elem )
+void ALTIUM_PCB::HelperParseDimensions6Center( const ADIMENSION6& aElem )
 {
-    PCB_LAYER_ID kilayer = kicad_layer( elem.layer );
+    PCB_LAYER_ID kilayer = kicad_layer( aElem.layer );
 
     DRAWSEGMENT* ds1 = new DRAWSEGMENT( m_board );
     m_board->Add( ds1, ADD_MODE::APPEND );
     ds1->SetShape( STROKE_T::S_SEGMENT );
     ds1->SetLayer( kilayer );
-    ds1->SetWidth( elem.linewidth );
+    ds1->SetWidth( aElem.linewidth );
 
-    wxPoint vec1 = wxPoint( 0, elem.height / 2 );
-    RotatePoint( &vec1, elem.angle * 10. );
-    ds1->SetStart( elem.xy1 + vec1 );
-    ds1->SetEnd( elem.xy1 - vec1 );
+    wxPoint vec1 = wxPoint( 0, aElem.height / 2 );
+    RotatePoint( &vec1, aElem.angle * 10. );
+    ds1->SetStart( aElem.xy1 + vec1 );
+    ds1->SetEnd( aElem.xy1 - vec1 );
 
     DRAWSEGMENT* ds2 = new DRAWSEGMENT( m_board );
     m_board->Add( ds2, ADD_MODE::APPEND );
     ds2->SetShape( STROKE_T::S_SEGMENT );
     ds2->SetLayer( kilayer );
-    ds2->SetWidth( elem.linewidth );
+    ds2->SetWidth( aElem.linewidth );
 
-    wxPoint vec2 = wxPoint( elem.height / 2, 0 );
-    RotatePoint( &vec2, elem.angle * 10. );
-    ds2->SetStart( elem.xy1 + vec2 );
-    ds2->SetEnd( elem.xy1 - vec2 );
+    wxPoint vec2 = wxPoint( aElem.height / 2, 0 );
+    RotatePoint( &vec2, aElem.angle * 10. );
+    ds2->SetStart( aElem.xy1 + vec2 );
+    ds2->SetEnd( aElem.xy1 - vec2 );
 }
 
 

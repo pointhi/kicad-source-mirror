@@ -36,12 +36,16 @@ class CompoundFileReader;
 struct COMPOUND_FILE_ENTRY;
 } // namespace CFB
 
+// Helper method to find file inside compound file
+const CFB::COMPOUND_FILE_ENTRY* FindStream(
+        const CFB::CompoundFileReader& aReader, const char* aStreamName );
+
 
 class ALTIUM_PARSER
 {
 public:
     ALTIUM_PARSER( const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
-    ~ALTIUM_PARSER();
+    ~ALTIUM_PARSER() = default;
 
     template <typename Type>
     Type read()
@@ -77,17 +81,32 @@ public:
         }
     }
 
+    int32_t read_unit()
+    {
+        return kicad_unit( read<int32_t>() );
+    }
+
+    int32_t read_unit_x()
+    {
+        return read_unit();
+    }
+
+    int32_t read_unit_y()
+    {
+        return -read_unit();
+    }
+
     wxPoint read_point()
     {
-        int32_t x = kicad_x( read<int32_t>() );
-        int32_t y = kicad_y( read<int32_t>() );
+        int32_t x = read_unit_x();
+        int32_t y = read_unit_y();
         return { x, y };
     }
 
     wxSize read_size()
     {
-        int32_t x = kicad_unit( read<int32_t>() );
-        int32_t y = kicad_unit( read<int32_t>() );
+        int32_t x = read_unit();
+        int32_t y = read_unit();
         return { x, y };
     }
 
@@ -100,41 +119,31 @@ public:
 
     std::map<wxString, wxString> read_properties();
 
-    static int32_t kicad_unit( const int32_t x )
+    static int32_t kicad_unit( const int32_t aValue )
     {
-        return ( ( (int64_t) x ) * 254L ) / 100;
-    }
-
-    static int32_t kicad_x( const int32_t x )
-    {
-        return kicad_unit( x );
-    }
-
-    static int32_t kicad_y( const int32_t y )
-    {
-        return -kicad_unit( y );
+        return ( ( (int64_t) aValue ) * 254L ) / 100;
     }
 
     static int property_int(
-            const std::map<wxString, wxString>& properties, const wxString& key, int def );
+            const std::map<wxString, wxString>& aProperties, const wxString& aKey, int aDefault );
 
-    static double property_double(
-            const std::map<wxString, wxString>& properties, const wxString& key, double def );
+    static double property_double( const std::map<wxString, wxString>& aProperties,
+            const wxString& aKey, double aDefault );
 
     static bool property_bool(
-            const std::map<wxString, wxString>& properties, const wxString& key, bool def );
+            const std::map<wxString, wxString>& aProperties, const wxString& aKey, bool aDefault );
 
-    static int32_t property_unit( const std::map<wxString, wxString>& properties,
-            const wxString& key, const wxString& def );
+    static int32_t property_unit( const std::map<wxString, wxString>& aProperties,
+            const wxString& aKey, const wxString& aDefault );
 
-    static wxString property_string(
-            const std::map<wxString, wxString>& properties, const wxString& key, wxString def );
+    static wxString property_string( const std::map<wxString, wxString>& aProperties,
+            const wxString& aKey, wxString aDefault );
 
-    void skip( size_t len )
+    void skip( size_t aLength )
     {
-        if( bytes_remaining() >= len )
+        if( bytes_remaining() >= aLength )
         {
-            pos += len;
+            pos += aLength;
         }
         else
         {

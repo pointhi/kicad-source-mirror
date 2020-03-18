@@ -46,7 +46,7 @@ struct COMPOUND_FILE_ENTRY;
 // type declaration required for a helper method
 class ALTIUM_PCB;
 typedef std::function<void( const CFB::CompoundFileReader&, const CFB::COMPOUND_FILE_ENTRY* )>
-        parse_function_pointer_t;
+        PARSE_FUNCTION_POINTER_fp;
 
 
 class ALTIUM_PCB
@@ -62,12 +62,12 @@ public:
 private:
     PCB_LAYER_ID kicad_layer( ALTIUM_LAYER aAltiumLayer ) const;
 
-    int     GetNetCode( const uint16_t id );
-    ARULE6* GetRule( ALTIUM_RULE_KIND kind, const wxString& name );
-    ARULE6* GetRuleDefault( ALTIUM_RULE_KIND kind );
+    int     GetNetCode( uint16_t aId );
+    ARULE6* GetRule( ALTIUM_RULE_KIND aKind, const wxString& aName );
+    ARULE6* GetRuleDefault( ALTIUM_RULE_KIND aKind );
 
-    void ParseHelper( const CFB::CompoundFileReader& aReader, const wxString& streamName,
-            parse_function_pointer_t fp );
+    void ParseHelper( const CFB::CompoundFileReader& aReader, const wxString& aStreamName,
+            PARSE_FUNCTION_POINTER_fp aFP );
     void FinishParsingHelper();
 
     void ParseFileHeader(
@@ -110,12 +110,12 @@ private:
             const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry );
 
     // Helper Functions
-    void HelperParseDimensions6Linear( const ADIMENSION6& elem );
-    void HelperParseDimensions6Leader( const ADIMENSION6& elem );
-    void HelperParseDimensions6Datum( const ADIMENSION6& elem );
-    void HelperParseDimensions6Center( const ADIMENSION6& elem );
+    void HelperParseDimensions6Linear( const ADIMENSION6& aElem );
+    void HelperParseDimensions6Leader( const ADIMENSION6& aElem );
+    void HelperParseDimensions6Datum( const ADIMENSION6& aElem );
+    void HelperParseDimensions6Center( const ADIMENSION6& aElem );
 
-    void HelperCreateBoardOutline( const std::vector<ALTIUM_VERTICE>& vertices );
+    void HelperCreateBoardOutline( const std::vector<ALTIUM_VERTICE>& aVertices );
 
     BOARD*                               m_board;
     std::vector<MODULE*>                 m_components;

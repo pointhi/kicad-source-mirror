@@ -172,24 +172,24 @@ struct ALTIUM_VERTICE
     const wxPoint position;
     const wxPoint center;
 
-    explicit ALTIUM_VERTICE( const wxPoint position )
+    explicit ALTIUM_VERTICE( const wxPoint aPosition )
             : isRound( false ),
               radius( 0 ),
               startangle( 0. ),
               endangle( 0. ),
-              position( position ),
+              position( aPosition ),
               center( wxPoint( 0, 0 ) )
     {
     }
 
-    explicit ALTIUM_VERTICE( bool isRound, int32_t radius, double startangle, double endangle,
-            const wxPoint position, const wxPoint center )
-            : isRound( isRound ),
-              radius( radius ),
-              startangle( startangle ),
-              endangle( endangle ),
-              position( position ),
-              center( center )
+    explicit ALTIUM_VERTICE( bool aIsRound, int32_t aRadius, double aStartAngle, double aEndAngle,
+            const wxPoint aPosition, const wxPoint aCenter )
+            : isRound( aIsRound ),
+              radius( aRadius ),
+              startangle( aStartAngle ),
+              endangle( aEndAngle ),
+              position( aPosition ),
+              center( aCenter )
     {
     }
 };
@@ -313,7 +313,7 @@ struct ABOARD6
 
     std::vector<ALTIUM_VERTICE> board_vertices;
 
-    explicit ABOARD6( ALTIUM_PARSER& reader );
+    explicit ABOARD6( ALTIUM_PARSER& aReader );
 };
 
 struct ACLASS6
@@ -325,7 +325,7 @@ struct ACLASS6
 
     std::vector<wxString> names;
 
-    explicit ACLASS6( ALTIUM_PARSER& reader );
+    explicit ACLASS6( ALTIUM_PARSER& aReader );
 };
 
 struct ACOMPONENT6
@@ -338,7 +338,7 @@ struct ACOMPONENT6
     bool         commenton;
     wxString     sourcedesignator;
     wxString     sourcelibreference;
-    explicit ACOMPONENT6( ALTIUM_PARSER& reader );
+    explicit ACOMPONENT6( ALTIUM_PARSER& aReader );
 };
 
 struct ADIMENSION6
@@ -367,14 +367,14 @@ struct ADIMENSION6
     std::vector<wxPoint> referencePoint;
     std::vector<wxPoint> textPoint;
 
-    explicit ADIMENSION6( ALTIUM_PARSER& reader );
+    explicit ADIMENSION6( ALTIUM_PARSER& aReader );
 };
 
 struct ANET6
 {
     wxString name;
 
-    explicit ANET6( ALTIUM_PARSER& reader );
+    explicit ANET6( ALTIUM_PARSER& aReader );
 };
 
 struct APOLYGON6
@@ -392,7 +392,7 @@ struct APOLYGON6
 
     std::vector<ALTIUM_VERTICE> vertices;
 
-    explicit APOLYGON6( ALTIUM_PARSER& reader );
+    explicit APOLYGON6( ALTIUM_PARSER& aReader );
 };
 
 
@@ -419,7 +419,7 @@ struct ARULE6
 
     // TODO: implement different types of rules we need to parse
 
-    explicit ARULE6( ALTIUM_PARSER& reader );
+    explicit ARULE6( ALTIUM_PARSER& aReader );
 };
 
 struct AREGION6
@@ -437,7 +437,7 @@ struct AREGION6
 
     std::vector<ALTIUM_VERTICE> vertices;
 
-    explicit AREGION6( ALTIUM_PARSER& reader, bool aExtendedVertices );
+    explicit AREGION6( ALTIUM_PARSER& aReader, bool aExtendedVertices );
 };
 
 struct AARC6
@@ -455,7 +455,7 @@ struct AARC6
     double   endangle;
     uint32_t width;
 
-    explicit AARC6( ALTIUM_PARSER& reader );
+    explicit AARC6( ALTIUM_PARSER& aReader );
 };
 
 struct APAD6_SIZE_AND_SHAPE
@@ -510,7 +510,7 @@ struct APAD6
 
     std::unique_ptr<APAD6_SIZE_AND_SHAPE> sizeAndShape;
 
-    explicit APAD6( ALTIUM_PARSER& reader );
+    explicit APAD6( ALTIUM_PARSER& aReader );
 };
 
 struct AVIA6
@@ -531,7 +531,7 @@ struct AVIA6
     ALTIUM_LAYER    layer_end;
     ALTIUM_PAD_MODE viamode;
 
-    explicit AVIA6( ALTIUM_PARSER& reader );
+    explicit AVIA6( ALTIUM_PARSER& aReader );
 };
 
 struct ATRACK6
@@ -547,7 +547,7 @@ struct ATRACK6
     wxPoint  end;
     uint32_t width;
 
-    explicit ATRACK6( ALTIUM_PARSER& reader );
+    explicit ATRACK6( ALTIUM_PARSER& aReader );
 };
 
 struct ATEXT6
@@ -568,7 +568,7 @@ struct ATEXT6
 
     wxString text;
 
-    explicit ATEXT6( ALTIUM_PARSER& reader );
+    explicit ATEXT6( ALTIUM_PARSER& aReader );
 };
 
 struct AFILL6
@@ -584,7 +584,7 @@ struct AFILL6
     wxPoint pos2;
     double  rotation;
 
-    explicit AFILL6( ALTIUM_PARSER& reader );
+    explicit AFILL6( ALTIUM_PARSER& aReader );
 };
 
 

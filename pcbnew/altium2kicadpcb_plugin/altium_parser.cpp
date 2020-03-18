@@ -30,6 +30,39 @@
 #include <utf.h>
 
 
+const CFB::COMPOUND_FILE_ENTRY* FindStream(
+        const CFB::CompoundFileReader& aReader, const char* aStreamName )
+{
+    const CFB::COMPOUND_FILE_ENTRY* ret = nullptr;
+    aReader.EnumFiles( aReader.GetRootEntry(), -1,
+            [&]( const CFB::COMPOUND_FILE_ENTRY* aEntry, const CFB::utf16string& aU16dir,
+                    int level ) -> void {
+                if( aReader.IsStream( aEntry ) )
+                {
+                    std::string name = UTF16ToUTF8( aEntry->name );
+                    if( aU16dir.length() > 0 )
+                    {
+                        std::string dir = UTF16ToUTF8( aU16dir.c_str() );
+                        if( strncmp( aStreamName, dir.c_str(), dir.length() ) == 0
+                                && aStreamName[dir.length()] == '\\'
+                                && strcmp( aStreamName + dir.length() + 1, name.c_str() ) == 0 )
+                        {
+                            ret = aEntry;
+                        }
+                    }
+                    else
+                    {
+                        if( strcmp( aStreamName, name.c_str() ) == 0 )
+                        {
+                            ret = aEntry;
+                        }
+                    }
+                }
+            } );
+    return ret;
+}
+
+
 ALTIUM_PARSER::ALTIUM_PARSER(
         const CFB::CompoundFileReader& aReader, const CFB::COMPOUND_FILE_ENTRY* aEntry )
 {
@@ -53,9 +86,6 @@ ALTIUM_PARSER::ALTIUM_PARSER(
     aReader.ReadFile( aEntry, 0, content.get(), size );
 }
 
-ALTIUM_PARSER::~ALTIUM_PARSER()
-{
-}
 
 std::map<wxString, wxString> ALTIUM_PARSER::read_properties()
 {
@@ -95,26 +125,26 @@ std::map<wxString, wxString> ALTIUM_PARSER::read_properties()
 }
 
 int ALTIUM_PARSER::property_int(
-        const std::map<wxString, wxString>& properties, const wxString& key, int def )
+        const std::map<wxString, wxString>& aProperties, const wxString& aKey, int aDefault )
 {
     try
     {
-        const wxString& value = properties.at( key );
+        const wxString& value = aProperties.at( aKey );
 
         return wxAtoi( value );
     }
     catch( const std::out_of_range& oor )
     {
-        return def;
+        return aDefault;
     }
 }
 
 double ALTIUM_PARSER::property_double(
-        const std::map<wxString, wxString>& properties, const wxString& key, double def )
+        const std::map<wxString, wxString>& aProperties, const wxString& aKey, double aDefault )
 {
     try
     {
-        const wxString& value = properties.at( key );
+        const wxString& value = aProperties.at( aKey );
 
         // Locale independent str -> double conversation
         std::istringstream istr( (const char*) value.mb_str() );
@@ -126,29 +156,29 @@ double ALTIUM_PARSER::property_double(
     }
     catch( const std::out_of_range& oor )
     {
-        return def;
+        return aDefault;
     }
 }
 
 bool ALTIUM_PARSER::property_bool(
-        const std::map<wxString, wxString>& properties, const wxString& key, bool def )
+        const std::map<wxString, wxString>& aProperties, const wxString& aKey, bool aDefault )
 {
     try
     {
-        const wxString& value = properties.at( key );
+        const wxString& value = aProperties.at( aKey );
 
         return value == "TRUE";
     }
     catch( const std::out_of_range& oor )
     {
-        return def;
+        return aDefault;
     }
 }
 
-int32_t ALTIUM_PARSER::property_unit(
-        const std::map<wxString, wxString>& properties, const wxString& key, const wxString& def )
+int32_t ALTIUM_PARSER::property_unit( const std::map<wxString, wxString>& aProperties,
+        const wxString& aKey, const wxString& aDefault )
 {
-    const wxString& value = property_string( properties, key, def );
+    const wxString& value = property_string( aProperties, aKey, aDefault );
 
     int decimal_point = value.find( '.' );
     int value_end     = value.find_first_not_of( "+-0123456789." );
@@ -193,14 +223,14 @@ int32_t ALTIUM_PARSER::property_unit(
 }
 
 wxString ALTIUM_PARSER::property_string(
-        const std::map<wxString, wxString>& properties, const wxString& key, wxString def )
+        const std::map<wxString, wxString>& aProperties, const wxString& aKey, wxString aDefault )
 {
     try
     {
-        return properties.at( key );
+        return aProperties.at( aKey );
     }
     catch( const std::out_of_range& oor )
     {
-        return def;
+        return aDefault;
     }
 }
