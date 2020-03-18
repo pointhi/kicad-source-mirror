@@ -12,6 +12,7 @@ set( ALTIUM2PCBNEW_SRCS
     altium_designer_plugin.cpp
     altium_pcb.cpp
     altium_parser.cpp
+    altium_parser_pcb.cpp
     )
 
 add_library( altium2kicadpcb STATIC ${ALTIUM2PCBNEW_SRCS} )
