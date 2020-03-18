@@ -867,7 +867,8 @@ void ALTIUM_PCB::HelperParseDimensions6Linear( const ADIMENSION6& aElem )
          * measurement point where we can place the drawsegment.
          */
         wxPoint direction = aElem.xy1 - referencePoint0;
-        SEG     segm1( referencePoint0, referencePoint0 + VectorNorm( direction ) );
+        wxPoint directionNormalVector = wxPoint( -direction.y, direction.x );
+        SEG     segm1( referencePoint0, referencePoint0 + directionNormalVector );
         SEG     segm2( referencePoint1, referencePoint1 + direction );
         wxPoint intersection( segm1.Intersect( segm2, true, true ).get() );
         dimension->SetEnd( intersection, aElem.textprecission );
