@@ -115,6 +115,14 @@ public:
     int PlaceText( const TOOL_EVENT& aEvent );
 
     /**
+     * Function DrawBarcode()
+     * Starts interactively drawing a barcode. After invoking the function it expects the user
+     * to first click on a point that is going to be used as the origin of the barcode.
+     * The second click determines the the size
+     */
+    int DrawBarcode( const TOOL_EVENT& aEvent );
+
+    /**
      * Function DrawDimension()
      * Starts interactively drawing a dimension. After invoking the function it expects the user
      * to first click on a point that is going to be used as the origin of the dimension.

@@ -422,6 +422,7 @@ void PCB_EDIT_FRAME::ReCreateMenuBar()
     placeMenu->AddItem( PCB_ACTIONS::drawPolygon,      SELECTION_CONDITIONS::ShowAlways );
 
     placeMenu->AddSeparator();
+    placeMenu->AddItem( PCB_ACTIONS::drawBarcode,      SELECTION_CONDITIONS::ShowAlways );
     placeMenu->AddItem( PCB_ACTIONS::drawDimension,    SELECTION_CONDITIONS::ShowAlways );
 
     placeMenu->AddSeparator();

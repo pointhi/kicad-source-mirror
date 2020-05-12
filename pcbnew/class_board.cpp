@@ -574,6 +574,7 @@ void BOARD::Add( BOARD_ITEM* aBoardItem, ADD_MODE aMode )
 
         break;
 
+    case PCB_BARCODE_T:
     case PCB_DIMENSION_T:
     case PCB_LINE_T:
     case PCB_TEXT_T:

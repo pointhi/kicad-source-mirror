@@ -442,6 +442,7 @@ set( PCB_COMMON_SRCS
     ${CMAKE_SOURCE_DIR}/pcbnew/board_items_to_polygon_shape_transform.cpp
     ${CMAKE_SOURCE_DIR}/pcbnew/class_board.cpp
     ${CMAKE_SOURCE_DIR}/pcbnew/class_board_item.cpp
+    ${CMAKE_SOURCE_DIR}/pcbnew/class_barcode.cpp
     ${CMAKE_SOURCE_DIR}/pcbnew/class_dimension.cpp
     ${CMAKE_SOURCE_DIR}/pcbnew/class_drawsegment.cpp
     ${CMAKE_SOURCE_DIR}/pcbnew/class_edge_mod.cpp

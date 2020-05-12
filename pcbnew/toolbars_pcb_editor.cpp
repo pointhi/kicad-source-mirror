@@ -379,6 +379,7 @@ void PCB_EDIT_FRAME::ReCreateVToolbar()
     m_drawToolBar->Add( PCB_ACTIONS::drawArc,              ACTION_TOOLBAR::TOGGLE );
     m_drawToolBar->Add( PCB_ACTIONS::drawPolygon,          ACTION_TOOLBAR::TOGGLE );
     m_drawToolBar->Add( PCB_ACTIONS::placeText,            ACTION_TOOLBAR::TOGGLE );
+    m_drawToolBar->Add( PCB_ACTIONS::drawBarcode,          ACTION_TOOLBAR::TOGGLE );
     m_drawToolBar->Add( PCB_ACTIONS::drawDimension,        ACTION_TOOLBAR::TOGGLE );
     m_drawToolBar->Add( PCB_ACTIONS::placeTarget,          ACTION_TOOLBAR::TOGGLE );
     m_drawToolBar->Add( ACTIONS::deleteTool,               ACTION_TOOLBAR::TOGGLE );
@@ -719,6 +720,7 @@ void PCB_EDIT_FRAME::SyncToolbars()
     TOGGLE_TOOL( m_drawToolBar, PCB_ACTIONS::drawArc );
     TOGGLE_TOOL( m_drawToolBar, PCB_ACTIONS::drawPolygon );
     TOGGLE_TOOL( m_drawToolBar, PCB_ACTIONS::placeText );
+    TOGGLE_TOOL( m_drawToolBar, PCB_ACTIONS::drawBarcode );
     TOGGLE_TOOL( m_drawToolBar, PCB_ACTIONS::drawDimension );
     TOGGLE_TOOL( m_drawToolBar, PCB_ACTIONS::placeTarget );
     TOGGLE_TOOL( m_drawToolBar, ACTIONS::deleteTool );
