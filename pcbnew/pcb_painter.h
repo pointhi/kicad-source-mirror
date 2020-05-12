@@ -45,7 +45,7 @@ class MODULE;
 class ZONE_CONTAINER;
 class TEXTE_PCB;
 class TEXTE_MODULE;
-class BARCODE;
+class PCB_BARCODE;
 class DIMENSION;
 class PCB_TARGET;
 class MARKER_PCB;
@@ -254,7 +254,7 @@ protected:
     void draw( const TEXTE_MODULE* aText, int aLayer );
     void draw( const MODULE* aModule, int aLayer );
     void draw( const ZONE_CONTAINER* aZone, int aLayer );
-    void draw( const BARCODE* aBarcode, int aLayer );
+    void draw( const PCB_BARCODE* aBarcode, int aLayer );
     void draw( const DIMENSION* aDimension, int aLayer );
     void draw( const PCB_TARGET* aTarget );
     void draw( const MARKER_PCB* aMarker );

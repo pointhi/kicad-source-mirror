@@ -474,7 +474,7 @@ int DRAWING_TOOL::DrawBarcode( const TOOL_EVENT& aEvent )
     if( m_editModules && !m_frame->GetModel() )
         return 0;
 
-    BARCODE*                     barcode     = NULL;
+    PCB_BARCODE*                 barcode     = NULL;
     const BOARD_DESIGN_SETTINGS& dsnSettings = m_frame->GetDesignSettings();
     BOARD_COMMIT                 commit( m_frame );
 
@@ -553,7 +553,7 @@ int DRAWING_TOOL::DrawBarcode( const TOOL_EVENT& aEvent )
                 m_controls->ForceCursorPosition( true, m_controls->GetCursorPosition() );
                 PCB_LAYER_ID layer = m_frame->GetActiveLayer();
 
-                barcode = new BARCODE( m_frame->GetModel() );
+                barcode = new PCB_BARCODE( m_frame->GetModel() );
                 // TODO we have to set IS_NEW, otherwise InstallTextPCB.. creates an undo entry :| LEGACY_CLEANUP
                 barcode->SetFlags( IS_NEW );
 

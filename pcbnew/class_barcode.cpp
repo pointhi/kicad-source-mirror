@@ -42,7 +42,7 @@
 
 #include <backend/zint.h>
 
-BARCODE::BARCODE( BOARD_ITEM* aParent )
+PCB_BARCODE::PCB_BARCODE( BOARD_ITEM* aParent )
         : BOARD_ITEM( aParent, PCB_BARCODE_T ),
           m_Width( Millimeter2iu( 40 ) ),
           m_Height( Millimeter2iu( 40 ) ),
@@ -53,43 +53,43 @@ BARCODE::BARCODE( BOARD_ITEM* aParent )
 }
 
 
-BARCODE::~BARCODE()
+PCB_BARCODE::~PCB_BARCODE()
 {
 }
 
 
-void BARCODE::SetPosition( const wxPoint& aPos )
+void PCB_BARCODE::SetPosition( const wxPoint& aPos )
 {
     m_Text.SetTextPos( aPos );
 }
 
 
-const wxPoint BARCODE::GetPosition() const
+const wxPoint PCB_BARCODE::GetPosition() const
 {
     return m_Text.GetTextPos();
 }
 
 
-void BARCODE::SetText( const wxString& aNewText )
+void PCB_BARCODE::SetText( const wxString& aNewText )
 {
     m_Text.SetText( aNewText );
 }
 
 
-const wxString BARCODE::GetText() const
+const wxString PCB_BARCODE::GetText() const
 {
     return m_Text.GetText();
 }
 
 
-void BARCODE::SetLayer( PCB_LAYER_ID aLayer )
+void PCB_BARCODE::SetLayer( PCB_LAYER_ID aLayer )
 {
     m_Layer = aLayer;
     m_Text.SetLayer( aLayer );
 }
 
 
-void BARCODE::Move( const wxPoint& offset )
+void PCB_BARCODE::Move( const wxPoint& offset )
 {
     m_Text.Offset( offset );
 
@@ -97,7 +97,7 @@ void BARCODE::Move( const wxPoint& offset )
 }
 
 
-void BARCODE::Rotate( const wxPoint& aRotCentre, double aAngle )
+void PCB_BARCODE::Rotate( const wxPoint& aRotCentre, double aAngle )
 {
     wxPoint tmp = m_Text.GetTextPos();
     RotatePoint( &tmp, aRotCentre, aAngle );
@@ -117,7 +117,7 @@ void BARCODE::Rotate( const wxPoint& aRotCentre, double aAngle )
 }
 
 
-void BARCODE::Flip( const wxPoint& aCentre, bool aFlipLeftRight )
+void PCB_BARCODE::Flip( const wxPoint& aCentre, bool aFlipLeftRight )
 {
 
     // BARCODE items are not usually on copper layers, so
@@ -126,7 +126,7 @@ void BARCODE::Flip( const wxPoint& aCentre, bool aFlipLeftRight )
 }
 
 
-void BARCODE::ComputeBarcode()
+void PCB_BARCODE::ComputeBarcode()
 {
     m_Poly.RemoveAllContours();
 
@@ -181,14 +181,14 @@ void BARCODE::ComputeBarcode()
 
 
 // see class_cotation.h
-void BARCODE::GetMsgPanelInfo( EDA_DRAW_FRAME* aFrame, std::vector<MSG_PANEL_ITEM>& aList )
+void PCB_BARCODE::GetMsgPanelInfo( EDA_DRAW_FRAME* aFrame, std::vector<MSG_PANEL_ITEM>& aList )
 {
     // for now, display only the text within the BARCODE using class TEXTE_PCB.
     m_Text.GetMsgPanelInfo( aFrame, aList );
 }
 
 
-bool BARCODE::HitTest( const wxPoint& aPosition, int aAccuracy ) const
+bool PCB_BARCODE::HitTest( const wxPoint& aPosition, int aAccuracy ) const
 {
     if( m_Text.TextHitTest( aPosition ) )
         return true;
@@ -197,7 +197,7 @@ bool BARCODE::HitTest( const wxPoint& aPosition, int aAccuracy ) const
 }
 
 
-bool BARCODE::HitTest( const EDA_RECT& aRect, bool aContained, int aAccuracy ) const
+bool PCB_BARCODE::HitTest( const EDA_RECT& aRect, bool aContained, int aAccuracy ) const
 {
     EDA_RECT arect = aRect;
     arect.Inflate( aAccuracy );
@@ -213,7 +213,7 @@ bool BARCODE::HitTest( const EDA_RECT& aRect, bool aContained, int aAccuracy ) c
 }
 
 
-const EDA_RECT BARCODE::GetBoundingBox() const
+const EDA_RECT PCB_BARCODE::GetBoundingBox() const
 {
     EDA_RECT bBox;
     int      xmin, xmax, ymin, ymax;
@@ -240,19 +240,19 @@ const EDA_RECT BARCODE::GetBoundingBox() const
 }
 
 
-wxString BARCODE::GetSelectMenuText( EDA_UNITS aUnits ) const
+wxString PCB_BARCODE::GetSelectMenuText( EDA_UNITS aUnits ) const
 {
     return wxString::Format( _( "BARCODE \"%s\" on %s" ), GetText(), GetLayerName() );
 }
 
 
-BITMAP_DEF BARCODE::GetMenuImage() const
+BITMAP_DEF PCB_BARCODE::GetMenuImage() const
 {
     return add_dimension_xpm; // TOOD
 }
 
 
-const BOX2I BARCODE::ViewBBox() const
+const BOX2I PCB_BARCODE::ViewBBox() const
 {
     BOX2I dimBBox = BOX2I(
             VECTOR2I( GetBoundingBox().GetPosition() ), VECTOR2I( GetBoundingBox().GetSize() ) );
@@ -262,14 +262,14 @@ const BOX2I BARCODE::ViewBBox() const
 }
 
 
-EDA_ITEM* BARCODE::Clone() const
+EDA_ITEM* PCB_BARCODE::Clone() const
 {
-    return new BARCODE( *this );
+    return new PCB_BARCODE( *this );
 }
 
-void BARCODE::SwapData( BOARD_ITEM* aImage )
+void PCB_BARCODE::SwapData( BOARD_ITEM* aImage )
 {
     assert( aImage->Type() == PCB_BARCODE_T );
 
-    std::swap( *( (BARCODE*) this ), *( (BARCODE*) aImage ) );
+    std::swap( *( (PCB_BARCODE*) this ), *( (PCB_BARCODE*) aImage ) );
 }
