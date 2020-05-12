@@ -49,15 +49,16 @@ enum class BARCODE_T
 {
     CODE_39,
     CODE_128,
-    QR
+    QR_CODE
 };
 
 class BARCODE : public BOARD_ITEM
 {
-    int       m_Width;  ///< Barcode width
-    int       m_Height; ///< Barcode height
-    TEXTE_PCB m_Text;
-    BARCODE_T m_Kind;
+    int            m_Width;  ///< Barcode width
+    int            m_Height; ///< Barcode height
+    TEXTE_PCB      m_Text;
+    BARCODE_T      m_Kind;
+    SHAPE_POLY_SET m_Poly; ///< Stores the S_POLYGON shape
 
 public:
     BARCODE( BOARD_ITEM* aParent );
@@ -99,6 +100,11 @@ public:
     void SetHeight( int aHeight )
     {
         m_Width = aHeight;
+    }
+
+    SHAPE_POLY_SET& GetPolyShape()
+    {
+        return m_Poly;
     }
 
     /**

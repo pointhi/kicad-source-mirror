@@ -1176,26 +1176,35 @@ void PCB_PAINTER::draw( const BARCODE* aBarcode, int aLayer )
     m_gal->SetFillColor( color );
     m_gal->SetStrokeColor( color );
 
-    wxPoint p11 = aBarcode->GetPosition()
-                  - wxPoint( aBarcode->GetWidth() / 2, aBarcode->GetHeight() / 2 );
-    wxPoint p12 = p11 + wxPoint( aBarcode->GetWidth(), 0 );
-    wxPoint p21 = p11 + wxPoint( 0, aBarcode->GetHeight() );
-    wxPoint p22 = p11 + wxPoint( aBarcode->GetWidth(), aBarcode->GetHeight() );
+    // Draw the barcode
+    SHAPE_POLY_SET& shape = ( (BARCODE*) aBarcode )->GetPolyShape();
+    if( shape.OutlineCount() != 0 )
+    {
+        // On Opengl, a not convex filled polygon is usually drawn by using triangles as primitives.
+        // CacheTriangulation() can create basic triangle primitives to draw the polygon solid shape
+        // on Opengl.
+        // GLU tesselation is much slower, so currently we are using our tesselation.
+        if( m_gal->IsOpenGlEngine() && !shape.IsTriangulationUpToDate() )
+        {
+            shape.CacheTriangulation();
+        }
 
-    int linewidth = Millimeter2iu( 0.1 );
+        m_gal->Save();
 
-    // draw bounding-box for development
-    m_gal->DrawSegment( p11, p12, linewidth );
-    m_gal->DrawSegment( p12, p22, linewidth );
-    m_gal->DrawSegment( p22, p21, linewidth );
-    m_gal->DrawSegment( p21, p11, linewidth );
+        m_gal->Translate( aBarcode->GetPosition() );
 
-    // Draw a barcode
-    // TODO
+        m_gal->SetLineWidth( 0 );
+        m_gal->SetIsFill( true );
+
+        m_gal->SetIsStroke( true );
+        m_gal->DrawPolygon( shape );
+
+        m_gal->Restore();
+    }
 
     // Draw text
     TEXTE_PCB& text = aBarcode->Text();
-    VECTOR2D   position( text.GetTextPos().x, text.GetTextPos().y );
+    VECTOR2D   position( text.GetTextPos().x, text.GetTextPos().y + aBarcode->GetHeight() / 2 );
 
     m_gal->SetLineWidth( getLineThickness( text.GetEffectiveTextPenWidth() ) );
     m_gal->SetTextAttributes( &text );

@@ -505,6 +505,7 @@ target_include_directories( pcbcommon PUBLIC
 target_link_libraries( pcbcommon PUBLIC
     common
     kimath
+    zint
 )
 
 

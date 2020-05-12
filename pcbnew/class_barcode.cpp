@@ -40,13 +40,14 @@
 #include <settings/color_settings.h>
 #include <settings/settings_manager.h>
 
+#include <backend/zint.h>
 
 BARCODE::BARCODE( BOARD_ITEM* aParent )
         : BOARD_ITEM( aParent, PCB_BARCODE_T ),
           m_Width( Millimeter2iu( 40 ) ),
           m_Height( Millimeter2iu( 40 ) ),
           m_Text( this ),
-          m_Kind( BARCODE_T::CODE_39 )
+          m_Kind( BARCODE_T::QR_CODE )
 {
     m_Layer = Dwgs_User;
 }
@@ -127,7 +128,55 @@ void BARCODE::Flip( const wxPoint& aCentre, bool aFlipLeftRight )
 
 void BARCODE::ComputeBarcode()
 {
-    // TODO
+    m_Poly.RemoveAllContours();
+
+    zint_symbol* symbol = ZBarcode_Create();
+    if( symbol == nullptr )
+    {
+        return; // TODO: malloc was not possible
+    }
+
+    symbol->input_mode = UNICODE_MODE;
+    switch( m_Kind )
+    {
+    case BARCODE_T::CODE_39:
+        symbol->symbology = BARCODE_CODE39;
+        break;
+    case BARCODE_T::CODE_128:
+        symbol->symbology = BARCODE_CODE128;
+        break;
+    case BARCODE_T::QR_CODE:
+        symbol->symbology = BARCODE_QRCODE;
+        break;
+    default:
+        return; // invalid code
+    }
+
+    wxString text = GetText();
+    ZBarcode_Encode( symbol, text.c_str(), text.length() );
+
+    // TODO: for now only lines are rendered!
+    ZBarcode_Render( symbol, static_cast<float>( m_Width ), static_cast<float>( m_Height ) );
+
+    wxPoint start = -wxPoint( m_Width / 2, m_Height / 2 );
+    for( zint_render_line* line = symbol->rendered->lines; line != nullptr; line = line->next )
+    {
+        int x1 = start.x + static_cast<int>( line->x );
+        int x2 = x1 + static_cast<int>( line->width );
+        int y1 = start.y + static_cast<int>( line->y );
+        int y2 = y1 - static_cast<int>( line->length );
+
+        SHAPE_LINE_CHAIN shapeline;
+        shapeline.Append( x1, y1 );
+        shapeline.Append( x2, y1 );
+        shapeline.Append( x2, y2 );
+        shapeline.Append( x1, y2 );
+        shapeline.SetClosed( true );
+
+        m_Poly.AddOutline( shapeline );
+    }
+
+    ZBarcode_Delete( symbol );
 }
 
 
