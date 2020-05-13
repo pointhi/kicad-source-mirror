@@ -109,6 +109,7 @@ set( BMAPS_SMALL
 set( BMAPS_MID
     about
     add_arc
+    add_barcode
     add_board
     add_bus2bus
     add_bus

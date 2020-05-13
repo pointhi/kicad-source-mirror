@@ -30,6 +30,7 @@
 // may eventually generate this file automatically.
 EXTERN_BITMAP( about_xpm )
 EXTERN_BITMAP( add_arc_xpm )
+EXTERN_BITMAP( add_barcode_xpm )
 EXTERN_BITMAP( add_board_xpm )
 EXTERN_BITMAP( add_bus2bus_xpm )
 EXTERN_BITMAP( add_bus_xpm )

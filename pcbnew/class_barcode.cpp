@@ -248,7 +248,7 @@ wxString PCB_BARCODE::GetSelectMenuText( EDA_UNITS aUnits ) const
 
 BITMAP_DEF PCB_BARCODE::GetMenuImage() const
 {
-    return add_dimension_xpm; // TOOD
+    return add_barcode_xpm;
 }
 
 

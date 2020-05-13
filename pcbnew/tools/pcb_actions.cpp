@@ -88,7 +88,7 @@ TOOL_ACTION PCB_ACTIONS::drawBarcode( "pcbnew.InteractiveDrawing.barcode",
                                         AS_GLOBAL,
                                         MD_SHIFT + MD_CTRL + 'B', LEGACY_HK_NAME(  "Add Barcode" ),
                                         _( "Add Barcode" ), _( "Add a barcode" ),
-                                        add_dimension_xpm, AF_ACTIVATE );
+                                        add_barcode_xpm, AF_ACTIVATE );
 
 TOOL_ACTION PCB_ACTIONS::drawDimension( "pcbnew.InteractiveDrawing.dimension",
         AS_GLOBAL,
