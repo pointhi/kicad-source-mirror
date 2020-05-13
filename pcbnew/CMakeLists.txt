@@ -51,6 +51,8 @@ include_directories(
 set( PCBNEW_DIALOGS
     dialogs/dialog_filter_selection.cpp
     dialogs/dialog_filter_selection_base.cpp
+    dialogs/dialog_barcode_properties.cpp
+    dialogs/dialog_barcode_properties_base.cpp
     dialogs/dialog_board_setup.cpp
     dialogs/dialog_board_statistics.cpp
     dialogs/dialog_board_statistics_base.cpp

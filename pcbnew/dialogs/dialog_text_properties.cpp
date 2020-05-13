@@ -22,23 +22,25 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
-#include <dialog_text_properties.h>
-#include <confirm.h>
-#include <gr_text.h>
-#include <fctsys.h>
-#include <widgets/tab_traversal.h>
-#include <widgets/unit_binder.h>
+#include "dialog_barcode_properties.h"
 #include <board_commit.h>
+#include <class_barcode.h>
 #include <class_board.h>
 #include <class_dimension.h>
 #include <class_module.h>
 #include <class_pcb_text.h>
 #include <class_text_mod.h>
+#include <confirm.h>
+#include <dialog_text_properties.h>
+#include <fctsys.h>
+#include <gr_text.h>
+#include <math/util.h> // for KiROUND
 #include <pcb_edit_frame.h>
 #include <pcb_layer_box_selector.h>
 #include <pcbnew.h>
+#include <widgets/tab_traversal.h>
+#include <widgets/unit_binder.h>
 #include <wx/valnum.h>
-#include <math/util.h>      // for KiROUND
 
 
 DIALOG_TEXT_PROPERTIES::DIALOG_TEXT_PROPERTIES( PCB_BASE_EDIT_FRAME* aParent, BOARD_ITEM* aItem ) :
@@ -205,6 +207,17 @@ DIALOG_TEXT_PROPERTIES::~DIALOG_TEXT_PROPERTIES()
 void PCB_BASE_EDIT_FRAME::InstallTextOptionsFrame( BOARD_ITEM* aText )
 {
     DIALOG_TEXT_PROPERTIES dlg( this, aText );
+    dlg.ShowModal();
+}
+
+
+/**
+ * Routine for main window class to launch barcode properties dialog.
+ */
+void PCB_BASE_EDIT_FRAME::InstallBarcodeOptionsFrame( PCB_BARCODE* aBarcode )
+{
+    DIALOG_TEXT_PROPERTIES dlg( this, &aBarcode->Text() );
+    //DIALOG_BARCODE_PROPERTIES dlg( this, aBarcode );
     dlg.ShowModal();
 }
 

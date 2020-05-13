@@ -565,8 +565,7 @@ int DRAWING_TOOL::DrawBarcode( const TOOL_EVENT& aEvent )
 
                 barcode->SetTextSize( dsnSettings.GetTextSize( layer ) );
 
-                // TODO: replace with a custom barcode dialog
-                RunMainStack( [&]() { m_frame->InstallTextOptionsFrame( &barcode->Text() ); } );
+                RunMainStack( [&]() { m_frame->InstallBarcodeOptionsFrame( barcode ); } );
 
                 barcode->ComputeBarcode(); // compute content of barcode
 

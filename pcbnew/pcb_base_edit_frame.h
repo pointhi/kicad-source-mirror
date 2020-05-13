@@ -29,6 +29,7 @@
 
 class BOARD_ITEM_CONTAINER;
 class PCB_LAYER_WIDGET;
+class PCB_BARCODE;
 
 /**
  * Common, abstract interface for edit frames.
@@ -180,6 +181,7 @@ public:
     void SetRotationAngle( int aRotationAngle );
 
     void InstallTextOptionsFrame( BOARD_ITEM* aText );
+    void InstallBarcodeOptionsFrame( PCB_BARCODE* aText );
     void InstallGraphicItemPropertiesDialog( BOARD_ITEM* aItem );
 
     ///> @copydoc EDA_DRAW_FRAME::UseGalCanvas()
